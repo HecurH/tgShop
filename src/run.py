@@ -4,10 +4,10 @@ import shutil
 from os import getenv
 from colorlog import ColoredFormatter
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from Handlers import common
+from Handlers import common, shopping
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = getenv("BOT_TOKEN")
@@ -15,6 +15,8 @@ TOKEN = getenv("BOT_TOKEN")
 # All handlers should be attached to the Router (or Dispatcher)
 
 dp = Dispatcher()
+dp.message.filter(F.chat.type == "private")
+
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"
 
@@ -68,7 +70,7 @@ async def main() -> None:
               #default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_router(common.router)
+    dp.include_routers(common.router, shopping.router)
 
     # And the run events dispatching
     await dp.start_polling(bot)

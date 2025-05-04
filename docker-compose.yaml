@@ -1,0 +1,12 @@
+services:
+  tg_bot:
+    container_name: tg_bot_container
+    build: ./src
+    restart: unless-stopped
+    network_mode: host
+
+    command: python /src/run.py
+    volumes:
+      - ./src/:/src/
+    env_file:
+      - .env
