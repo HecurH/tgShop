@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from pydantic import BaseModel
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
@@ -7,9 +7,15 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
-    name: str
+    customer_id: PydanticObjectId
+    product_id: PydanticObjectId
+    step: str
 
-    configurations: dict[str, dict[str, Any]]
+    configuration: dict[Any]
+    colors: str
+
+    promocodes: List[PydanticObjectId]
+
 
 
 class OrdersRepository(AsyncAbstractRepository[Order]):

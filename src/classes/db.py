@@ -7,6 +7,8 @@ from pymongo import MongoClient, AsyncMongoClient
 from pymongo.errors import PyMongoError
 import logging
 
+from src.classes.db_models import *
+
 T = TypeVar("T", bound="MongoModel")
 
 
@@ -23,6 +25,7 @@ class DB:
         self._init_collections()
 
     def _init_collections(self):
+        self.orders = OrdersRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
         self.inviters = InvitersRepository(self.db)
