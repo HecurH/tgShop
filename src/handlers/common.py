@@ -61,7 +61,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
                                  ],
                                  provider_token="1744374395:TEST:2c5a6f30c2763af47ad6",
                                  need_shipping_address=True,
-                                 need)
+                                 )
 
 # Если нет состояния
 # @router.message(StateFilter(None))
