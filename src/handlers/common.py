@@ -7,6 +7,7 @@ from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
 from src.classes import keyboards
 from src.classes import states
+from src.classes.db import *
 
 router = Router(name="commnon")
 
@@ -14,7 +15,7 @@ router = Router(name="commnon")
 
 @router.message(Command("start"))
 @router.message(CommandStart(deep_link=True))
-async def command_start_handler(message: Message, command: CommandObject, state: FSMContext) -> None:
+async def command_start_handler(message: Message, command: CommandObject, state: FSMContext, db: DB) -> None:
     await state.clear()
 
     await message.reply("Привет!")
@@ -31,7 +32,7 @@ async def menu_command_handler(message: Message, state: FSMContext) -> None:
     await state.set_state(states.CommonStates.main_menu)
 
 
-@router.message(states.CommonStates.main_menu, F.text.lower() == "о нас")
+@router.message(F.text.lower() == "о нас")
 async def about_command_handler(message: Message, state: FSMContext) -> None:
 
     await message.reply(**as_list(
@@ -50,19 +51,21 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 
 
 
-    # await message.answer_invoice("Плоти денге",
-    #                              "описалса",
-    #                              "idхуйди",
-    #                              currency="rub",
-    #                              prices=[
-    #                                  LabeledPrice(label="Базовая цена", amount=10000),
-    #                                  LabeledPrice(label="скидка", amount=-1000)
-    #                              ],
-    #                              provider_token="1744374395:TEST:2c5a6f30c2763af47ad6")
+    await message.answer_invoice("Плоти денге",
+                                 "описалса",
+                                 "idхуйди",
+                                 currency="rub",
+                                 prices=[
+                                     LabeledPrice(label="Базовая цена", amount=10000),
+                                     LabeledPrice(label="скидка", amount=-1000)
+                                 ],
+                                 provider_token="1744374395:TEST:2c5a6f30c2763af47ad6",
+                                 need_shipping_address=True,
+                                 need)
 
 # Если нет состояния
-@router.message(StateFilter(None))
-async def base_handler(message: Message, state: FSMContext) -> None:
-    await message.reply("Упс! Прости, мне нужно начать заново...")
-    await message.answer("Вот меню:", reply_markup=keyboards.main_menu())
-    await state.set_state(states.CommonStates.main_menu)
+# @router.message(StateFilter(None))
+# async def base_handler(message: Message, state: FSMContext) -> None:
+#     await message.reply("Упс! Прости, мне нужно начать заново...")
+#     await message.answer("Вот меню:", reply_markup=keyboards.main_menu())
+#     await state.set_state(states.CommonStates.main_menu)

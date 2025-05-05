@@ -1,107 +1,14 @@
 import datetime
 from os import getenv
-from typing import Optional, Type, TypeVar, Iterable
+from typing import Optional, Type, TypeVar, Iterable, Any, List
 from pydantic import BaseModel
 from pydantic_mongo import PydanticObjectId, AsyncAbstractRepository
-from pymongo import MongoClient
+from pymongo import MongoClient, AsyncMongoClient
 from pymongo.errors import PyMongoError
 import logging
 
 T = TypeVar("T", bound="MongoModel")
 
-
-class BlacklistTag(BaseModel):
-    id: Optional[PydanticObjectId] = None,
-    name: str
-
-
-
-class BlacklistRepository(AbstractRepository[BlacklistTag]):
-    class Meta:
-        collection_name = 'blacklist'
-
-
-class Updateable(BaseModel):
-    id: Optional[PydanticObjectId] = None,
-    name: str
-    blacklist: list[str]
-    path: str
-
-
-class UpdateablesRepository(AbstractRepository[Updateable]):
-    class Meta:
-        collection_name = 'updateables'
-
-
-# Класс для хранения данных о постах
-class Post(BaseModel):
-    id: Optional[PydanticObjectId] = None
-    updateable_id: PydanticObjectId  # Ссылка на Updateable через ID
-    tags: list[str]
-    source: str
-    deleted: bool
-    filename: str
-
-    # Метод для получения связанного документа
-    def get_updateable(self, db: "DB") -> Updateable:
-        return db.get_updateable(self.updateable_id)
-
-
-class PostsRepository(AbstractRepository[Post]):
-    class Meta:
-        collection_name = 'posts'
-
-class Promocode(BaseModel):
-    id: Optional[PydanticObjectId] = None
-    code: str
-    only_newbies: bool
-
-    already_used: int = 0
-    max_usages: int
-
-    expire_date: datetime.datetime
-
-
-    # # Метод для получения связанного документа
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
-
-class PromocodesRepository(AsyncAbstractRepository[Promocode]):
-    class Meta:
-        collection_name = 'promocodes'
-
-
-class Inviter(BaseModel):
-    id: Optional[PydanticObjectId] = None
-    inviter_code: int
-
-    name: str
-
-
-    # # Метод для получения связанного документа
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
-
-class InvitersRepository(AsyncAbstractRepository[Inviter]):
-    class Meta:
-        collection_name = 'inviters'
-
-
-class Customer(BaseModel):
-    id: Optional[PydanticObjectId] = None
-    user_id: int
-
-    invited_by: int
-    kicked: bool = False
-
-
-    # # Метод для получения связанного документа
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
-
-class CustomersRepository(AsyncAbstractRepository[Customer]):
-    class Meta:
-        collection_name = 'customers'
 
 
 class DB:
@@ -110,15 +17,16 @@ class DB:
     """
 
     def __init__(self, db_name="Shop"):
-        self.client = MongoClient(getenv("MONGO_URI"))
+        self.client = AsyncMongoClient(getenv("MONGO_URI"))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
         self._init_collections()
 
     def _init_collections(self):
-        self.posts = PostsRepository(self.db)
-        self.updateables = UpdateablesRepository(self.db)
-        self.blacklist = BlacklistRepository(self.db)
+        self.customers = CustomersRepository(self.db)
+        self.products = ProductsRepository(self.db)
+        self.inviters = InvitersRepository(self.db)
+        self.promocodes = PromocodesRepository(self.db)
 
     def get_updateable(self, updateable_id: PydanticObjectId) -> Optional[Updateable]:
         return self.get(Updateable, updateable_id)

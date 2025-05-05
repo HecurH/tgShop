@@ -7,7 +7,8 @@ from colorlog import ColoredFormatter
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from Handlers import common, shopping
+from handlers import common, shopping
+from classes import middlewares
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = getenv("BOT_TOKEN")
@@ -16,6 +17,7 @@ TOKEN = getenv("BOT_TOKEN")
 
 dp = Dispatcher()
 dp.message.filter(F.chat.type == "private")
+dp.update.middleware.register(middlewares.MongoDBMiddleware)
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"

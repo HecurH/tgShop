@@ -1,11 +1,12 @@
 from aiogram import Dispatcher
 from pymongo import MongoClient
+from src.classes.db import DB
 
 
 
 class MongoDBMiddleware:
     def __init__(self):
-        self.client = MongoClient(mongo_uri)
+        self.db = DB()
 
     async def __call__(self, handler, event, data):
         data["db"] = self.db
