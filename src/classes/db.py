@@ -1,7 +1,8 @@
+import datetime
 from os import getenv
 from typing import Optional, Type, TypeVar, Iterable
 from pydantic import BaseModel
-from pydantic_mongo import PydanticObjectId, AbstractRepository
+from pydantic_mongo import PydanticObjectId, AsyncAbstractRepository
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 import logging
@@ -12,6 +13,7 @@ T = TypeVar("T", bound="MongoModel")
 class BlacklistTag(BaseModel):
     id: Optional[PydanticObjectId] = None,
     name: str
+
 
 
 class BlacklistRepository(AbstractRepository[BlacklistTag]):
@@ -48,6 +50,58 @@ class Post(BaseModel):
 class PostsRepository(AbstractRepository[Post]):
     class Meta:
         collection_name = 'posts'
+
+class Promocode(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    code: str
+    only_newbies: bool
+
+    already_used: int = 0
+    max_usages: int
+
+    expire_date: datetime.datetime
+
+
+    # # Метод для получения связанного документа
+    # def get_updateable(self, db: "DB") -> Updateable:
+    #     return db.get_updateable(self.updateable_id)
+
+class PromocodesRepository(AsyncAbstractRepository[Promocode]):
+    class Meta:
+        collection_name = 'promocodes'
+
+
+class Inviter(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    inviter_code: int
+
+    name: str
+
+
+    # # Метод для получения связанного документа
+    # def get_updateable(self, db: "DB") -> Updateable:
+    #     return db.get_updateable(self.updateable_id)
+
+class InvitersRepository(AsyncAbstractRepository[Inviter]):
+    class Meta:
+        collection_name = 'inviters'
+
+
+class Customer(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    user_id: int
+
+    invited_by: int
+    kicked: bool = False
+
+
+    # # Метод для получения связанного документа
+    # def get_updateable(self, db: "DB") -> Updateable:
+    #     return db.get_updateable(self.updateable_id)
+
+class CustomersRepository(AsyncAbstractRepository[Customer]):
+    class Meta:
+        collection_name = 'customers'
 
 
 class DB:
