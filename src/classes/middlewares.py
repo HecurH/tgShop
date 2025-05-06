@@ -14,7 +14,6 @@ class MongoDBMiddleware:
 
     async def __call__(self, handler, event, data):
         user_id = data["event_from_user"].id
-        print(user_id)
 
         if user_id:
             # Проверяем кеш

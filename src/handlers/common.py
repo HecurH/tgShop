@@ -1,9 +1,9 @@
 from aiogram.fsm.context import FSMContext
 
 from aiogram import Bot, Router, html, F
-from aiogram.filters import CommandStart, CommandObject, Command, StateFilter
+from aiogram.filters import CommandStart, CommandObject, Command, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, CallbackQuery, InlineKeyboardMarkup, \
-    ReplyKeyboardRemove
+    ReplyKeyboardRemove, ChatMemberUpdated
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 from pyanaconda.core.async_utils import async_action_wait
 
@@ -23,17 +23,18 @@ async def command_start_handler(message: Message, command: CommandObject, state:
     await state.clear()
 
     user = await db.get_user_by_id(message.from_user.id)
-    if lang == "?":
-        if not user:
-            inviter = await db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
+    if not user:
+        inviter = await db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
 
-            await db.insert(
-                Customer(
-                    user_id=message.from_user.id,
-                    invited_by= inviter.inviter_code if inviter else "",
-                    lang="?"
-                )
+        await db.insert(
+            Customer(
+                user_id=message.from_user.id,
+                invited_by=inviter.inviter_code if inviter else "",
+                lang="?"
             )
+        )
+    if lang == "?":
+
 
         await message.answer("Выберите язык:\n\nChoose language:", reply_markup=keyboards.lang_choose())
         await state.set_state(CommonStates.lang_choosing)
@@ -59,11 +60,7 @@ async def lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: 
 
     await callback.answer()
 
-@router.callback_query()
-async def bad_lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:
 
-
-    await callback.answer()
 
 
 # @router.message(Command("menu"))
@@ -111,6 +108,27 @@ async def about_command_handler(message: Message, state: FSMContext, lang: str) 
 @router.message(StateFilter(None))
 async def base_handler(message: Message, state: FSMContext, db, lang):
     await state.clear()
-    await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
+    #await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
 
     await command_start_handler(message, CommandObject(), state, db, lang)
+
+@router.callback_query()
+async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:
+    await callback.answer()
+
+@router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
+async def user_blocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
+    await state.clear()
+
+    user = await db.get_user_by_id(event.from_user.id)
+    user.kicked = True
+    await db.update(user)
+
+
+@router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
+async def user_unblocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
+    await state.clear()
+
+    user = await db.get_user_by_id(event.from_user.id)
+    user.kicked = False
+    await db.update(user)

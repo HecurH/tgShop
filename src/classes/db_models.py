@@ -1,21 +1,22 @@
 import datetime
 from typing import Optional, Any, List, Iterable
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
-
-
 
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
-    product_id: PydanticObjectId
-    step: str
+    promocodes: list[PydanticObjectId]
 
-    configuration: dict[Any, Any]
-    colors: str
+    entries: list[PydanticObjectId]
 
-    promocodes: List[PydanticObjectId]
+    async def add_promocode(self, promocode: "Promocode", db: "DB") -> bool:
+        user: "Customer" = await db.get_user_by_id(self.customer_id)
+        if promocode.only_newbies:
+            count = await db.get_count_by_query(Order, {"customer_id": self.customer_id})
+            if count != 0:
+                return False
 
 
 
@@ -23,35 +24,51 @@ class OrdersRepository(AsyncAbstractRepository[Order]):
     class Meta:
         collection_name = 'orders'
 
+class CartEntry(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    customer_id: PydanticObjectId
+    product_id: PydanticObjectId
+    in_order: bool = False
+
+    quantity: int = Field(default=1, gt=0)
+
+    configuration: dict[Any, Any]
+
+class CartEntriesRepository(AsyncAbstractRepository[CartEntry]):
+    class Meta:
+        collection_name = 'cart_entries'
+
+
 class Product(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: str
+    base_price: int
 
     configurations: dict[str, dict[str, Any]]
 
     # {
     #     "Размер": {
-    #         "text": "Выберите размер товара:",
+    #         "text": {"ru": "Выберите размер товара:", "en": "Choose the size of the product:"},
     #         "choices": [
-    #             ["Маленький", False],
-    #             ["Средний", False],
-    #             ["Большой", False]
+    #             ["Маленький", False, -n],
+    #             ["Средний", False, 0],
+    #             ["Большой", False, n]
     #         ]
     #     },
     #     "Твёрдость": {
-    #         "text": "Выберите твёрдость товара:",
+    #         "text": {"ru": "Выберите твёрдость изделия:", "en": "Choose the hardness of the product:"},
     #         "choices": [
-    #             ["Мягкий", False],
-    #             ["Средний", False],
-    #             ["Твёрдый", False]
+    #             ["Мягкий", False, 0],
+    #             ["Средний", False, 0],
+    #             ["Твёрдый", False, 0]
     #         ]
     #     },
     #     "Расцветка": {
-    #         "text": "Выберите расцветку товара:",
+    #         "text": {"ru": "Выберите расцветку товара:", "en": "Choose the color of the product:"},
     #         "choices": [
-    #             ["Оригинальный", False],
-    #             ["Шоколадный", False],
-    #             ["Свой вариант", True]
+    #             ["Оригинальный", False, 0],
+    #             ["Шоколадный", False, 0],
+    #             ["Свой вариант", True, ]
     #         ]
     #     }
     # }
@@ -107,9 +124,36 @@ class Customer(BaseModel):
 
     lang: str
 
-    async def get_orders(self, db: "DB") -> Iterable[Order]:
+    async def get_cart(self, db: "DB") -> Iterable[CartEntry]:
+        return await db.get_by_query(CartEntry, {"customer_id": self.id})
 
-        return await db.get_by_query(Order, {"customer_id": self.user_id})
+    async def get_orders(self, db: "DB") -> Iterable[Order]:
+        return await db.get_by_query(Order, {"customer_id": self.id})
+
+    async def add_to_cart(self, db: "DB", product: Product,
+                          configuration: dict):
+
+        # Проверка на существующую запись
+        existing = await db.get_one_by_query(CartEntry, {
+            "customer_id": self.id,
+            "product_id": product.id,
+            "configuration": configuration
+        })
+
+        if existing:
+            existing.quantity += 1
+            await db.update(existing)
+            return existing
+
+        new_entry = CartEntry(
+            customer_id=self.id,
+            product_id=product.id,
+            configuration=configuration
+        )
+        return await db.insert(new_entry)
+
+    async def get_orders(self, db: "DB") -> Iterable[CartEntry]:
+        return await db.get_by_query(CartEntry, {"customer_id": self.user_id})
 
 class CustomersRepository(AsyncAbstractRepository[Customer]):
     class Meta:

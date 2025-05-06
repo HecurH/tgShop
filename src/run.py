@@ -5,8 +5,11 @@ from os import getenv
 from colorlog import ColoredFormatter
 
 from aiogram import Bot, Dispatcher, F
+from aiogram.fsm.storage.mongo import MongoStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from motor.motor_asyncio import AsyncIOMotorClient
+
 from handlers import common, shopping
 from classes import middlewares
 
@@ -15,7 +18,7 @@ TOKEN = getenv("BOT_TOKEN")
 
 # All handlers should be attached to the Router (or Dispatcher)
 
-dp = Dispatcher()
+dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient()))
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.MongoDBMiddleware())
 
@@ -72,7 +75,7 @@ async def main() -> None:
               #default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_routers(common.router, shopping.router)
+    dp.include_routers(shopping.router, common.router)
 
     # And the run events dispatching
     await dp.start_polling(bot)

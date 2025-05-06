@@ -23,7 +23,7 @@ class DB:
         self._init_collections()
 
     def _init_collections(self):
-        self.orders = OrdersRepository(self.db)
+        self.cart_entries = CartEntriesRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
         self.inviters = InvitersRepository(self.db)
@@ -46,6 +46,15 @@ class DB:
             collection = self._get_collection(model)
             doc = await collection.find_by(query)
             return doc if doc else None
+        except PyMongoError as e:
+            self._handle_error(e)
+            return None
+
+    async def get_count_by_query(self, model: Type[T], query: dict) -> int | None:
+        try:
+            collection = self._get_collection(model).Meta.collection_name
+
+            return await self.db[collection].count_documents(query)
         except PyMongoError as e:
             self._handle_error(e)
             return None
@@ -79,7 +88,6 @@ class DB:
             self._handle_error(e)
             raise
 
-
     async def delete(self, entity: T) -> bool:
         try:
             if not entity.id:
@@ -108,8 +116,8 @@ class DB:
             return False
 
     def _get_collection(self, model: Type[T]):
-        if model == Order:
-            return self.orders
+        if model == CartEntry:
+            return self.cart_entries
         if model == Customer:
             return self.customers
         if model == Product:
