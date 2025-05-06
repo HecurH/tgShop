@@ -2,7 +2,8 @@ from aiogram.fsm.context import FSMContext
 
 from aiogram import Bot, Router, html, F
 from aiogram.filters import CommandStart, CommandObject, Command, StateFilter
-from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, CallbackQuery
+from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, CallbackQuery, InlineKeyboardMarkup, \
+    ReplyKeyboardRemove
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 from pyanaconda.core.async_utils import async_action_wait
 
@@ -10,7 +11,7 @@ from src.classes import keyboards
 from src.classes.db import *
 from src.classes.middlewares import MongoDBMiddleware
 from src.classes.states import CommonStates
-from src.classes.translates import CommonTranslates
+from src.classes.translates import CommonTranslates, UncategorizedTranslates
 
 router = Router(name="commnon")
 
@@ -24,7 +25,7 @@ async def command_start_handler(message: Message, command: CommandObject, state:
     user = await db.get_user_by_id(message.from_user.id)
     if lang == "?":
         if not user:
-            inviter = await db.get_one_by_query(Inviter, {"inviter_code": command.args})
+            inviter = await db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
 
             await db.insert(
                 Customer(
@@ -40,20 +41,29 @@ async def command_start_handler(message: Message, command: CommandObject, state:
 
     await message.reply(CommonTranslates.hi[lang])
 
-    await message.answer(CommonTranslates.heres_the_menu[lang], reply_markup=keyboards.main_menu())
+    await message.answer(CommonTranslates.heres_the_menu[lang], reply_markup=keyboards.main_menu(lang))
     await state.set_state(CommonStates.main_menu)
 
 
 @router.callback_query(CommonStates.lang_choosing)
 async def lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:
     user = await db.get_user_by_id(callback.from_user.id)
-    user.lang = callback.message.text
+    user.lang = callback.data
 
     await db.update(user)
-    middleware.update_customer_cache(callback.from_user.id, callback.message.text)
+    middleware.update_customer_cache(callback.from_user.id, callback.data)
 
-    await callback.answer(CommonTranslates.heres_the_menu[user.lang], reply_markup=keyboards.main_menu())
+    await callback.message.delete()
+    await callback.message.answer(CommonTranslates.heres_the_menu[user.lang], reply_markup=keyboards.main_menu(user.lang))
     await state.set_state(CommonStates.main_menu)
+
+    await callback.answer()
+
+@router.callback_query()
+async def bad_lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:
+
+
+    await callback.answer()
 
 
 # @router.message(Command("menu"))
@@ -66,13 +76,13 @@ async def lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: 
 #     await state.set_state(CommonStates.main_menu)
 
 
-@router.message(CommonStates.main_menu, F.text.lower() in CommonTranslates.about_menu.items())
+@router.message(CommonStates.main_menu, lambda message: message.text.lower() in CommonTranslates.about_menu.values())
 async def about_command_handler(message: Message, state: FSMContext, lang: str) -> None:
 
     await message.reply(**as_list(
         BlockQuote(Bold("PLACEHOLDER")),
         Text("Lorem ipsum dolor sit amed.")
-    ).as_kwargs(), reply_markup=keyboards.main_menu())
+    ).as_kwargs(), reply_markup=keyboards.main_menu(lang))
 
     await state.set_state(CommonStates.main_menu)
 
@@ -98,8 +108,9 @@ async def about_command_handler(message: Message, state: FSMContext, lang: str) 
 #                                  )
 
 # Если нет состояния
-# @router.message(StateFilter(None))
-# async def base_handler(message: Message, state: FSMContext) -> None:
-#     await message.reply("Упс! Прости, мне нужно начать заново...")
-#     await message.answer("Вот меню:", reply_markup=keyboards.main_menu())
-#     await state.set_state(states.CommonStates.main_menu)
+@router.message(StateFilter(None))
+async def base_handler(message: Message, state: FSMContext, db, lang):
+    await state.clear()
+    await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
+
+    await command_start_handler(message, CommandObject(), state, db, lang)

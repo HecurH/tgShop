@@ -1,13 +1,18 @@
 
+class UncategorizedTranslates:
+    oopsie = {
+        "ru": "Упс! Прости, мне нужно начать заново...",
+        "en": "Oops! I'm sorry, I need to start over..."
+    }
 
-strings = {
-    ""
-}
+
 class CommonTranslates:
     # name = {
     #     "ru": "",
     #     "en": ""
     # }
+
+
 
     hi = {
         "ru": "Привет!",
@@ -22,4 +27,26 @@ class CommonTranslates:
     about_menu = {
         "ru": "о нас",
         "en": "about us"
+    }
+
+class ReplyButtonsTranslates:
+    choose_an_item = {
+        "ru": "Выберите пункт...",
+        "en": "Select an item..."
+    }
+
+    assortment = {
+        "ru": "Ассортимент",
+        "en": "Assortment"
+    }
+
+
+    orders = {
+        "ru": "Заказы",
+        "en": "Orders"
+    }
+
+    about = {
+        "ru": "О нас",
+        "en": "About us"
     }

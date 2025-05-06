@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
 from aiogram import Dispatcher
-from aiogram.types import TelegramObject
+from aiogram.types import TelegramObject, CallbackQuery, update
 from pymongo import MongoClient
 from src.classes.db import DB
 
@@ -13,7 +13,8 @@ class MongoDBMiddleware:
         self.langs: Dict[int, str] = {}
 
     async def __call__(self, handler, event, data):
-        user_id = self._extract_user_id(event)
+        user_id = data["event_from_user"].id
+        print(user_id)
 
         if user_id:
             # Проверяем кеш
@@ -29,17 +30,10 @@ class MongoDBMiddleware:
             # Добавляем пользователя в контекст
             if user_id in self.langs:
                 data["lang"] = self.langs[user_id]
-            data["db_middleware"] = self
-            data["db"] = self.db
+        data["middleware"] = self
+        data["db"] = self.db
         return await handler(event, data)
 
-    def _extract_user_id(self, event: TelegramObject) -> Optional[int]:
-        # Извлекаем user_id из различных типов событий
-        if hasattr(event, 'from_user') and event.from_user:
-            return event.from_user.id
-        if hasattr(event, 'message') and event.message:
-            return event.message.from_user.id
-        return None
 
     def update_customer_cache(self, user_id: int, lang: str):
         self.langs[user_id] = lang

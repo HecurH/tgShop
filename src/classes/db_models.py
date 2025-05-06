@@ -4,7 +4,6 @@ from typing import Optional, Any, List, Iterable
 from pydantic import BaseModel
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
-from src.classes.db import DB
 
 
 class Order(BaseModel):
@@ -13,7 +12,7 @@ class Order(BaseModel):
     product_id: PydanticObjectId
     step: str
 
-    configuration: dict[Any]
+    configuration: dict[Any, Any]
     colors: str
 
     promocodes: List[PydanticObjectId]
@@ -108,7 +107,7 @@ class Customer(BaseModel):
 
     lang: str
 
-    async def get_orders(self, db: DB) -> Iterable[Order]:
+    async def get_orders(self, db: "DB") -> Iterable[Order]:
 
         return await db.get_by_query(Order, {"customer_id": self.user_id})
 
