@@ -1,8 +1,10 @@
 import datetime
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Iterable
 
 from pydantic import BaseModel
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
+
+from src.classes.db import DB
 
 
 class Order(BaseModel):
@@ -83,7 +85,7 @@ class PromocodesRepository(AsyncAbstractRepository[Promocode]):
 
 class Inviter(BaseModel):
     id: Optional[PydanticObjectId] = None
-    inviter_code: int
+    inviter_code: str
 
     name: str
 
@@ -101,13 +103,14 @@ class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None
     user_id: int
 
-    invited_by: int
+    invited_by: str
     kicked: bool = False
 
     lang: str
 
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
+    async def get_orders(self, db: DB) -> Iterable[Order]:
+
+        return await db.get_by_query(Order, {"customer_id": self.user_id})
 
 class CustomersRepository(AsyncAbstractRepository[Customer]):
     class Meta:
