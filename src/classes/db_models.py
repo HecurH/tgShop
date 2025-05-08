@@ -1,8 +1,12 @@
 import datetime
+import logging
 from typing import Optional, Any, List, Iterable
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
+from pymongo.asynchronous.database import AsyncDatabase
+from pymongo.errors import PyMongoError
+
 
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -11,7 +15,7 @@ class Order(BaseModel):
 
     entries: list[PydanticObjectId]
 
-    async def add_promocode(self, promocode: "Promocode", db: "DB") -> bool:
+    async def add_promocode(self, promocode: "Promocode", db: "DB") -> Optional[bool]:
         user: "Customer" = await db.get_user_by_id(self.customer_id)
         if promocode.only_newbies:
             count = await db.get_count_by_query(Order, {"customer_id": self.customer_id})
@@ -42,11 +46,13 @@ class CartEntriesRepository(AsyncAbstractRepository[CartEntry]):
 class Product(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: str
+    category: str
+
     base_price: int
 
     configurations: dict[str, dict[str, Any]]
 
-    # {
+    # d = {
     #     "Размер": {
     #         "text": {"ru": "Выберите размер товара:", "en": "Choose the size of the product:"},
     #         "choices": [
@@ -68,7 +74,7 @@ class Product(BaseModel):
     #         "choices": [
     #             ["Оригинальный", False, 0],
     #             ["Шоколадный", False, 0],
-    #             ["Свой вариант", True, ]
+    #             ["Свой вариант", True, 0]
     #         ]
     #     }
     # }
@@ -152,9 +158,45 @@ class Customer(BaseModel):
         )
         return await db.insert(new_entry)
 
-    async def get_orders(self, db: "DB") -> Iterable[CartEntry]:
-        return await db.get_by_query(CartEntry, {"customer_id": self.user_id})
 
 class CustomersRepository(AsyncAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
+
+    def __init__(self, database: AsyncDatabase):
+        super().__init__(database)
+        self.logger = logging.getLogger(__name__)
+
+
+    async def get_user_by_id(self, user_id: int) -> Optional[Customer]:
+        try:
+            doc = await self.find_one_by({"user_id": user_id})
+
+            return doc if doc else None
+        except PyMongoError as e:
+            handle_error(self.logger, e)
+
+
+class Category(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    name: str
+
+class CategoriesRepository(AsyncAbstractRepository[Category]):
+    class Meta:
+        collection_name = 'categories'
+
+    def __init__(self, database: AsyncDatabase):
+        super().__init__(database)
+        self.logger = logging.getLogger(__name__)
+
+
+    async def get_all(self) -> Optional[Iterable[Category]]:
+        try:
+            doc = await self.find_by({})
+
+            return doc if doc else None
+        except PyMongoError as e:
+            handle_error(self.logger, e)
+
+def handle_error(logger, error: PyMongoError):
+    logger.error(f"Database error: {error}")

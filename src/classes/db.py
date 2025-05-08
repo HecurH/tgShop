@@ -26,6 +26,7 @@ class DB:
         self.cart_entries = CartEntriesRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
+        self.categories = CategoriesRepository(self.db)
         self.inviters = InvitersRepository(self.db)
         self.promocodes = PromocodesRepository(self.db)
 
@@ -129,14 +130,7 @@ class DB:
         raise ValueError(f"No collection for model {model.__name__}")
 
     # Специфичные методы
-    async def get_user_by_id(self, user_id: int) -> Optional[Customer]:
-        try:
-            doc = await self.customers.find_one_by({"user_id": user_id})
 
-            return doc if doc else None
-        except PyMongoError as e:
-            self._handle_error(e)
-            return None
 
 
     # def get_posts(self, query: dict) -> Optional[Iterable[Post]]:

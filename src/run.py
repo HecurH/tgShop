@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import shutil
+import sys
 from os import getenv
 from colorlog import ColoredFormatter
 
@@ -9,6 +10,10 @@ from aiogram.fsm.storage.mongo import MongoStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from motor.motor_asyncio import AsyncIOMotorClient
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
 
 from handlers import common, shopping
 from classes import middlewares
@@ -18,8 +23,10 @@ TOKEN = getenv("BOT_TOKEN")
 
 # All handlers should be attached to the Router (or Dispatcher)
 
-dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient()))
+dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
+
 dp.message.filter(F.chat.type == "private")
+dp.update.middleware.register(middlewares.ThrottlingMiddleware())
 dp.update.middleware.register(middlewares.MongoDBMiddleware())
 
 LOG_LEVEL = logging.INFO

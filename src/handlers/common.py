@@ -22,7 +22,7 @@ router = Router(name="commnon")
 async def command_start_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
     await state.clear()
 
-    user = await db.get_user_by_id(message.from_user.id)
+    user = await db.customers.get_user_by_id(message.from_user.id)
     if not user:
         inviter = await db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
 
@@ -40,22 +40,21 @@ async def command_start_handler(message: Message, command: CommandObject, state:
         await state.set_state(CommonStates.lang_choosing)
         return
 
-    await message.reply(CommonTranslates.hi[lang])
+    await message.reply(CommonTranslates.translate("hi", lang))
 
-    await message.answer(CommonTranslates.heres_the_menu[lang], reply_markup=keyboards.main_menu(lang))
+    await message.answer(CommonTranslates.translate("heres_the_menu", lang), reply_markup=keyboards.main_menu(lang))
     await state.set_state(CommonStates.main_menu)
 
 
 @router.callback_query(CommonStates.lang_choosing)
 async def lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:
-    user = await db.get_user_by_id(callback.from_user.id)
+    user = await db.customers.get_user_by_id(callback.from_user.id)
     user.lang = callback.data
 
     await db.update(user)
-    middleware.update_customer_cache(callback.from_user.id, callback.data)
 
     await callback.message.delete()
-    await callback.message.answer(CommonTranslates.heres_the_menu[user.lang], reply_markup=keyboards.main_menu(user.lang))
+    await callback.message.answer(CommonTranslates.translate("heres_the_menu", lang), reply_markup=keyboards.main_menu(user.lang))
     await state.set_state(CommonStates.main_menu)
 
     await callback.answer()
@@ -120,7 +119,7 @@ async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: 
 async def user_blocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
     await state.clear()
 
-    user = await db.get_user_by_id(event.from_user.id)
+    user = await db.customers.get_user_by_id(event.from_user.id)
     user.kicked = True
     await db.update(user)
 
@@ -129,6 +128,6 @@ async def user_blocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
 async def user_unblocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
     await state.clear()
 
-    user = await db.get_user_by_id(event.from_user.id)
+    user = await db.customers.get_user_by_id(event.from_user.id)
     user.kicked = False
     await db.update(user)
