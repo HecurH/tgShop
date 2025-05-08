@@ -9,6 +9,7 @@ class CommonStates(StatesGroup):
 class ShopStates(StatesGroup):
     Assortment = State()
     ViewingAssortment = State()
+    ViewingProductDetails = State()
 
     Cart = State()
     Orders = State()

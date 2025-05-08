@@ -12,6 +12,8 @@ from aiogram.enums import ParseMode
 from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
 
+from src.handlers import admin
+
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
@@ -27,6 +29,7 @@ dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
+
 dp.update.middleware.register(middlewares.MongoDBMiddleware())
 
 LOG_LEVEL = logging.INFO
@@ -79,10 +82,10 @@ logger = logging.getLogger(__name__)
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
     bot = Bot(token=TOKEN,
-              #default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+              default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_routers(shopping.router, common.router)
+    dp.include_routers(admin.router, shopping.router, common.router)
 
     # And the run events dispatching
     await dp.start_polling(bot)

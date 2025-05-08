@@ -1,11 +1,13 @@
 import datetime
 import logging
-from typing import Optional, Any, List, Iterable
+from typing import Optional, Any, List, Iterable, Union
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
+from pydantic_mongo.base_abstract_repository import T
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
+from pymongo.results import InsertOneResult, UpdateResult
 
 
 class Order(BaseModel):
@@ -43,45 +45,60 @@ class CartEntriesRepository(AsyncAbstractRepository[CartEntry]):
         collection_name = 'cart_entries'
 
 
+
+class LocalizedString(BaseModel):
+    data: dict[str, str]
+
+class LocalizedPrice(BaseModel):
+    data: dict[str, float]
+
+class ConfigurationChoice(BaseModel):
+    label: LocalizedString
+    description: LocalizedString
+    photo_id: str = ""
+    video_id: str = ""
+
+    existing_presets: bool = Field(default=False)
+    existing_presets_default: int = 1
+    existing_presets_quantity: int = 0
+
+    is_custom_input: bool = Field(default=False)
+    price_adjustment: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
+
+
+class ConfigurationOption(BaseModel):
+    name: LocalizedString
+    text: LocalizedString
+    photo_id: Optional[int] = None
+    choices: List[ConfigurationChoice]
+
+
+
 class Product(BaseModel):
     id: Optional[PydanticObjectId] = None
-    name: str
+    order_no: int = None
+    name: LocalizedString
     category: str
 
-    base_price: int
+    short_description: LocalizedString
+    short_description_photo_id: str
 
-    configurations: dict[str, dict[str, Any]]
+    long_description: LocalizedString
+    long_description_photo_id: str
 
-    # d = {
-    #     "Размер": {
-    #         "text": {"ru": "Выберите размер товара:", "en": "Choose the size of the product:"},
-    #         "choices": [
-    #             ["Маленький", False, -n],
-    #             ["Средний", False, 0],
-    #             ["Большой", False, n]
-    #         ]
-    #     },
-    #     "Твёрдость": {
-    #         "text": {"ru": "Выберите твёрдость изделия:", "en": "Choose the hardness of the product:"},
-    #         "choices": [
-    #             ["Мягкий", False, 0],
-    #             ["Средний", False, 0],
-    #             ["Твёрдый", False, 0]
-    #         ]
-    #     },
-    #     "Расцветка": {
-    #         "text": {"ru": "Выберите расцветку товара:", "en": "Choose the color of the product:"},
-    #         "choices": [
-    #             ["Оригинальный", False, 0],
-    #             ["Шоколадный", False, 0],
-    #             ["Свой вариант", True, 0]
-    #         ]
-    #     }
-    # }
+    base_price: LocalizedPrice
+    configurations: dict[str, ConfigurationOption]
+
 
 class ProductsRepository(AsyncAbstractRepository[Product]):
     class Meta:
         collection_name = 'products'
+
+    async def insert(self, model: Product, category, db: "DB"):
+        model.order_no = await db.get_counter(category)
+        await self.save(model)
+
+
 
 
 class Promocode(BaseModel):
@@ -124,6 +141,7 @@ class InvitersRepository(AsyncAbstractRepository[Inviter]):
 class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None
     user_id: int
+    role: str = "default"
 
     invited_by: str
     kicked: bool = False

@@ -72,7 +72,7 @@ async def lang_changing_handler(callback: CallbackQuery, state: FSMContext, db: 
 #     await state.set_state(CommonStates.main_menu)
 
 
-@router.message(CommonStates.main_menu, lambda message: message.text.lower() in CommonTranslates.about_menu.values())
+@router.message(CommonStates.main_menu, lambda message: (message.text.lower() in CommonTranslates.about_menu.values()) if message.text else False)
 async def about_command_handler(message: Message, state: FSMContext, lang: str) -> None:
 
     await message.reply(**as_list(
@@ -110,6 +110,10 @@ async def base_handler(message: Message, state: FSMContext, db, lang):
     #await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
 
     await command_start_handler(message, CommandObject(), state, db, lang)
+
+@router.message()
+async def real_base_handler(message: Message, state: FSMContext, db, lang):
+    await message.delete()
 
 @router.callback_query()
 async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: MongoDBMiddleware) -> None:

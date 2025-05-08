@@ -96,6 +96,12 @@ class AssortmentTranslates(Translatable):
         "en": "Select a product category:"
     }
 
+
+    no_products_in_category = {
+        "ru": "Простите! Судя по всему, товаров данной категории не существует.",
+        "en": "Sorry! Apparently, there are no products in this category."
+    }
+
     cant_find_that_category = {
         "ru": "Такой категории нет!",
         "en": "There is no such category!"
@@ -119,6 +125,17 @@ class AssortmentTranslates(Translatable):
     other = {
         "ru": "Другое",
         "en": "Other"
+    }
+
+class InlineButtonsTranslates(Translatable):
+    details = {
+        "ru": "Подробнее",
+        "en": "Details"
+    }
+
+    add_to_cart = {
+        "ru": "Добавить в корзину",
+        "en": "Add to cart"
     }
 
 class ReplyButtonsTranslates(Translatable):

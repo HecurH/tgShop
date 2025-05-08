@@ -1,6 +1,8 @@
 import datetime
 from os import getenv
 from typing import Optional, Type, TypeVar, Iterable, Any, List, Union
+
+import pymongo
 from pymongo import AsyncMongoClient
 from pymongo.errors import PyMongoError
 import logging
@@ -20,15 +22,46 @@ class DB:
         self.client = AsyncMongoClient(getenv("MONGO_URI"))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
+
+        self.counters = {}
         self._init_collections()
 
     def _init_collections(self):
+        self.orders = OrdersRepository(self.db)
         self.cart_entries = CartEntriesRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
         self.categories = CategoriesRepository(self.db)
         self.inviters = InvitersRepository(self.db)
         self.promocodes = PromocodesRepository(self.db)
+
+    async def get_counter(self, name):
+
+        counter = await self.db.counters.find_one_and_update(
+            {"name": name},
+            {"$inc": {"value": 1}},
+            upsert=True,
+            return_document=True  # Вернуть обновлённый документ
+        )
+        self.counters[name] = counter
+
+
+        return self.counters.get(name)["value"]
+
+    async def create_indexes(self):
+        await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
+
+        await self.db["cart_entries"].create_index([("customer_id", pymongo.ASCENDING)])
+
+        await self.db["customers"].create_index([("user_id", pymongo.ASCENDING)], unique=True)
+
+        await self.db["products"].create_index([("order_no", pymongo.ASCENDING)], unique=True)
+
+        await self.db["categories"].create_index([("name", pymongo.ASCENDING)], unique=True)
+
+        await self.db["inviters"].create_index([("inviter_code", pymongo.ASCENDING)], unique=True)
+
+        await self.db["promocodes"].create_index([("code", pymongo.ASCENDING)], unique=True)
 
     # def get_updateable(self, updateable_id: PydanticObjectId) -> Optional[Updateable]:
     #     return self.get(Updateable, updateable_id)

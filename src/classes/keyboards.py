@@ -2,7 +2,8 @@ from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 from src.classes.db import DB
-from src.classes.translates import ReplyButtonsTranslates, AssortmentTranslates, UncategorizedTranslates
+from src.classes.translates import ReplyButtonsTranslates, AssortmentTranslates, UncategorizedTranslates, \
+    InlineButtonsTranslates
 
 
 def lang_choose() -> types.InlineKeyboardMarkup:
@@ -43,5 +44,55 @@ async def assortment_menu(db: DB, lang: str) -> types.ReplyKeyboardMarkup:
     builder.adjust(2)
     return builder.as_markup(
         resize_keyboard=True,
+        #one_time_keyboard=True,
         input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+
+
+def gen_assortment_view_kb(current: int, amount: int, lang) -> types.InlineKeyboardMarkup:
+    kb = [
+        [
+            types.InlineKeyboardButton(text=InlineButtonsTranslates.translate("details", lang),
+                                       callback_data="details" if amount != 0 else "none")
+        ],
+        [
+            types.InlineKeyboardButton(text="⬅️" if amount > 1 else "❌",
+                                       callback_data="view_left" if amount > 1 else "none"),
+
+            types.InlineKeyboardButton(text=f"{current}/{amount}",
+                                       callback_data="none"),
+
+            types.InlineKeyboardButton(text="➡️" if amount > 1 else "❌",
+                                       callback_data="view_right" if amount > 1 else "none")
+        ],
+        [
+            types.InlineKeyboardButton(text=UncategorizedTranslates.translate("back", lang), callback_data="back")
+        ]
+    ]
+    return types.InlineKeyboardMarkup(
+        inline_keyboard=kb
+    )
+
+def detailed_view(lang) -> types.InlineKeyboardMarkup:
+    kb = [
+        [
+            types.InlineKeyboardButton(text=UncategorizedTranslates.translate("back", lang),
+                                       callback_data="back"),
+
+            types.InlineKeyboardButton(text=InlineButtonsTranslates.translate("add_to_cart", lang),
+                                       callback_data="add_to_cart")
+        ]
+    ]
+    return types.InlineKeyboardMarkup(
+        inline_keyboard=kb
+    )
+
+def inline_back(lang) -> types.InlineKeyboardMarkup:
+    kb = [
+        [
+            types.InlineKeyboardButton(text=UncategorizedTranslates.translate("back", lang), callback_data="back")
+        ]
+    ]
+    return types.InlineKeyboardMarkup(
+        inline_keyboard=kb
+    )
 
