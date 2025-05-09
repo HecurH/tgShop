@@ -20,11 +20,13 @@ def generate_product_configurating_main(product: Product, currency_sign, lang):
     configurations = product.configurations
 
     selected_options = []
-    price = product.base_price.data[lang]
+    total_price = product.base_price.data[lang]
+    cannot_determine_price = False
     for option in configurations.values():
         choice = option.choices[option.chosen - 1]
         label = choice.label.data[lang]
         price_adjustment = choice.price_adjustment.data[lang]
+        if choice.custom_input_text: cannot_determine_price = True
 
         # Добавляем информацию о пресетах, если они есть
         presets_info = f" ({choice.existing_presets_chosen})" if choice.existing_presets else ""
@@ -36,7 +38,7 @@ def generate_product_configurating_main(product: Product, currency_sign, lang):
             price_info = f" {price_adjustment:.2f} {currency_sign}"
         else:
             price_info = ""
-        price += price_adjustment
+        total_price += price_adjustment
 
         value = f"{label}{presets_info}{price_info}"
 
@@ -49,8 +51,18 @@ def generate_product_configurating_main(product: Product, currency_sign, lang):
         *selected_options,
         marker="  "
     )
+
+    price_template = (
+        (Text(AssortmentTranslates.translate("cannot_price", lang),
+         AssortmentTranslates.translate("price_will_be_higher", lang)))
+        if cannot_determine_price
+        else Text(AssortmentTranslates.translate("total", lang))
+    )
+
     price_text = Text(
-        AssortmentTranslates.translate("total", lang), Bold(f"{price:.2f}"), Bold(currency_sign)
+        price_template,
+        Bold(f"{total_price:.2f} "),
+        Bold(currency_sign)
     )
 
     return Text(section, price_text).as_html()

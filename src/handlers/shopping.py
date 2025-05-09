@@ -113,6 +113,7 @@ async def assortment_viewing_handler(callback: CallbackQuery, state: FSMContext,
 
     await callback.answer()
 
+
 @router.callback_query(ShopStates.ViewingProductDetails)
 async def detailed_product_viewing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str) -> None:
     current: int = await state.get_value("current")
@@ -132,10 +133,12 @@ async def detailed_product_viewing_handler(callback: CallbackQuery, state: FSMCo
         await state.set_state(ShopStates.ViewingAssortment)
 
     if callback.data == "add_to_cart":
-        configurations: dict[str, ConfigurationOption]  = product.configurations
+        configurations: dict[str, ConfigurationOption] = product.configurations
         photo_id = product.configuration_photo_id
 
         await callback.message.delete()
+        await state.update_data(product=product.dict())
+
         if photo_id:
             await callback.message.answer_photo(photo_id,
                                                 caption=generate_product_configurating_main(product, currency_sign, lang),
@@ -156,6 +159,7 @@ async def forming_order_entry_viewing_handler(callback: CallbackQuery, state: FS
     current: int = await state.get_value("current")
     category: int = await state.get_value("category")
     product = await db.products.find_one_by({'order_no': current, "category": category})
+    cached_product = Product(**await state.get_value("product"))
     currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
 
     if callback.data == "cancel":
@@ -163,10 +167,12 @@ async def forming_order_entry_viewing_handler(callback: CallbackQuery, state: FS
         media = InputMediaPhoto(media=product.long_description_photo_id, caption=caption)
 
         await callback.message.edit_media(media, reply_markup=keyboards.detailed_view(lang))
+        await state.update_data(product=None)
         await state.set_state(ShopStates.ViewingProductDetails)
 
     options = [option.name.data[lang] for option in product.configurations.values()]
     if callback.data in options:
+
         pass
 
     elif callback.data == "finish":

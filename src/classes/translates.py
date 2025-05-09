@@ -148,6 +148,17 @@ class AssortmentTranslates(Translatable):
         "en": "\n\nTotal: "
     }
 
+    cannot_price = {
+        "ru": "Определить точную цену товара невозможно.\n",
+        "en": "It is impossible to determine the exact price of the product.\n"
+    }
+
+    price_will_be_higher = {
+        "ru": "Предполагаемая цена скорее всего будет немного выше: ",
+        "en": "The estimated price is likely to be slightly higher: "
+    }
+
+
     currently_selected = {
         "ru": "На данный момент выбраны такие настройки:",
         "en": "The following settings are currently selected: "
