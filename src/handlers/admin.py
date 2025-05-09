@@ -58,6 +58,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                 "ru": "Выберите размер изделия:",
                 "en": "Choose the size of the product:"
             }),
+            chosen=2,
             choices=[
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Маленький", "en":"Small"}),
@@ -95,6 +96,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                 "ru": "Выберите мягкость изделия:",
                 "en": "Choose the firmness of the product:"
             }),
+            chosen=2,
             choices=[
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Мягкий", "en": "Soft"}),
@@ -104,7 +106,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
                 ),
                 ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Средний", "en": "Medium"}),
+                    label=LocalizedString(data={"ru": "Средняя", "en": "Medium"}),
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     description=LocalizedString(data={
                         "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
@@ -128,11 +130,13 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                 "ru": "Выберите окрас изделия:",
                 "en": "Choose the color of the product:"
             }),
+            chosen=1,
             choices=[
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Выбрать существующий", "en": "Select an existing one"}),
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     existing_presets=True,
+                    existing_presets_chosen=1,
                     existing_presets_quantity=3,
 
                     description=LocalizedString(data={
@@ -177,6 +181,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
             "en": 100.00
         }),
 
+        configuration_photo_id="",
         configurations=configurations
     )
 

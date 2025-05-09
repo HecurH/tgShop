@@ -10,6 +10,7 @@ class ShopStates(StatesGroup):
     Assortment = State()
     ViewingAssortment = State()
     ViewingProductDetails = State()
+    FormingOrderEntry = State()
 
     Cart = State()
     Orders = State()

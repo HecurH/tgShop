@@ -35,10 +35,11 @@ class CartEntry(BaseModel):
     customer_id: PydanticObjectId
     product_id: PydanticObjectId
     in_order: bool = False
+    need_to_confirm_price: bool = False
 
     quantity: int = Field(default=1, gt=0)
 
-    configuration: dict[Any, Any]
+    configuration: dict[str, "ConfigurationOption"]
 
 class CartEntriesRepository(AsyncAbstractRepository[CartEntry]):
     class Meta:
@@ -59,10 +60,11 @@ class ConfigurationChoice(BaseModel):
     video_id: str = ""
 
     existing_presets: bool = Field(default=False)
-    existing_presets_default: int = 1
+    existing_presets_chosen: int = 1
     existing_presets_quantity: int = 0
 
     is_custom_input: bool = Field(default=False)
+    custom_input_text: str = ""
     price_adjustment: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
 
 
@@ -70,6 +72,8 @@ class ConfigurationOption(BaseModel):
     name: LocalizedString
     text: LocalizedString
     photo_id: Optional[int] = None
+    chosen: int
+
     choices: List[ConfigurationChoice]
 
 
@@ -87,6 +91,8 @@ class Product(BaseModel):
     long_description_photo_id: str
 
     base_price: LocalizedPrice
+
+    configuration_photo_id: str = ""
     configurations: dict[str, ConfigurationOption]
 
 

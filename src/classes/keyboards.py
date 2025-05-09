@@ -1,7 +1,8 @@
 from aiogram import types
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from src.classes.db import DB
+from src.classes.db_models import ConfigurationOption
 from src.classes.translates import ReplyButtonsTranslates, AssortmentTranslates, UncategorizedTranslates, \
     InlineButtonsTranslates
 
@@ -85,6 +86,38 @@ def detailed_view(lang) -> types.InlineKeyboardMarkup:
     return types.InlineKeyboardMarkup(
         inline_keyboard=kb
     )
+
+
+
+def adding_to_cart_main(configurations: dict[str, ConfigurationOption], lang) -> types.InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for option in configurations.values():
+        builder.add(
+            types.InlineKeyboardButton(
+                text=option.name.data[lang],
+                callback_data=option.name.data["en"]
+            )
+        )
+
+    quantity = len(configurations.values())
+    markup = types.InlineKeyboardMarkup(inline_keyboard=
+                                        [
+                                            [
+                                                types.InlineKeyboardButton(
+                                                    text=UncategorizedTranslates.translate("cancel", lang),
+                                                    callback_data="cancel"),
+                                                types.InlineKeyboardButton(
+                                                    text=UncategorizedTranslates.translate("finish", lang),
+                                                    callback_data="finish")
+                                            ]
+                                         ]
+                                        )
+    builder.adjust(2)
+    builder.attach(InlineKeyboardBuilder.from_markup(markup))
+
+    return builder.as_markup()
+
+
 
 def inline_back(lang) -> types.InlineKeyboardMarkup:
     kb = [

@@ -6,8 +6,11 @@ from pydantic_mongo.pagination import Edge
 
 from src.classes import keyboards
 from src.classes.db import DB
-from src.classes.db_models import Product
+from src.classes.db_models import Product, ConfigurationOption
+from src.classes.keyboards import adding_to_cart_main
 from src.classes.states import ShopStates, CommonStates
+from src.classes.texts import generate_viewing_assortment_entry_caption, generate_product_detailed_caption, \
+    generate_product_configurating_main
 from src.classes.translates import CommonTranslates, ReplyButtonsTranslates, AssortmentTranslates, \
     UncategorizedTranslates
 
@@ -19,6 +22,7 @@ async def assortment_command_handler(message: Message, state: FSMContext, db: DB
     await message.answer(AssortmentTranslates.translate("choose_the_category", lang),
                          reply_markup=await keyboards.assortment_menu(db, lang))
     await state.set_state(ShopStates.Assortment)
+
 
 @router.message(ShopStates.Assortment)
 async def assortment_category_handler(message: Message, state: FSMContext, db: DB,  lang: str) -> None:
@@ -36,128 +40,137 @@ async def assortment_category_handler(message: Message, state: FSMContext, db: D
                              reply_markup=await keyboards.assortment_menu(db, lang))
         return
 
-    amount = await db.get_count_by_query(Product, {"category": category})
+    total = await db.get_count_by_query(Product, {"category": category})
 
 
-    if amount == 0:
-        await message.answer(AssortmentTranslates.translate("no_products_in_category", lang), reply_markup=await keyboards.assortment_menu(db, lang))
+    if total == 0:
+        await message.answer(
+            AssortmentTranslates.translate("no_products_in_category", lang),
+            reply_markup=await keyboards.assortment_menu(db, lang))
         return
 
 
     product: Product = await db.products.find_one_by({'order_no': 1, "category": category})
 
-    msg = await message.answer("_BOO_",
-                         reply_markup=ReplyKeyboardRemove(), parse_mode="Markdown")
+    msg = await message.answer("_BOO_", reply_markup=ReplyKeyboardRemove(), parse_mode="Markdown")
     await msg.delete()
 
+    currency = UncategorizedTranslates.translate("currency_sign", lang)
+    caption = generate_viewing_assortment_entry_caption(product, currency, lang)
+
     await message.answer_photo(product.short_description_photo_id,
-                               f"{product.name.data[lang]} - {product.short_description.data[lang]}",
-                         reply_markup=keyboards.gen_assortment_view_kb(1, amount, lang))
+                               caption,
+                               reply_markup=keyboards.gen_assortment_view_kb(1, total, lang))
 
     await state.set_data({})
-
-    await state.update_data(current=1)
-    await state.update_data(category=category)
-    await state.update_data(amount=amount)
-
+    await state.update_data(current=1, category=category, amount=total)
     await state.set_state(ShopStates.ViewingAssortment)
 
 
 @router.callback_query(ShopStates.ViewingAssortment)
 async def assortment_viewing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str) -> None:
+    data = callback.data
 
-    if callback.data == "back":
+    async def update_product_view(order_no: int, total: int):
+        product = await db.products.find_one_by({'order_no': order_no, 'category': category})
+        currency = UncategorizedTranslates.translate("currency_sign", lang)
+        caption = generate_viewing_assortment_entry_caption(product, currency, lang)
+        media = InputMediaPhoto(media=product.short_description_photo_id, caption=caption)
+
+        await callback.message.edit_media(media, reply_markup=keyboards.gen_assortment_view_kb(order_no, total, lang))
+        await state.update_data(current=order_no)
+        await state.set_state(ShopStates.ViewingAssortment)
+
+    if data == "back":
         await callback.message.answer(AssortmentTranslates.translate("choose_the_category", lang),
                              reply_markup=await keyboards.assortment_menu(db, lang))
         await callback.message.delete()
         await state.set_data({})
         await state.set_state(ShopStates.Assortment)
 
-    elif callback.data == "view_left":
-        current: int = await state.get_value("current")
-        category: int = await state.get_value("category")
-        amount: int = await state.get_value("amount")
+    elif data in {"view_left", "view_right", "details"}:
+        current = await state.get_value("current")
+        category = await state.get_value("category")
+        amount = await state.get_value("amount")
 
-        if current == 1:
-            product = await db.products.find_one_by({'order_no': amount, "category": category})
+        if data == "view_left":
+            new_order = amount if current == 1 else current - 1
+            await update_product_view(new_order, amount)
 
+        elif data == "view_right":
+            new_order = 1 if current == amount else current + 1
+            await update_product_view(new_order, amount)
 
-            await callback.message.edit_media(InputMediaPhoto(media=product.short_description_photo_id,
-                                              caption=f"{product.name.data[lang]} - {product.short_description.data[lang]}"),
-                reply_markup=keyboards.gen_assortment_view_kb(amount, amount, lang))
+        elif data == "details":
+            product = await db.products.find_one_by({'order_no': current, 'category': category})
+            currency = UncategorizedTranslates.translate("currency_sign", lang)
+            caption = generate_product_detailed_caption(product, currency, lang)
+            media = InputMediaPhoto(media=product.long_description_photo_id, caption=caption)
 
-            await state.update_data(current=amount)
-            await state.set_state(ShopStates.ViewingAssortment)
-            await callback.answer()
-            return
-
-        product = await db.products.find_one_by({'order_no': current-1, "category": category})
-
-
-        await callback.message.edit_media(InputMediaPhoto(media=product.short_description_photo_id, caption=f"{product.name.data[lang]} - {product.short_description.data[lang]}"), reply_markup=keyboards.gen_assortment_view_kb(current-1, amount, lang))
-
-
-        await state.update_data(current=current-1)
-        await state.set_state(ShopStates.ViewingAssortment)
-    elif callback.data == "view_right":
-        current: int = await state.get_value("current")
-        category: int = await state.get_value("category")
-        amount: int = await state.get_value("amount")
-
-        if current == amount:
-            product = await db.products.find_one_by({'order_no': 1, "category": category})
-
-
-            await callback.message.edit_media(InputMediaPhoto(media=product.short_description_photo_id,
-                                              caption=f"{product.name.data[lang]} - {product.short_description.data[lang]}"),
-                reply_markup=keyboards.gen_assortment_view_kb(1, amount, lang))
-
-            await state.update_data(current=1)
-            await state.set_state(ShopStates.ViewingAssortment)
-            await callback.answer()
-            return
-
-        product = await db.products.find_one_by({'order_no': current+1, "category": category})
-
-
-        await callback.message.edit_media(InputMediaPhoto(media=product.short_description_photo_id, caption=f"{product.name.data[lang]} - {product.short_description.data[lang]}"), reply_markup=keyboards.gen_assortment_view_kb(current+1, amount, lang))
-
-
-        await state.update_data(current=current+1)
-        await state.set_state(ShopStates.ViewingAssortment)
-    elif callback.data == "details":
-        current: int = await state.get_value("current")
-        category: int = await state.get_value("category")
-        amount: int = await state.get_value("amount")
-
-        product = await db.products.find_one_by({'order_no': current, "category": category})
-
-        await callback.message.edit_media(
-            InputMediaPhoto(media=product.long_description_photo_id,
-                            caption=f"{product.name.data[lang]} \n\n{product.long_description.data[lang]}"),
-            reply_markup=keyboards.detailed_view(lang))
-
-
-        await state.set_state(ShopStates.ViewingProductDetails)
+            await callback.message.edit_media(media, reply_markup=keyboards.detailed_view(lang))
+            await state.set_state(ShopStates.ViewingProductDetails)
 
 
     await callback.answer()
 
 @router.callback_query(ShopStates.ViewingProductDetails)
-async def assortment_viewing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str) -> None:
+async def detailed_product_viewing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str) -> None:
+    current: int = await state.get_value("current")
+    category: int = await state.get_value("category")
+    amount: int = await state.get_value("amount")
+    product = await db.products.find_one_by({'order_no': current, "category": category})
+    currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
 
     if callback.data == "back":
-        current: int = await state.get_value("current")
-        category: int = await state.get_value("category")
-        amount: int = await state.get_value("amount")
-        product = await db.products.find_one_by({'order_no': current, "category": category})
+        caption = generate_viewing_assortment_entry_caption(product, currency_sign, lang)
 
 
         await callback.message.edit_media(InputMediaPhoto(media=product.short_description_photo_id,
-                                                          caption=f"{product.name.data[lang]} - {product.short_description.data[lang]}"),
+                                                          caption=caption),
                                           reply_markup=keyboards.gen_assortment_view_kb(current, amount, lang))
 
         await state.set_state(ShopStates.ViewingAssortment)
+
+    if callback.data == "add_to_cart":
+        configurations: dict[str, ConfigurationOption]  = product.configurations
+        photo_id = product.configuration_photo_id
+
+        await callback.message.delete()
+        if photo_id:
+            await callback.message.answer_photo(photo_id,
+                                                caption=generate_product_configurating_main(product, currency_sign, lang),
+                                                reply_markup=adding_to_cart_main(configurations, lang)
+                                                )
+        else:
+            await callback.message.answer(generate_product_configurating_main(product, currency_sign, lang),
+                                                reply_markup=adding_to_cart_main(configurations, lang))
+
+        await state.set_state(ShopStates.FormingOrderEntry)
+
+
+    await callback.answer()
+
+
+@router.callback_query(ShopStates.FormingOrderEntry)
+async def forming_order_entry_viewing_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str) -> None:
+    current: int = await state.get_value("current")
+    category: int = await state.get_value("category")
+    product = await db.products.find_one_by({'order_no': current, "category": category})
+    currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
+
+    if callback.data == "cancel":
+        caption = generate_product_detailed_caption(product, currency_sign, lang)
+        media = InputMediaPhoto(media=product.long_description_photo_id, caption=caption)
+
+        await callback.message.edit_media(media, reply_markup=keyboards.detailed_view(lang))
+        await state.set_state(ShopStates.ViewingProductDetails)
+
+    options = [option.name.data[lang] for option in product.configurations.values()]
+    if callback.data in options:
+        pass
+
+    elif callback.data == "finish":
+        pass
 
 
     await callback.answer()

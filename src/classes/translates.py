@@ -60,9 +60,25 @@ class UncategorizedTranslates(Translatable):
         "ru": "Упс! Прости, мне нужно начать заново...",
         "en": "Oops! I'm sorry, I need to start over..."
     }
+
     back = {
         "ru": "Назад",
         "en": "Back"
+    }
+
+    finish = {
+        "ru": "Закончить",
+        "en": "Finish"
+    }
+
+    currency_sign = {
+        "ru": "₽",
+        "en": "$"
+    }
+
+    cancel = {
+        "ru": "Отмена",
+        "en": "Cancel"
     }
 
 
@@ -125,6 +141,16 @@ class AssortmentTranslates(Translatable):
     other = {
         "ru": "Другое",
         "en": "Other"
+    }
+
+    total = {
+        "ru": "\n\nИтоговая стоимость: ",
+        "en": "\n\nTotal: "
+    }
+
+    currently_selected = {
+        "ru": "На данный момент выбраны такие настройки:",
+        "en": "The following settings are currently selected: "
     }
 
 class InlineButtonsTranslates(Translatable):
