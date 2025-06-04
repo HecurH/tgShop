@@ -1,7 +1,6 @@
-from typing import Dict, Optional, Callable, Awaitable, Any
+from typing import Any
 
 from aiogram import BaseMiddleware
-from aiogram.types import Message
 from cachetools import TTLCache
 
 from src.classes.db import DB

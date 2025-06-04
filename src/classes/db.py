@@ -1,16 +1,12 @@
-import datetime
 from os import getenv
-from typing import Optional, Type, TypeVar, Iterable, Any, List, Union
+from typing import Type, TypeVar, Union
 
 import pymongo
 from pymongo import AsyncMongoClient
-from pymongo.errors import PyMongoError
-import logging
 
 from src.classes.db_models import *
 
 T = TypeVar("T", bound="MongoModel")
-
 
 
 class DB:
@@ -31,6 +27,7 @@ class DB:
         self.cart_entries = CartEntriesRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
+        self.additionals = AdditionalsRepository(self.db)
         self.categories = CategoriesRepository(self.db)
         self.inviters = InvitersRepository(self.db)
         self.promocodes = PromocodesRepository(self.db)

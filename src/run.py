@@ -12,12 +12,10 @@ from aiogram.enums import ParseMode
 from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
 
-from src.handlers import admin
-
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from handlers import common, shopping
+from handlers import admin, bottom, common, assortment
 from classes import middlewares
 
 # Bot token can be obtained via https://t.me/BotFather
@@ -29,7 +27,7 @@ dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
-
+dp.update.middleware.register(middlewares.MongoDBMiddleware())
 dp.update.middleware.register(middlewares.MongoDBMiddleware())
 
 LOG_LEVEL = logging.INFO
@@ -85,7 +83,10 @@ async def main() -> None:
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_routers(admin.router, shopping.router, common.router)
+    dp.include_routers(admin.router,
+                       common.router,
+                       assortment.router,
+                       bottom.router)
 
     # And the run events dispatching
     await dp.start_polling(bot)

@@ -112,6 +112,20 @@ class AssortmentTranslates(Translatable):
         "en": "Select a product category:"
     }
 
+    choose_the_preset = {
+        "ru": "Выберите номер готового пресета:",
+        "en": "Select the preset number:"
+    }
+
+    enter_custom = {
+        "ru": "Введите текст-описание кастомного окраса:",
+        "en": "Enter a text description of your custom coloring:"
+    }
+
+    switches_enter = {
+        "ru": "Переключайте опции кнопками ниже:",
+        "en": "Switch the options using the buttons below:"
+    }
 
     no_products_in_category = {
         "ru": "Простите! Судя по всему, товаров данной категории не существует.",
@@ -123,41 +137,25 @@ class AssortmentTranslates(Translatable):
         "en": "There is no such category!"
     }
 
-    dildos = {
-        "ru": "Дилдо",
-        "en": "Dildos"
-    }
-
-    masturbators = {
-        "ru": "Мастурбаторы",
-        "en": "Masturbators"
-    }
-
-    anal_plugs = {
-        "ru": "Анальные пробки",
-        "en": "Anal plugs"
-    }
-
-    other = {
-        "ru": "Другое",
-        "en": "Other"
-    }
-
     total = {
-        "ru": "\n\nИтоговая стоимость: ",
-        "en": "\n\nTotal: "
+        "ru": "Итоговая стоимость: ",
+        "en": "Total: "
+    }
+
+    additionals = {
+        "ru": "Другое:",
+        "en": "Other:"
     }
 
     cannot_price = {
-        "ru": "Определить точную цену товара невозможно.\n",
-        "en": "It is impossible to determine the exact price of the product.\n"
+        "ru": "Определить точную цену товара невозможно.",
+        "en": "It is impossible to determine the exact price of the product."
     }
 
-    price_will_be_higher = {
-        "ru": "Предполагаемая цена скорее всего будет немного выше: ",
-        "en": "The estimated price is likely to be slightly higher: "
+    approximate_price = {
+        "ru": "Приблизительная цена: ",
+        "en": "Approximate price: "
     }
-
 
     currently_selected = {
         "ru": "На данный момент выбраны такие настройки:",

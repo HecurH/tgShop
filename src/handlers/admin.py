@@ -3,17 +3,12 @@ from io import BytesIO
 from aiogram.fsm.context import FSMContext
 
 from aiogram import Bot, Router, html, F
-from aiogram.filters import CommandStart, CommandObject, Command, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
-from aiogram.types import Message, LabeledPrice, PreCheckoutQuery, CallbackQuery, InlineKeyboardMarkup, \
-    ReplyKeyboardRemove, ChatMemberUpdated, BufferedInputFile
-from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
-from pyanaconda.core.async_utils import async_action_wait
+from aiogram.filters import CommandStart, CommandObject, Command
+from aiogram.types import Message, BufferedInputFile
 
 from src.classes import keyboards
 from src.classes.db import *
-from src.classes.middlewares import MongoDBMiddleware, RoleCheckMiddleware
-from src.classes.states import CommonStates
-from src.classes.translates import CommonTranslates, UncategorizedTranslates
+from src.classes.middlewares import RoleCheckMiddleware
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -46,9 +41,42 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
     )
     await message.answer(msg_id.video.file_id)
 
+@router.message(Command("add_cats"))
+async def cats_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
+    cat = Category(
+        name="dildos",
+        localized_name=LocalizedString(data={
+                "ru": "Дилдо",
+                "en": "Dildos"
+            }))
+    await db.categories.save(cat)
+    cat = Category(
+        name="masturbators",
+        localized_name=LocalizedString(data={
+                "ru": "Мастурбаторы",
+                "en": "Masturbators"
+            }))
+    await db.categories.save(cat)
+    cat = Category(
+        name="anal_plugs",
+        localized_name=LocalizedString(data={
+                "ru": "Анальные пробки",
+                "en": "Anal plugs"
+            }))
+    await db.categories.save(cat)
+
+    cat = Category(
+        name="other",
+        localized_name=LocalizedString(data={
+                "ru": "Другое",
+                "en": "Other"
+            }))
+    await db.categories.save(cat)
+
+
 @router.message(Command("add_product"))
 async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
-    configurations = {
+    configuration = ProductConfiguration(options={
         "Размер": ConfigurationOption(
             name=LocalizedString(data={
                 "ru": "Размер",
@@ -67,7 +95,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price_adjustment=LocalizedPrice(data={"ru":-1000.00, "en":-30.00})
+                    price=LocalizedPrice(data={"ru":-1000.00, "en":-30.00})
                 ),
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
@@ -83,7 +111,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price_adjustment=LocalizedPrice(data={"ru":1000.00, "en":30.00})
+                    price=LocalizedPrice(data={"ru":1000.00, "en":30.00})
                 )
             ]
         ),
@@ -106,7 +134,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
                 ),
                 ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Средняя", "en": "Medium"}),
+                    label=LocalizedString(data={"ru": "Средний", "en": "Medium"}),
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     description=LocalizedString(data={
                         "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
@@ -127,8 +155,8 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                 "en": "Color"
             }),
             text=LocalizedString(data={
-                "ru": "Выберите окрас изделия:",
-                "en": "Choose the color of the product:"
+                "ru": "Что вы хотите сделать?",
+                "en": "What do you want to do?"
             }),
             chosen=1,
             choices=[
@@ -140,20 +168,45 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     existing_presets_quantity=3,
 
                     description=LocalizedString(data={
-                        "ru": "Введите число выбранной раскраски:",
-                        "en": "Enter the number of the selected coloring:"})
+                        "ru": "Вы выбрали раскраску под номером CHOSEN.",
+                        "en": "You have chosen the color number CHOSEN."})
                 ),
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Своя раскраска", "en": "Custom colors"}),
+                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     is_custom_input=True,
 
                     description=LocalizedString(data={
-                        "ru": "Здесь типо текст где\nэээээ\nну типо тут то что можно менять/какие цвета, цены на них же ээ да\n\nВводи уже строку:",
-                        "en": "Here's like a text where\nuhhhhh\n I'm like here's what you can change/what colors, the prices for them are the same, uh yes\n\n Enter the line already:"})
+                        "ru": "Здесь типо текст где\nэээээ\nну типо тут то что можно менять/какие цвета, цены на них же ээ да",
+                        "en": "Here's like a text where\nuhhhhh\n I'm like here's what you can change/what colors, the prices for them are the same, uh yes"})
+                ),
+                ConfigurationSwitches(
+                    label=LocalizedString(data={"ru": "Дополнительно", "en": "Additional"}),
+                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    description=LocalizedString(data={
+                        "ru": "Тут чисто инфа про сами свитчи и про то что если надо на отдельные части, то указывать в коментах, ну и ляля",
+                        "en": "Тут чисто инфа про то что если надо на отдельные части, то указывать в коментах, ну и ляля"}),
+                    switches=[
+                        ConfigurationSwitch(
+                            name=LocalizedString(data={"ru": "Блёстки", "en": "Glitter"}),
+                            price=LocalizedPrice(data={"ru":100.00, "en":6.00})
+
+                        ),
+                        ConfigurationSwitch(
+                            name=LocalizedString(data={"ru": "Шиммер", "en": "Shimmer"}),
+                            price=LocalizedPrice(data={"ru": 100.00, "en": 6.00})
+
+                        ),
+                        ConfigurationSwitch(
+                            name=LocalizedString(data={"ru": "Люминофор", "en": "Phosphor"}),
+                            price=LocalizedPrice(data={"ru": 100.00, "en": 6.00})
+
+                        )
+                    ]
                 )
             ]
         )
-    }
+    })
 
     product = Product(
         name=LocalizedString(data={
@@ -180,9 +233,45 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
             "ru": 5000.00,
             "en": 100.00
         }),
-
-        configuration_photo_id="",
-        configurations=configurations
+        configuration_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
+        configuration=configuration
     )
 
     await db.products.insert(product, "dildos", db)
+
+
+@router.message(Command("add_addit"))
+async def addit(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
+    additional = ProductAdditional(
+        name=LocalizedString(data={
+            "ru":"Дракон Хайден",
+            "en":"Hiden Dragon"}
+        ),
+        category="dildos",
+        short_description=LocalizedString(data={
+            "ru":"Заглушка хд",
+            "en":"Заглушка хд"}
+        ),
+        price=LocalizedPrice(data={"ru": 1000, "en": 10})
+    )
+
+    await db.additionals.save(additional)
+
+@router.message(Command("get"))
+async def getto(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
+    additional = ProductAdditional(
+        name=LocalizedString(data={
+            "ru":"Страпон",
+            "en":"Strap onchik"}
+        ),
+        category="dildos",
+        short_description=LocalizedString(data={
+            "ru":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да",
+            "en":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да"}
+        ),
+        price=LocalizedPrice(data={"ru": 400, "en": 10}),
+        disallowed_products=[]
+    )
+    await db.additionals.save(additional)
+
+    print(await db.additionals.get("dildos", PydanticObjectId("681fc67be2f9eecf62c8a750")))

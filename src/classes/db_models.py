@@ -1,14 +1,14 @@
 import datetime
 import logging
-from typing import Optional, Any, List, Iterable, Union
+from typing import Optional, List, Iterable, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
-from pydantic_mongo.base_abstract_repository import T
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
-from pymongo.results import InsertOneResult, UpdateResult
 
+if TYPE_CHECKING:
+    from db import DB
 
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -18,13 +18,11 @@ class Order(BaseModel):
     entries: list[PydanticObjectId]
 
     async def add_promocode(self, promocode: "Promocode", db: "DB") -> Optional[bool]:
-        user: "Customer" = await db.get_user_by_id(self.customer_id)
+        user: "Customer" = await db.get_by_id(Customer, self.customer_id)
         if promocode.only_newbies:
             count = await db.get_count_by_query(Order, {"customer_id": self.customer_id})
             if count != 0:
                 return False
-
-
 
 class OrdersRepository(AsyncAbstractRepository[Order]):
     class Meta:
@@ -39,13 +37,11 @@ class CartEntry(BaseModel):
 
     quantity: int = Field(default=1, gt=0)
 
-    configuration: dict[str, "ConfigurationOption"]
+    configuration: "ProductConfiguration"
 
 class CartEntriesRepository(AsyncAbstractRepository[CartEntry]):
     class Meta:
         collection_name = 'cart_entries'
-
-
 
 class LocalizedString(BaseModel):
     data: dict[str, str]
@@ -53,29 +49,54 @@ class LocalizedString(BaseModel):
 class LocalizedPrice(BaseModel):
     data: dict[str, float]
 
+class ConfigurationSwitch(BaseModel):
+    name: LocalizedString
+    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
+
+
+    enabled: bool = False
+
+class ConfigurationSwitches(BaseModel):
+    label: LocalizedString
+    description: LocalizedString
+    photo_id: Optional[str] = None
+    video_id: Optional[str] = None
+
+    switches: list[ConfigurationSwitch]
+
+    def get_enabled(self):
+        return [switch for switch in self.switches if switch.enabled]
+
+    @staticmethod
+    def calculate_price(switches: list[ConfigurationSwitch], lang):
+        return sum([switch.price.data[lang] for switch in switches])
+
 class ConfigurationChoice(BaseModel):
     label: LocalizedString
     description: LocalizedString
-    photo_id: str = ""
-    video_id: str = ""
+    photo_id: Optional[str] = None
+    video_id: Optional[str] = None
 
     existing_presets: bool = Field(default=False)
     existing_presets_chosen: int = 1
     existing_presets_quantity: int = 0
 
     is_custom_input: bool = Field(default=False)
-    custom_input_text: str = ""
-    price_adjustment: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
-
+    custom_input_text: Optional[str] = None
+    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
 
 class ConfigurationOption(BaseModel):
     name: LocalizedString
     text: LocalizedString
-    photo_id: Optional[int] = None
+    photo_id: Optional[str] = None
+    video_id: Optional[str] = None
     chosen: int
 
-    choices: List[ConfigurationChoice]
+    choices: List[ConfigurationChoice | ConfigurationSwitches]
 
+class ProductConfiguration(BaseModel):
+    options: dict[str, ConfigurationOption]
+    additionals: list["ProductAdditional"] = []
 
 
 class Product(BaseModel):
@@ -92,9 +113,9 @@ class Product(BaseModel):
 
     base_price: LocalizedPrice
 
-    configuration_photo_id: str = ""
-    configurations: dict[str, ConfigurationOption]
-
+    configuration_photo_id: Optional[str] = None
+    configuration_video_id: Optional[str] = None
+    configuration: ProductConfiguration
 
 class ProductsRepository(AsyncAbstractRepository[Product]):
     class Meta:
@@ -103,6 +124,24 @@ class ProductsRepository(AsyncAbstractRepository[Product]):
     async def insert(self, model: Product, category, db: "DB"):
         model.order_no = await db.get_counter(category)
         await self.save(model)
+
+class ProductAdditional(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    name: LocalizedString
+    category: str
+
+    short_description: LocalizedString
+
+    price: LocalizedPrice
+    disallowed_products: list[PydanticObjectId] = []
+
+
+class AdditionalsRepository(AsyncAbstractRepository[ProductAdditional]):
+    class Meta:
+        collection_name = 'additionals'
+
+    async def get(self, category: str, product_id: PydanticObjectId):
+        return await self.find_by({"category": category, "disallowed_products": {"$nin": [str(product_id)]}})
 
 
 
@@ -161,7 +200,7 @@ class Customer(BaseModel):
         return await db.get_by_query(Order, {"customer_id": self.id})
 
     async def add_to_cart(self, db: "DB", product: Product,
-                          configuration: dict):
+                          configuration: ProductConfiguration):
 
         # Проверка на существующую запись
         existing = await db.get_one_by_query(CartEntry, {
@@ -204,6 +243,8 @@ class CustomersRepository(AsyncAbstractRepository[Customer]):
 class Category(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: str
+    localized_name: LocalizedString
+
 
 class CategoriesRepository(AsyncAbstractRepository[Category]):
     class Meta:

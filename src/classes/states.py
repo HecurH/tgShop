@@ -5,12 +5,18 @@ class CommonStates(StatesGroup):
     lang_choosing = State()
     main_menu = State()
 
-
-class ShopStates(StatesGroup):
+class MainMenuOptions(StatesGroup):
     Assortment = State()
+    Cart = State()
+    Orders = State()
+
+class Assortment(StatesGroup):
     ViewingAssortment = State()
     ViewingProductDetails = State()
     FormingOrderEntry = State()
+    EntryOptionSelect = State()
+    ChoiceEditValue = State()
+    SwitchesEditing = State()
 
-    Cart = State()
-    Orders = State()
+    AdditionalsEditing = State()
+
