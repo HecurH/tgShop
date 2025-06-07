@@ -71,10 +71,10 @@ class UncategorizedTranslates(Translatable):
         "en": "Finish"
     }
 
-    currency_sign = {
-        "ru": "₽",
-        "en": "$"
-    }
+    # currency_sign = {
+    #     "ru": "₽",
+    #     "en": "$"
+    # }
 
     cancel = {
         "ru": "Отмена",
@@ -88,11 +88,14 @@ class CommonTranslates(Translatable):
     #     "en": ""
     # }
 
-
-
     hi = {
         "ru": "Привет!",
         "en": "Hi!"
+    }
+    
+    currency_choosing = {
+        "ru": "Выберите валюту (можно изменить в настройках):",
+        "en": "Select a currency (you can change it in the settings):"
     }
 
     heres_the_menu = {

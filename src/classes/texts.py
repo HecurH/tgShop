@@ -2,20 +2,14 @@ from aiogram import html
 
 
 from src.classes.db_models import *
-from src.classes.translates import AssortmentTranslates, UncategorizedTranslates
+from src.classes.translates import AssortmentTranslates
 
 
-def generate_viewing_assortment_entry_caption(product, currency, lang: str):
-    content = f"{product.name.data[lang]} — {product.base_price.data[lang]} {currency}\n\n{product.short_description.data[lang]}"
+def generate_viewing_assortment_entry_caption(product, balance: CustomerBalance, lang: str):
+    return f"{product.name.data[lang]} — {product.base_price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()}\n\n{product.short_description.data[lang]}"
 
-
-    return content
-
-def generate_product_detailed_caption(product, currency, lang: str):
-    content = f"{product.name.data[lang]} — {product.base_price.data[lang]} {currency}\n\n{product.long_description.data[lang]}"
-
-
-    return content
+def generate_product_detailed_caption(product, balance: CustomerBalance, lang: str):
+    return f"{product.name.data[lang]} — {product.base_price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()}\n\n{product.long_description.data[lang]}"
 
 def generate_choice_text(option: ConfigurationOption, lang: str):
     chosen = option.choices[option.chosen-1]
@@ -23,60 +17,58 @@ def generate_choice_text(option: ConfigurationOption, lang: str):
     description = chosen.description.data[lang]
 
     if chosen.existing_presets: description = description.replace("CHOSEN", str(chosen.existing_presets_chosen))
-    if chosen.is_custom_input and chosen.custom_input_text: description = f"<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>" + description
+    if chosen.is_custom_input and chosen.custom_input_text:
+        description = f"<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>{description}"
 
-    content = f"{description}\n{option.text.data[lang]}"
+    return f"{description}\n{option.text.data[lang]}"
 
-    return content
-
-def generate_switches_text(conf_switches: ConfigurationSwitches, lang: str):
-    currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
+def generate_switches_text(conf_switches: ConfigurationSwitches, balance: CustomerBalance, lang: str):
     switches = conf_switches.switches
-    switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[lang]} {currency_sign} ( {"✅" if switch.enabled else "❌"} )" for switch in switches])
-    content = conf_switches.description.data[lang] + f"\n\n{switches_info}\n\n" + AssortmentTranslates.translate("switches_enter", lang)
+    switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()} ( {"✅" if switch.enabled else "❌"} )" for switch in switches])
+    return (
+        f"{conf_switches.description.data[lang]}\n\n{switches_info}\n\n"
+        + AssortmentTranslates.translate("switches_enter", lang)
+    )
 
-    return content
+def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], balance: CustomerBalance, lang: str):
+    additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()} ( {"✅" if additional in additionals else "❌"} )\n    {additional.short_description.data[lang]}\n" for additional in available])
+    return f"\n{additionals_info}\n\n" + AssortmentTranslates.translate(
+        "switches_enter", lang
+    )
 
-def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], lang: str):
-    currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
+def generate_presets_text(lang: str):
 
-    additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[lang]} {currency_sign} ( {"✅" if additional in additionals else "❌"} )\n    {additional.short_description.data[lang]}\n" for additional in available])
-    content = f"\n{additionals_info}\n\n" + AssortmentTranslates.translate("switches_enter", lang)
+    return f'{AssortmentTranslates.translate("choose_the_preset", lang)}'
 
-    return content
-
-def generate_presets_text(chosen: ConfigurationChoice, lang: str):
-
-    # content = chosen.description.data[lang]
-    # content = content.replace("CHOSEN", str(chosen.existing_presets_chosen))
-    content = f"{AssortmentTranslates.translate("choose_the_preset", lang)}"
-
-    return content
-
-def generate_cutom_input_text(chosen: ConfigurationChoice, lang: str):
+def generate_custom_input_text(chosen: ConfigurationChoice, lang: str):
 
     content = chosen.description.data[lang]
-    content = content+f"\n\n<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>" if chosen.custom_input_text else content
-    content = content + f"\n\n{AssortmentTranslates.translate("enter_custom", lang)}"
+    content = (
+        f"{content}\n\n<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>"
+        if chosen.custom_input_text
+        else content
+    )
+    content = f"{content}\n\n{AssortmentTranslates.translate("enter_custom", lang)}"
 
     return content
 
 
-def generate_product_configurating_main(product: Product, lang: str):
+def generate_product_configurating_main(product: Product, lang: str, balance: CustomerBalance):
     options = product.configuration.options
-    currency_sign = UncategorizedTranslates.translate("currency_sign", lang)
+    currency_sign = balance.get_selected_currency_symbol()
+    selected_currency = balance.selected_currency
 
     selected_options = ""
-    total_price = product.base_price.data[lang]
+    total_price = product.base_price.data[selected_currency]
     cannot_determine_price = False
 
-    for option in options.values():
+    for option in options:
         conf_choice = option.choices[option.chosen - 1]
 
         if isinstance(conf_choice, ConfigurationChoice):
             conf_choice: ConfigurationChoice
             label = conf_choice.label.data[lang]
-            price = conf_choice.price.data[lang]
+            price = conf_choice.price.data[selected_currency]
 
             if conf_choice.custom_input_text:
                 cannot_determine_price = True
@@ -106,12 +98,12 @@ def generate_product_configurating_main(product: Product, lang: str):
 
                 for switch in enabled_switches:
                     name = switch.name.data[lang]
-                    price = switch.price.data[lang]
+                    price = switch.price.data[selected_currency]
 
                     switches_text += f"\n      {name} — {'+' if price > 0 else ''}{price} {currency_sign}"
 
 
-                total_price += choice.calculate_price(enabled_switches, lang)
+                total_price += choice.calculate_price(enabled_switches, selected_currency)
 
                 selected_options += f"\n  {label}:{switches_text}"
 
@@ -119,7 +111,7 @@ def generate_product_configurating_main(product: Product, lang: str):
         selected_options += f"\n\n  {AssortmentTranslates.translate("additionals", lang)}"
         for additional in product.configuration.additionals:
             name = additional.name.data[lang]
-            price = additional.price.data[lang]
+            price = additional.price.data[selected_currency]
 
             total_price += price
             selected_options += f"\n      {name} — {'+' if price > 0 else ''}{price} {currency_sign}"
@@ -127,7 +119,7 @@ def generate_product_configurating_main(product: Product, lang: str):
     section = f"{AssortmentTranslates.translate('currently_selected', lang)}\n{selected_options}"
 
     if cannot_determine_price:
-        price_text = f"\n\n{AssortmentTranslates.translate('cannot_price', lang)}\n{AssortmentTranslates.translate('price_will_be_higher', lang)} {total_price:.2f} {currency_sign}"
+        price_text = f"\n\n{AssortmentTranslates.translate('cannot_price', lang)}\n{AssortmentTranslates.translate('approximate_price', lang)} {total_price:.2f} {currency_sign}"
     else:
         price_text = f"\n\n{AssortmentTranslates.translate('total', lang)} {total_price:.2f} {currency_sign}"
 

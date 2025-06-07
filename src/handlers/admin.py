@@ -1,12 +1,9 @@
-from io import BytesIO
-
 from aiogram.fsm.context import FSMContext
 
 from aiogram import Bot, Router, html, F
 from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import Message, BufferedInputFile
 
-from src.classes import keyboards
 from src.classes.db import *
 from src.classes.middlewares import RoleCheckMiddleware
 
@@ -76,8 +73,8 @@ async def cats_handler(message: Message, command: CommandObject, state: FSMConte
 
 @router.message(Command("add_product"))
 async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
-    configuration = ProductConfiguration(options={
-        "Размер": ConfigurationOption(
+    configuration = ProductConfiguration(options=[
+        ConfigurationOption(
             name=LocalizedString(data={
                 "ru": "Размер",
                 "en": "Size"
@@ -95,7 +92,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedPrice(data={"ru":-1000.00, "en":-30.00})
+                    price=LocalizedPrice(data={"RUB":-1000.00, "USD":-30.00})
                 ),
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
@@ -111,11 +108,11 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedPrice(data={"ru":1000.00, "en":30.00})
+                    price=LocalizedPrice(data={"RUB":1000.00, "USD":30.00})
                 )
             ]
         ),
-        "Мягкость": ConfigurationOption(
+        ConfigurationOption(
             name=LocalizedString(data={
                 "ru": "Мягкость",
                 "en": "Firmness"
@@ -149,7 +146,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                 )
             ]
         ),
-        "Окрас": ConfigurationOption(
+        ConfigurationOption(
             name=LocalizedString(data={
                 "ru": "Окрас",
                 "en": "Color"
@@ -189,24 +186,24 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     switches=[
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Блёстки", "en": "Glitter"}),
-                            price=LocalizedPrice(data={"ru":100.00, "en":6.00})
+                            price=LocalizedPrice(data={"RUB":100.00, "USD":6.00})
 
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Шиммер", "en": "Shimmer"}),
-                            price=LocalizedPrice(data={"ru": 100.00, "en": 6.00})
+                            price=LocalizedPrice(data={"RUB": 100.00, "USD": 6.00})
 
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Люминофор", "en": "Phosphor"}),
-                            price=LocalizedPrice(data={"ru": 100.00, "en": 6.00})
+                            price=LocalizedPrice(data={"RUB": 100.00, "USD": 6.00})
 
                         )
                     ]
                 )
             ]
         )
-    })
+    ])
 
     product = Product(
         name=LocalizedString(data={
@@ -230,8 +227,8 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
         ),
         long_description_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
         base_price=LocalizedPrice(data={
-            "ru": 5000.00,
-            "en": 100.00
+            "RUB": 5000.00,
+            "USD": 100.00
         }),
         configuration_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
         configuration=configuration
@@ -252,7 +249,7 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
             "ru":"Заглушка хд",
             "en":"Заглушка хд"}
         ),
-        price=LocalizedPrice(data={"ru": 1000, "en": 10})
+        price=LocalizedPrice(data={"RUB": 1000, "USD": 10})
     )
 
     await db.additionals.save(additional)
@@ -269,7 +266,7 @@ async def getto(message: Message, command: CommandObject, state: FSMContext, db:
             "ru":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да",
             "en":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да"}
         ),
-        price=LocalizedPrice(data={"ru": 400, "en": 10}),
+        price=LocalizedPrice(data={"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
     await db.additionals.save(additional)

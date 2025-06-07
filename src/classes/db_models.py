@@ -7,6 +7,8 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
 
+from src.classes.config import SUPPORTED_CURRENCIES
+
 if TYPE_CHECKING:
     from db import DB
 
@@ -65,11 +67,13 @@ class ConfigurationSwitches(BaseModel):
     switches: list[ConfigurationSwitch]
 
     def get_enabled(self):
+        """Возвращает список включённых переключателей из списка switches."""
         return [switch for switch in self.switches if switch.enabled]
 
     @staticmethod
-    def calculate_price(switches: list[ConfigurationSwitch], lang):
-        return sum([switch.price.data[lang] for switch in switches])
+    def calculate_price(switches: list[ConfigurationSwitch], currency):
+        """Возвращает сумму цен всех переданных переключателей."""
+        return sum(switch.price.data[currency] for switch in switches)
 
 class ConfigurationChoice(BaseModel):
     label: LocalizedString
@@ -83,7 +87,7 @@ class ConfigurationChoice(BaseModel):
 
     is_custom_input: bool = Field(default=False)
     custom_input_text: Optional[str] = None
-    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
+    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"RUB": 0, "USD": 0}))
 
 class ConfigurationOption(BaseModel):
     name: LocalizedString
@@ -93,10 +97,38 @@ class ConfigurationOption(BaseModel):
     chosen: int
 
     choices: List[ConfigurationChoice | ConfigurationSwitches]
+    
+    def get_chosen(self):
+        return self.choices[self.chosen - 1]
+    
+    def set_chosen(self, choice: ConfigurationChoice):
+        self.chosen = self.choices.index(choice)+1
+    
+    def get_index_by_label(self, label: str, lang: str) -> ConfigurationChoice | ConfigurationSwitches:
+        for i, choice in enumerate(self.choices):
+            if hasattr(choice, "label") and choice.label.data[lang] == label:
+                return i
+        raise ValueError(f"Choice with label '{label}' not found in option '{self.name.data[lang]}'")
+    
+    def get_by_label(self, label: str, lang: str) -> ConfigurationChoice | ConfigurationSwitches:
+        for choice in self.choices:
+            if hasattr(choice, "label") and choice.label.data[lang] == label:
+                return choice
+        raise ValueError(f"Choice with label '{label}' not found in option '{self.name.data[lang]}'")
+    
 
 class ProductConfiguration(BaseModel):
-    options: dict[str, ConfigurationOption]
+    options: list[ConfigurationOption]
     additionals: list["ProductAdditional"] = []
+    
+    
+    def get_all_options_localized_names(self, lang):
+        return [option.name.data[lang] for option in self.options]
+    
+    def get_option_by_name(self, name, lang):
+        return next((idx, option) for idx, option in enumerate(self.options)
+                    if option.name.data[lang] == name)
+        
 
 
 class Product(BaseModel):
@@ -109,7 +141,8 @@ class Product(BaseModel):
     short_description_photo_id: str
 
     long_description: LocalizedString
-    long_description_photo_id: str
+    long_description_photo_id: Optional[str] = None
+    long_description_video_id: Optional[str] = None
 
     base_price: LocalizedPrice
 
@@ -122,6 +155,7 @@ class ProductsRepository(AsyncAbstractRepository[Product]):
         collection_name = 'products'
 
     async def insert(self, model: Product, category, db: "DB"):
+        """Добавляет продукт в базу с присвоением номера заказа."""
         model.order_no = await db.get_counter(category)
         await self.save(model)
 
@@ -141,7 +175,11 @@ class AdditionalsRepository(AsyncAbstractRepository[ProductAdditional]):
         collection_name = 'additionals'
 
     async def get(self, category: str, product_id: PydanticObjectId):
+        """Возвращает все additionals в категории, которые разрешены для данного продукта."""
         return await self.find_by({"category": category, "disallowed_products": {"$nin": [str(product_id)]}})
+    
+    def get_by_name(self, name, allowed_additionals, lang):
+        return next(a for a in allowed_additionals if a.name.data[lang] == name)
 
 
 
@@ -182,6 +220,50 @@ class InvitersRepository(AsyncAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
 
+class CustomerBalance(BaseModel):
+    selected_currency: str  # Основная валюта пользователя
+
+    balance: float = 0.0
+    bonus_balance: float = 0.0
+
+    def get_balance(self) -> float:
+        """Получить баланс пользователя"""
+        return self.balance
+
+    def get_currency_symbol(self, iso_code: str) -> str:
+        return SUPPORTED_CURRENCIES.get(iso_code, iso_code)
+
+    def get_selected_currency_symbol(self) -> str:
+        return self.get_currency_symbol(self.selected_currency)
+
+    def get_bonus_balance(self) -> float:
+        """Получить бонусный баланс пользователя"""
+        return self.bonus_balance
+
+    def change_selected_currency(self, iso: str):
+        """Изменить основную валюту"""
+        if iso not in SUPPORTED_CURRENCIES:
+            raise ValueError(f"Unsupported currency: {iso}")
+
+        self.selected_currency = iso
+        if iso not in self.balances:
+            self.balances[iso] = 0.0
+        if iso not in self.bonus_balances:
+            self.bonus_balances[iso] = 0.0
+
+    def add_funds(self, amount: float, currency: Optional[str] = None):
+        """Пополнить баланс"""
+        currency = currency or self.selected_currency
+        if currency not in self.balances:
+            self.balances[currency] = 0.0
+        self.balances[currency] += amount
+
+    def add_bonus(self, amount: float, currency: Optional[str] = None):
+        """Пополнить бонусный баланс"""
+        currency = currency or self.selected_currency
+        if currency not in self.bonus_balances:
+            self.bonus_balances[currency] = 0.0
+        self.bonus_balances[currency] += amount
 
 class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -192,6 +274,7 @@ class Customer(BaseModel):
     kicked: bool = False
 
     lang: str
+    balance: CustomerBalance = CustomerBalance(selected_currency="RUB")
 
     async def get_cart(self, db: "DB") -> Iterable[CartEntry]:
         return await db.get_by_query(CartEntry, {"customer_id": self.id})
@@ -200,7 +283,7 @@ class Customer(BaseModel):
         return await db.get_by_query(Order, {"customer_id": self.id})
 
     async def add_to_cart(self, db: "DB", product: Product,
-                          configuration: ProductConfiguration):
+        configuration: ProductConfiguration):
 
         # Проверка на существующую запись
         existing = await db.get_one_by_query(CartEntry, {
@@ -231,11 +314,12 @@ class CustomersRepository(AsyncAbstractRepository[Customer]):
         self.logger = logging.getLogger(__name__)
 
 
-    async def get_user_by_id(self, user_id: int) -> Optional[Customer]:
+    async def get_customer_by_id(self, user_id: int) -> Optional[Customer]:
+        """Возвращает пользователя по его user_id. Если пользователь не найден, возвращает None."""
         try:
             doc = await self.find_one_by({"user_id": user_id})
 
-            return doc if doc else None
+            return doc or None
         except PyMongoError as e:
             handle_error(self.logger, e)
 
@@ -258,8 +342,7 @@ class CategoriesRepository(AsyncAbstractRepository[Category]):
     async def get_all(self) -> Optional[Iterable[Category]]:
         try:
             doc = await self.find_by({})
-
-            return doc if doc else None
+            return doc or None
         except PyMongoError as e:
             handle_error(self.logger, e)
 

@@ -1,2 +1,8 @@
 
-SUPPORTED_CURRENCIES = {"RUB", "USD"}
+SUPPORTED_CURRENCIES = {
+    "USD": "$",
+    "RUB": "₽",
+    # "EUR": "€",
+    # "BTC": "₿"
+    # во прикол
+}

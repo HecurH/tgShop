@@ -27,8 +27,7 @@ dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
-dp.update.middleware.register(middlewares.MongoDBMiddleware())
-dp.update.middleware.register(middlewares.MongoDBMiddleware())
+dp.update.middleware.register(middlewares.ContextMiddleware())
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"

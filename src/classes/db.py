@@ -5,14 +5,17 @@ import pymongo
 from pymongo import AsyncMongoClient
 
 from src.classes.db_models import *
+from src.classes.helper_classes import AsyncCurrencyConverter
 
 T = TypeVar("T", bound="MongoModel")
 
 
 class DB:
+    """Represents the database interface for the application.
+
+    Provides methods for interacting with MongoDB collections, including CRUD operations and index management.
     """
-    Класс для управления базой данных
-    """
+
 
     def __init__(self, db_name="Shop"):
         self.client = AsyncMongoClient(getenv("MONGO_URI"))
@@ -20,6 +23,8 @@ class DB:
         self.logger = logging.getLogger(__name__)
 
         self.counters = {}
+
+        self.currency_converter = AsyncCurrencyConverter()
         self._init_collections()
 
     def _init_collections(self):
@@ -67,7 +72,7 @@ class DB:
         try:
             collection = self._get_collection(model)
             doc = await collection.find_one_by_id(entity_id)
-            return doc if doc else None
+            return doc or None
         except PyMongoError as e:
             self._handle_error(e)
             return None
@@ -76,7 +81,7 @@ class DB:
         try:
             collection = self._get_collection(model)
             doc = await collection.find_by(query)
-            return doc if doc else None
+            return doc or None
         except PyMongoError as e:
             self._handle_error(e)
             return None
@@ -94,7 +99,7 @@ class DB:
         try:
             collection = self._get_collection(model)
             doc = await collection.find_one_by(query)
-            return doc if doc else None
+            return doc or None
         except PyMongoError as e:
             self._handle_error(e)
             return None
@@ -109,12 +114,12 @@ class DB:
                 # Assign inserted IDs to each entity in the list
                 for entity, inserted_id in zip(entities, result.inserted_ids):
                     entity.id = inserted_id
-                return entities
             else:
                 collection = self._get_collection(type(entities))
                 result = await collection.save(entities)
                 entities.id = result.inserted_id
-                return entities
+                
+            return entities
         except PyMongoError as e:
             self._handle_error(e)
             raise
