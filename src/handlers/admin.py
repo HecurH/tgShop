@@ -1,10 +1,11 @@
 from aiogram.fsm.context import FSMContext
 
-from aiogram import Bot, Router, html, F
-from aiogram.filters import CommandStart, CommandObject, Command
+from aiogram import Router
+from aiogram.filters import CommandObject, Command
 from aiogram.types import Message, BufferedInputFile
 
 from src.classes.db import *
+from src.classes.helper_classes import Context
 from src.classes.middlewares import RoleCheckMiddleware
 
 router = Router(name="admin")
@@ -17,15 +18,15 @@ router.callback_query.middleware.register(middleware)
 
 
 @router.message(Command("save_image"))
-async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
-    raw = await message.bot.download(message.document)
+async def image_saving_handler(_, ctx: Context) -> None:
+    raw = await ctx.message.bot.download(ctx.message.document)
 
-    msg_id = await message.answer_photo(photo=BufferedInputFile(
+    msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
         raw.read(),
         filename="image.jpg"
     )
     )
-    await message.answer(msg_id.photo[-1].file_id)
+    await ctx.message.answer(msg_id.photo[-1].file_id)
 
 @router.message(Command("save_video"))
 async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:
@@ -165,8 +166,8 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     existing_presets_quantity=3,
 
                     description=LocalizedString(data={
-                        "ru": "Вы выбрали раскраску под номером CHOSEN.",
-                        "en": "You have chosen the color number CHOSEN."})
+                        "ru": "Вы выбрали раскраску под номером {chosen}.",
+                        "en": "You have chosen the color number {chosen}."})
                 ),
                 ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Своя раскраска", "en": "Custom colors"}),
@@ -253,6 +254,286 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
     )
 
     await db.additionals.save(additional)
+    
+@router.message(Command("add_delivery_services"))
+async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
+    service = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Почта России",
+            "en":"Russian Post"
+            }
+        ),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По номеру телефона",
+                    "en":"By phone number"
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание того что почта россии может принимать отправления и по номеру телефона блахблах\nСервис доступен при условии разрешения получателем принимать посылки по номеру телефона.\nПодключить функцию можно в Личном кабинете или в мобильном приложении Почты России",
+                    "en":"сначала на русском текст нормально надо написать про почту, а потом уже на английском емае"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            ),
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По ФИО и адресу",
+                    "en":"By full name and address"
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание стандартного метода отправки посылок почтой росиси",
+                    "en":"на русском сначала блин давай"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"ФИО",
+                            "en":"Full name"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите типо сюда свою Фамилию, Имя и Отчество лол",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Полный адрес",
+                            "en":"Address"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"При написании адреса не забудьте указать индекс, область, район, наименование населенного пункта и дальше змейка сам пиши я не ибу",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            )           
+        ]
+    )
+    
+    cdek = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"CDEK",
+            "en":"CDEK"
+            }
+        ),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По номеру телефона и адресу ПВЗ",
+                    "en":""
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание чего-то там не знаю чего",
+                    "en":"сначала на русском текст нормально надо"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Полный адрес пункта выдачи",
+                            "en":""
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            ) 
+        ]
+    )
+    
+    boxberry = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Boxberry",
+            "en":"Boxberry"
+            }
+        ),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По номеру телефона и адресу ПВЗ",
+                    "en":""
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание чего-то там не знаю чего",
+                    "en":"сначала на русском текст нормально надо"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Полный адрес пункта выдачи",
+                            "en":""
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            ) 
+        ]
+    )
+    
+    ya_delivery = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Яндекс Доставка",
+            "en":"Yandex Delivery"
+            }
+        ),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По номеру телефона и адресу ПВЗ",
+                    "en":""
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание чего-то там не знаю чего",
+                    "en":"сначала на русском текст нормально надо"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Полный адрес пункта выдачи",
+                            "en":""
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            ) 
+        ]
+    )
+
+    ozon_delivery = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Ozon Доставка",
+            "en":"Ozon Delivery"
+            }
+        ),
+        price=LocalizedPrice(data={
+            "RUB": 200,
+            "USD": 3
+            }
+        ),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По номеру телефона и адресу ПВЗ",
+                    "en":""
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание чего-то там не знаю чего",
+                    "en":"сначала на русском текст нормально надо"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Полный адрес пункта выдачи",
+                            "en":""
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            ) 
+        ]
+    )
+
+
+    # await ctx.db.delivery_services.save(service)
+    # await ctx.db.delivery_services.save(cdek)
+    # await ctx.db.delivery_services.save(boxberry)
+    # await ctx.db.delivery_services.save(ya_delivery)
+    # await ctx.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("get"))
 async def getto(message: Message, command: CommandObject, state: FSMContext, db: DB, lang: str) -> None:

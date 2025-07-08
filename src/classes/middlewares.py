@@ -5,17 +5,17 @@ from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
 from src.classes.db import DB
-from src.classes.helper_classes import Context, AsyncCurrencyConverter
-from src.classes.states import CommonStates, call_state_handler
+from src.classes.helper_classes import Context
+from src.classes.states import CommonStates
 
 
 class ContextMiddleware(BaseMiddleware):
     def __init__(self):
         self.db = DB()
-        self.db_initialized = False
+        self.initialized = False
 
     async def __call__(self, handler, event, data):
-        if not self.db_initialized:
+        if not self.initialized:
             await self.db.create_indexes()
             await self.db.currency_converter.init_session()
             self.initialized = True
@@ -37,8 +37,8 @@ class ContextMiddleware(BaseMiddleware):
                               customer,
                               data["lang"])
 
-        if not customer and not await data.get("state").get_state() == CommonStates.lang_choosing:
-            await data["ctx"].fsm.set_state(CommonStates.lang_choosing)
+        if not customer and not await data.get("state").get_state() == CommonStates.LangChoosing:
+            await data["ctx"].fsm.set_state(CommonStates.LangChoosing)
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
         return await handler(event, data)

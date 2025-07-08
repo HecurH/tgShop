@@ -2,36 +2,36 @@ from aiogram import html
 
 
 from src.classes.db_models import *
-from src.classes.translates import AssortmentTranslates
+from src.classes.translates import AssortmentTranslates, ProfileTranslates
 
 
-def generate_viewing_assortment_entry_caption(product, balance: CustomerBalance, lang: str):
-    return f"{product.name.data[lang]} — {product.base_price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()}\n\n{product.short_description.data[lang]}"
+def generate_viewing_assortment_entry_caption(product, customer: Customer, lang: str):
+    return f"{product.name.data[lang]} — {product.base_price.data[customer.currency]} {customer.get_selected_currency_symbol()}\n\n{product.short_description.data[lang]}"
 
-def generate_product_detailed_caption(product, balance: CustomerBalance, lang: str):
-    return f"{product.name.data[lang]} — {product.base_price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()}\n\n{product.long_description.data[lang]}"
+def generate_product_detailed_caption(product, customer: Customer, lang: str):
+    return f"{product.name.data[lang]} — {product.base_price.data[customer.currency]} {customer.get_selected_currency_symbol()}\n\n{product.long_description.data[lang]}"
 
 def generate_choice_text(option: ConfigurationOption, lang: str):
     chosen = option.choices[option.chosen-1]
 
     description = chosen.description.data[lang]
 
-    if chosen.existing_presets: description = description.replace("CHOSEN", str(chosen.existing_presets_chosen))
+    if chosen.existing_presets: description = description.format(chosen=str(chosen.existing_presets_chosen))
     if chosen.is_custom_input and chosen.custom_input_text:
         description = f"<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>{description}"
 
     return f"{description}\n{option.text.data[lang]}"
 
-def generate_switches_text(conf_switches: ConfigurationSwitches, balance: CustomerBalance, lang: str):
+def generate_switches_text(conf_switches: ConfigurationSwitches, customer: Customer, lang: str):
     switches = conf_switches.switches
-    switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()} ( {"✅" if switch.enabled else "❌"} )" for switch in switches])
+    switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {"✅" if switch.enabled else "❌"} )" for switch in switches])
     return (
         f"{conf_switches.description.data[lang]}\n\n{switches_info}\n\n"
         + AssortmentTranslates.translate("switches_enter", lang)
     )
 
-def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], balance: CustomerBalance, lang: str):
-    additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[balance.selected_currency]} {balance.get_selected_currency_symbol()} ( {"✅" if additional in additionals else "❌"} )\n    {additional.short_description.data[lang]}\n" for additional in available])
+def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], customer: Customer, lang: str):
+    additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {"✅" if additional in additionals else "❌"} )\n    {additional.short_description.data[lang]}\n" for additional in available])
     return f"\n{additionals_info}\n\n" + AssortmentTranslates.translate(
         "switches_enter", lang
     )
@@ -52,11 +52,30 @@ def generate_custom_input_text(chosen: ConfigurationChoice, lang: str):
 
     return content
 
+def settings_menu_text(lang: str):
+    return ProfileTranslates.Settings.translate("menu", lang)
 
-def generate_product_configurating_main(product: Product, lang: str, balance: CustomerBalance):
+def delivery_menu_text(delivery_info: DeliveryInfo, lang: str):
+    if not delivery_info.service:
+        return ProfileTranslates.Delivery.translate("menu_not_configured", lang)
+    service = delivery_info.service
+    
+    requirements = service.selected_option.requirements
+    
+    requirements_info_text = "\n".join([f"{requirement.name[lang]}: <tg-spoiler>{requirement.value}</tg-spoiler>" for requirement in requirements])
+    return ProfileTranslates.Delivery.translate("menu", lang).format(delivery_service=service.name[lang], requirements=requirements_info_text)
+
+def generate_change_currency_text(customer: Customer, lang: str):
+    current_currency_text = ProfileTranslates.translate("current_currency", lang).format(currency=customer.currency)
+    return f"{current_currency_text}\n{ProfileTranslates.translate("available_currencies", lang)}"
+
+def generate_change_currency_confirmation_text(iso: str, lang: str):
+    return ProfileTranslates.translate("currency_change_warning", lang).format(iso=iso)
+
+def generate_product_configurating_main(product: Product, lang: str, customer: Customer):
     options = product.configuration.options
-    currency_sign = balance.get_selected_currency_symbol()
-    selected_currency = balance.selected_currency
+    currency_sign = customer.get_selected_currency_symbol()
+    selected_currency = customer.currency
 
     selected_options = ""
     total_price = product.base_price.data[selected_currency]

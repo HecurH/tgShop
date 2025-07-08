@@ -12,6 +12,8 @@ from aiogram.enums import ParseMode
 from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
 
+from src.handlers import profile
+
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
@@ -67,13 +69,39 @@ formatter = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
 stream = logging.StreamHandler()
 stream.setFormatter(formatter)
 
-logging.basicConfig(level=LOG_LEVEL, handlers=[stream])
+from logging.handlers import TimedRotatingFileHandler
+
+logs_dir = Path("logs")
+logs_dir.mkdir(exist_ok=True)
+
+# TimedRotatingFileHandler будет создавать новый файл каждый день
+file_handler = TimedRotatingFileHandler(
+    filename=logs_dir / "current.log",
+    when="midnight",
+    interval=1,
+    backupCount=30,
+    encoding="utf-8",
+    utc=False
+)
+
+# Переопределяем метод namer, чтобы архивные логи были вида "18_06_25.log"
+def custom_namer(default_name):
+    # default_name: logs/current.log.2024-06-25_00-00-00
+    import re
+    if match := re.search(r'(\d{4}-\d{2}-\d{2})', default_name):
+        y, m, d = match.group(1).split('-')
+        short_name = f"{y[2:]}_{m}_{d}.log"
+        return str(logs_dir / short_name)
+    return default_name
+
+file_handler.namer = custom_namer
+
+logging.basicConfig(level=LOG_LEVEL, handlers=[stream, file_handler])
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("aiogram.event").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
-
 
 
 async def main() -> None:
@@ -85,6 +113,7 @@ async def main() -> None:
     dp.include_routers(admin.router,
                        common.router,
                        assortment.router,
+                       profile.router,
                        bottom.router)
 
     # And the run events dispatching

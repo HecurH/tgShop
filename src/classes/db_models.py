@@ -7,7 +7,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
 
-from src.classes.config import SUPPORTED_CURRENCIES
+from src.classes.config import CURRENCY_CHANGE_COOLDOWN_DAYS, SUPPORTED_CURRENCIES
 
 if TYPE_CHECKING:
     from db import DB
@@ -104,7 +104,7 @@ class ConfigurationOption(BaseModel):
     def set_chosen(self, choice: ConfigurationChoice):
         self.chosen = self.choices.index(choice)+1
     
-    def get_index_by_label(self, label: str, lang: str) -> ConfigurationChoice | ConfigurationSwitches:
+    def get_index_by_label(self, label: str, lang: str) -> int:
         for i, choice in enumerate(self.choices):
             if hasattr(choice, "label") and choice.label.data[lang] == label:
                 return i
@@ -220,50 +220,51 @@ class InvitersRepository(AsyncAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
 
-class CustomerBalance(BaseModel):
-    selected_currency: str  # Основная валюта пользователя
+class CustomerBonusWallet(BaseModel):
+    bonus_balance: dict[str, float] = Field(default_factory=lambda: {cur: 0.0 for cur in SUPPORTED_CURRENCIES.keys()})
 
-    balance: float = 0.0
-    bonus_balance: float = 0.0
+    def add_bonus_funds(self, amount: float, currency: str):
+        """Пополнить бонусный баланс для указанной валюты"""
+        if currency not in self.bonus_balance:
+            self.bonus_balance[currency] = 0.0
+        self.bonus_balance[currency] += amount
 
-    def get_balance(self) -> float:
-        """Получить баланс пользователя"""
-        return self.balance
+    def get_bonus_balance(self, currency: str) -> float:
+        """Получить бонусный баланс для указанной валюты"""
+        return self.bonus_balance.get(currency, 0.0)
 
-    def get_currency_symbol(self, iso_code: str) -> str:
-        return SUPPORTED_CURRENCIES.get(iso_code, iso_code)
 
-    def get_selected_currency_symbol(self) -> str:
-        return self.get_currency_symbol(self.selected_currency)
+class DeliveryRequirement(BaseModel):
+    name: LocalizedString
+    description: LocalizedString
+    value: Optional[str] = None # для заполнения в будущем при конфигурации
 
-    def get_bonus_balance(self) -> float:
-        """Получить бонусный баланс пользователя"""
-        return self.bonus_balance
+class DeliveryRequirementsList(BaseModel):
+    name: LocalizedString # типо "По номеру", или "По адресу и ФИО"
+    description: LocalizedString
+    requirements: list[DeliveryRequirement]
 
-    def change_selected_currency(self, iso: str):
-        """Изменить основную валюту"""
-        if iso not in SUPPORTED_CURRENCIES:
-            raise ValueError(f"Unsupported currency: {iso}")
+class DeliveryService(BaseModel):
+    id: Optional[PydanticObjectId] = None
+    name: LocalizedString  # Название сервиса
+    is_foreign: bool = False
+    
+    price: LocalizedPrice = LocalizedPrice(data=
+                                           {
+                                            "RUB": 500.0,
+                                            "USD": 7.0
+                                           }
+                                           )
+    requirements_options: list[DeliveryRequirementsList] # для почты россии, например, можно оформить как по адресу с ФИО, так и просто по номеру до востребования
+    selected_option: Optional[DeliveryRequirementsList] = None # для заполнения в будущем при конфигурации
 
-        self.selected_currency = iso
-        if iso not in self.balances:
-            self.balances[iso] = 0.0
-        if iso not in self.bonus_balances:
-            self.bonus_balances[iso] = 0.0
+class DeliveryServicesRepository(AsyncAbstractRepository[DeliveryService]):
+    class Meta:
+        collection_name = 'delivery_services'
 
-    def add_funds(self, amount: float, currency: Optional[str] = None):
-        """Пополнить баланс"""
-        currency = currency or self.selected_currency
-        if currency not in self.balances:
-            self.balances[currency] = 0.0
-        self.balances[currency] += amount
-
-    def add_bonus(self, amount: float, currency: Optional[str] = None):
-        """Пополнить бонусный баланс"""
-        currency = currency or self.selected_currency
-        if currency not in self.bonus_balances:
-            self.bonus_balances[currency] = 0.0
-        self.bonus_balances[currency] += amount
+class DeliveryInfo(BaseModel):
+    is_foreign: bool = False  # Вне РФ?
+    service: Optional[DeliveryService] = None
 
 class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -274,7 +275,24 @@ class Customer(BaseModel):
     kicked: bool = False
 
     lang: str
-    balance: CustomerBalance = CustomerBalance(selected_currency="RUB")
+    
+    currency: str
+    bonus_wallet: CustomerBonusWallet = CustomerBonusWallet()
+    delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
+
+    
+    def get_currency_symbol(self, iso_code: str) -> str:
+        return SUPPORTED_CURRENCIES.get(iso_code, iso_code)
+
+    def get_selected_currency_symbol(self) -> str:
+        return self.get_currency_symbol(self.currency)
+
+    def change_selected_currency(self, iso: str):
+        """Изменить основную валюту"""
+        if iso not in SUPPORTED_CURRENCIES:
+            raise ValueError(f"Unsupported currency: {iso}")
+
+        self.currency = iso
 
     async def get_cart(self, db: "DB") -> Iterable[CartEntry]:
         return await db.get_by_query(CartEntry, {"customer_id": self.id})

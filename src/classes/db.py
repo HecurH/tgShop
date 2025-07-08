@@ -30,6 +30,7 @@ class DB:
     def _init_collections(self):
         self.orders = OrdersRepository(self.db)
         self.cart_entries = CartEntriesRepository(self.db)
+        self.delivery_services = DeliveryServicesRepository(self.db)
         self.customers = CustomersRepository(self.db)
         self.products = ProductsRepository(self.db)
         self.additionals = AdditionalsRepository(self.db)

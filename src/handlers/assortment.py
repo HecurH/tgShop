@@ -1,7 +1,7 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import PreCheckoutQuery, Message, LabeledPrice, CallbackQuery
+from aiogram.types import Message, LabeledPrice, CallbackQuery
 
 from src.classes.helper_classes import Context
 from src.classes.message_tools import send_media_response
@@ -9,7 +9,7 @@ from src.classes.db_models import Product, ConfigurationOption, ConfigurationCho
 from src.classes.keyboards import AssortmentKBs
 from src.classes.states import Assortment, CommonStates, MainMenuOptions, call_state_handler
 from src.classes.texts import generate_choice_text
-from src.classes.translates import AssortmentTranslates, UncategorizedTranslates
+from src.classes.translates import *
 
 router = Router(name="assortment")
 
@@ -27,10 +27,14 @@ async def process_chosen_option(
                               media_type="video" if chosen.video_id else "photo" if chosen.photo_id else "text")
 
 
+@router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.assortment.values()) if message.text else False)
+async def assortment_command_handler(_, ctx: Context) -> None:
+    await call_state_handler(MainMenuOptions.Assortment, ctx)
+
 @router.message(MainMenuOptions.Assortment)
 async def assortment_category_handler(message: Message, ctx: Context) -> None:
     if message.text in UncategorizedTranslates.back.values():
-        await call_state_handler(CommonStates.main_menu,
+        await call_state_handler(CommonStates.MainMenu,
                                  ctx)
         return
 
@@ -291,19 +295,19 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
                                  need_shipping_address=True)
 
 
-@router.pre_checkout_query()
-async def on_pre_checkout_query(
-        pre_checkout_query: PreCheckoutQuery,
-):
-    await pre_checkout_query.answer(ok=True)
+# @router.pre_checkout_query()
+# async def on_pre_checkout_query(
+#         pre_checkout_query: PreCheckoutQuery,
+# ):
+#     await pre_checkout_query.answer(ok=True)
 
 
-@router.message(F.successful_payment)
-async def on_successful_payment(
-        message: Message,
-):
-    await message.reply(
-        "YAY",
-        # Это эффект "огонь" из стандартных реакций
-        message_effect_id="5104841245755180586"
-    )
+# @router.message(F.successful_payment)
+# async def on_successful_payment(
+#         message: Message,
+# ):
+#     await message.reply(
+#         "YAY",
+#         # Это эффект "огонь" из стандартных реакций
+#         message_effect_id="5104841245755180586"
+#     )

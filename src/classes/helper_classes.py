@@ -26,40 +26,9 @@ class Context:
     def message(self) -> Message:
         return getattr(self.event, "message", self.event)
 
-
-class ProductConfigEditor:
-    def __init__(self, product: Product):
-        self.product = product
-
-    def get_option_by_label(self, label: str, lang: str) -> tuple[str, ConfigurationOption]:
-        for key, option in self.product.configuration.options.items():
-            if option.name.data[lang] == label:
-                return key, option
-        raise ValueError(f"Option with label '{label}' not found")
-    
-    def get_choice_by_label(self, option: ConfigurationOption, label: str, lang: str):
-        for choice in option.choices:
-            if hasattr(choice, "label") and choice.label.data[lang] == label:
-                return choice
-        raise ValueError(f"Choice with label '{label}' not found in option '{option.name.data[lang]}'")
-
-    def get_choice_index_by_label(self, option: ConfigurationOption, label: str, lang: str) -> int:
-        for i, choice in enumerate(option.choices):
-            if hasattr(choice, "label") and choice.label.data[lang] == label:
-                return i
-        raise ValueError(f"Choice with label '{label}' not found in option '{option.name.data[lang]}'")
-
-    def update_switches(self, option_key: str, switches: ConfigurationSwitches, lang: str):
-        option = self.product.configuration.options[option_key]
-        idx = self.get_choice_index_by_label(option, switches.label.data[lang], lang)
-        option.choices[idx] = switches
-        self.product.configuration.options[option_key] = option
-    
-    def update_option(self, option_key: str, option: ConfigurationOption):
-        self.product.configuration.options[option_key] = option
-        
-    def dump(self):
-        return self.product.model_dump()
+    @property
+    def is_query(self) -> bool:
+        return isinstance(self.event, CallbackQuery)
 
 class AsyncCurrencyConverter:
     """Асинхронный конвертер валют с кэшированием и обновлением курсов.
