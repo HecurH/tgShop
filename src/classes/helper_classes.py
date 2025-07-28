@@ -1,8 +1,16 @@
 import asyncio
 import time
 import logging
+import os
+import base64
+from os import getenv
 from dataclasses import dataclass
 from typing import Union, TYPE_CHECKING
+
+
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding, hashes, hmac
+from cryptography.hazmat.backends import default_backend
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
@@ -12,23 +20,60 @@ from src.classes.config import SUPPORTED_CURRENCIES
 from src.classes.db_models import *
 
 if TYPE_CHECKING:
-    from db import DB
+    from db import DatabaseService
+    
+CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
 @dataclass
 class Context:
     event: Union[Message, CallbackQuery]
     fsm: FSMContext
-    db: "DB"
+    db: "DatabaseService"
     customer: "Customer"
     lang: str
 
     @property
     def message(self) -> Message:
         return getattr(self.event, "message", self.event)
+    
+    async def get_last_bot_message(self) -> Message:
+        last_bot_message = await self.fsm.get_value("last_bot_message")
+        
+        if last_bot_message: return Message(**last_bot_message).as_(self.event.bot)
+    
+    async def set_last_bot_message(self, msg: Message):
+        await self.fsm.update_data(last_bot_message=msg.model_dump())
 
     @property
     def is_query(self) -> bool:
         return isinstance(self.event, CallbackQuery)
+
+class Cryptography:
+    
+    @staticmethod
+    def encrypt_data(data: str) -> tuple[bytes, bytes, bytes]:
+        """Шифрование данных с использованием AES-256-GCM."""
+        # Генерация случайного вектора инициализации (IV)
+        iv = os.urandom(12)
+        # Создание шифра
+        cipher = Cipher(algorithms.AES(CRYPTO_KEY), modes.GCM(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        # Шифрование данных + добавление padding
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(data.encode()) + padder.finalize()
+        ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+        return iv, ciphertext, encryptor.tag
+
+    @staticmethod
+    def decrypt_data(iv: bytes, ciphertext: bytes, tag: bytes) -> str:
+        """Дешифрование данных."""
+        cipher = Cipher(algorithms.AES(CRYPTO_KEY), modes.GCM(iv, tag), backend=default_backend())
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
+        # Удаление padding
+        unpadder = padding.PKCS7(128).unpadder()
+        unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
+        return unpadded_data.decode()
 
 class AsyncCurrencyConverter:
     """Асинхронный конвертер валют с кэшированием и обновлением курсов.

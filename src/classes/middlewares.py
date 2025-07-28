@@ -4,14 +4,14 @@ from aiogram import BaseMiddleware
 from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
-from src.classes.db import DB
+from src.classes.db import DatabaseService
 from src.classes.helper_classes import Context
-from src.classes.states import CommonStates
+from src.classes.states import NewUserStates
 
 
 class ContextMiddleware(BaseMiddleware):
     def __init__(self):
-        self.db = DB()
+        self.db = DatabaseService()
         self.initialized = False
 
     async def __call__(self, handler, event, data):
@@ -37,15 +37,21 @@ class ContextMiddleware(BaseMiddleware):
                               customer,
                               data["lang"])
 
-        if not customer and not await data.get("state").get_state() == CommonStates.LangChoosing:
-            await data["ctx"].fsm.set_state(CommonStates.LangChoosing)
+        if not customer and not await data.get("state").get_state() == NewUserStates.LangChoosing:
+            await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
         return await handler(event, data)
 
 
+import time
+
 class ThrottlingMiddleware(BaseMiddleware):
-    default = TTLCache(maxsize=10_000, ttl=.25)
+    default = TTLCache(maxsize=25_000, ttl=.25)
+    # Храним временные метки запросов пользователя (user_id -> [timestamps])
+    user_requests = TTLCache(maxsize=25_000, ttl=30)
+    # Храним "забаненных" пользователей (user_id -> время окончания бана)
+    banned_users = TTLCache(maxsize=25_000, ttl=15)
 
     async def __call__(
             self,
@@ -53,10 +59,27 @@ class ThrottlingMiddleware(BaseMiddleware):
             event,
             data
     ) -> Any:
-        if data["event_from_user"].id in self.default:
+        user_id = data["event_from_user"].id
+        # Проверяем, не забанен ли пользователь
+        if user_id in self.banned_users:
             return
+        
+        if user_id in self.default:
+            now = time.time()
+            # Получаем список временных меток запросов пользователя
+            timestamps = self.user_requests.get(user_id, [])
+            # Оставляем только те, что были за последние 30 секунд
+            timestamps = [ts for ts in timestamps if now - ts < 30]
+            timestamps.append(now)
+            self.user_requests[user_id] = timestamps
+
+            if len(timestamps) > 5:
+                # Баним пользователя на 15 секунд
+                self.banned_users[user_id] = None
+                return await getattr(event, "message", event).answer("Throttled for 15 seconds.")
         else:
-            self.default[data["event_from_user"].id] = None
+            self.default[user_id] = None
+
         return await handler(event, data)
 
 class RoleCheckMiddleware(BaseMiddleware):
@@ -64,7 +87,7 @@ class RoleCheckMiddleware(BaseMiddleware):
         self.allowed = allowed
 
     async def __call__(self, handler, event, data):
-        db: DB = data["db"]
+        db: DatabaseService = data["db"]
         user = await db.customers.get_customer_by_id(data["event_from_user"].id)
 
 

@@ -20,7 +20,7 @@ class TranslationMeta(type):
                 translations[attr_name] = value
                 # Строим обратный словарь
                 for lang, text in value.items():
-                    reverse_translations.setdefault(lang, {})[text] = attr_name
+                    reverse_translations.setdefault(lang, {})[str(text)] = attr_name
 
         # Сохраняем в классе
         attrs['_translations'] = translations
@@ -32,17 +32,39 @@ class TranslationMeta(type):
 class Translatable(metaclass=TranslationMeta):
     """Базовый класс для переводимых объектов"""
 
+    @staticmethod
+    def _get_plural_form(lang: str, count: int) -> str:
+        """Определяет форму для множественного числа по языку и количеству"""
+        if lang == "ru":
+            if count % 10 == 1 and count % 100 != 11:
+                return "one"
+            elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
+                return "few"
+            else:
+                return "many"
+        else:
+            return "one" if count == 1 else "other"
 
     @classmethod
-    def translate(cls, attribute: str, lang: str, default_lang: str = 'en') -> str:
-        """Получить перевод для указанного атрибута"""
+    def translate(cls, attribute: str, lang: str, default_lang: str = 'en', count: int = None) -> str:
+        """
+        Получить перевод для указанного атрибута.
+        Если передан count, выбирает форму перевода в зависимости от количества.
+        """
         translations = cls._translations.get(attribute, {})
-        return translations.get(lang, translations.get(default_lang, attribute))
-
+        value = translations.get(lang, translations.get(default_lang, attribute))
+        # Если value — строка, возвращаем её для любых форм
+        if isinstance(value, str) or count is None:
+            return value
+        # Если value — dict, выбираем нужную форму
+        form = cls._get_plural_form(lang, count)
+        # Если нужная форма есть — возвращаем её, иначе первую попавшуюся
+        return value.get(form) or next(iter(value.values()))
+    
     @classmethod
-    def get_attribute(cls, text: str, lang: str) -> str:
+    def get_attribute(cls, text, lang: str) -> str:
         """Получить имя атрибута по переводу"""
-        return cls._reverse_translations.get(lang, {}).get(text)
+        return cls._reverse_translations.get(lang, {}).get(str(text))
     
     @classmethod
     def get_all_attributes(cls, lang: str) -> list:
@@ -84,6 +106,21 @@ class UncategorizedTranslates(Translatable):
     cancel = {
         "ru": "Отмена",
         "en": "Cancel"
+    }
+    
+    yes = {
+        "ru": "Да",
+        "en": "Yes"
+    }
+    
+    no = {
+        "ru": "Нет",
+        "en": "No"
+    }
+    
+    unit = {
+        "ru": "Шт.",
+        "en": {"one": "Pc.", "other": "Pcs."}  
     }
     
     class Currencies(Translatable):
@@ -131,8 +168,8 @@ class AssortmentTranslates(Translatable):
     }
 
     enter_custom = {
-        "ru": "Введите текст-описание кастомного окраса:",
-        "en": "Enter a text description of your custom coloring:"
+        "ru": "Введите текст-описание:",
+        "en": "Enter a text description:"
     }
 
     switches_enter = {
@@ -145,19 +182,19 @@ class AssortmentTranslates(Translatable):
         "en": "Sorry! Apparently, there are no products in this category."
     }
 
-    cant_find_that_category = {
-        "ru": "Такой категории нет!",
-        "en": "There is no such category!"
-    }
-
     total = {
-        "ru": "Итоговая стоимость: ",
-        "en": "Total: "
+        "ru": "💵 Итоговая стоимость: ",
+        "en": "💵 Total: "
     }
 
     additionals = {
-        "ru": "Другое:",
-        "en": "Other:"
+        "ru": "Другое",
+        "en": "Other"
+    }
+    
+    cannot_choose = {
+        "ru": "Эта опция недоступна, пока вы выбрали {path}.",
+        "en": "This option is unavailable while you have selected {path}."
     }
 
     cannot_price = {
@@ -166,13 +203,34 @@ class AssortmentTranslates(Translatable):
     }
 
     approximate_price = {
-        "ru": "Приблизительная цена: ",
-        "en": "Approximate price: "
+        "ru": "💵 Приблизительная цена: ",
+        "en": "💵 Approximate price: "
     }
 
     currently_selected = {
         "ru": "На данный момент выбраны такие настройки:",
         "en": "The following settings are currently selected: "
+    }
+
+    add_to_cart_finished = {
+        "ru": "Товар успешно добавлен в корзину!",
+        "en": "The product has been successfully added to the cart!"
+    }
+    
+class CartTranslates(Translatable):
+    no_products_in_cart = {
+        "ru": "В вашей корзине нет товаров!",
+        "en": "There are no products in your cart!"
+    }
+    
+    cart_view_menu = {
+        "ru": "{name} — {price}\n\n{configuration}",
+        "en": "{name} — {price}\n\n{configuration}"
+    }
+    
+    entry_remove_confirm = {
+        "ru": "Вы действительно хотите удалить этот товар из корзины?",
+        "en": "Are you sure you want to remove this item from the cart?"
     }
     
 class ProfileTranslates(Translatable):
@@ -232,13 +290,15 @@ class ProfileTranslates(Translatable):
     
         menu = {
             "ru": """Честно, не ебу какой сюда текст вставить, на тут вот инфа о уже настроенной доставке:
-    Способ доставки: {delivery_service}
+  Способ доставки: {delivery_service} ({service_price}), {delivery_req_lists_name}
 {requirements}
-Изменить информацию о доставке вы можете используя кнопку ниже:""",
+
+Изменить информацию о доставке вы можете используя кнопки ниже:""",
             "en": """Честно, не ебу какой сюда текст вставить, на тут вот инфа о уже настроенной доставке:
-    Способ доставки: {delivery_service}
+  Способ доставки: {delivery_service} ({service_price}), {delivery_req_lists_name}
 {requirements}
-Изменить информацию о доставке вы можете используя кнопку ниже:"""
+
+Изменить информацию о доставке вы можете используя кнопки ниже:"""
         }
         
         menu_not_configured = {
@@ -246,9 +306,9 @@ class ProfileTranslates(Translatable):
             "en": "Лееее ишак чо не сконфигурировал свою доставку чорт баля, кнопки ниже решат алёу"
         }
         
-        is_foreign_text = { # Россия / За рубеж
-            "ru": "Куда будет осуществляться доставка?",
-            "en": ""
+        delete_confimation = {
+            "ru": "Вы уверены что хотите удалить данные о доставке?",
+            "en": "Are you sure you want to delete your delivery information?"
         }
         
         foreign_choice_rus = {
@@ -261,31 +321,25 @@ class ProfileTranslates(Translatable):
             "en": "🌍 Foreign"
         }
         
+        is_foreign_text = { # Россия / За рубеж
+            "ru": "Куда будет осуществляться доставка?",
+            "en": "Where will the delivery be made?"
+        }
+
         service_text = { # Почта России / Боксберри
             "ru": "Выберите сервис доставки:",
-            "en": ""
+            "en": "Select a delivery service:"
         }
-        
+
         requirements_list_text = { # По телефону / По ФИО и адресу
             "ru": "Выберите способ оформления доставки:",
-            "en": ""
+            "en": "Select the delivery arrangement method:"
         }
-        
+
         requirement_value_text = { # Телефон / Адрес; пишите номер в формате +7xxxxxxxxxx
             "ru": "Примечание:\n{description}\n\nВведите <b>{name}</b>:",
-            "en": ""
+            "en": "Note:\n{description}\n\nEnter <b>{name}</b>:"
         }
-
-class InlineButtonsTranslates(Translatable):
-    details = {
-        "ru": "Подробнее",
-        "en": "Details"
-    }
-
-    add_to_cart = {
-        "ru": "Добавить в корзину",
-        "en": "Add to cart"
-    }
 
 class ReplyButtonsTranslates(Translatable):
     choose_an_item = {
@@ -317,6 +371,29 @@ class ReplyButtonsTranslates(Translatable):
         "ru": "Профиль",
         "en": "Profile"
     }
+    
+    class Assortment(Translatable):
+        details = {
+            "ru": "Подробнее",
+            "en": "Details"
+        }
+        
+        add_to_cart = {
+            "ru": "Добавить в корзину",
+            "en": "Add to cart"
+        }
+    
+    class Cart(Translatable):
+        place = {
+            "ru": "Оформить за {price}",
+            "en": "Place for {price}"
+        }
+        
+        edit = {
+            "ru": "Редактировать",
+            "en": "Edit"
+        }
+    
     class Profile(Translatable):
         settings = {
             "ru": "Настройки",
@@ -356,11 +433,16 @@ class ReplyButtonsTranslates(Translatable):
             
             class Edit(Translatable):
                 foreign = {
-                    "ru": "Зарубеж: ",
-                    "en": "Foreign: "
+                    "ru": "Зарубеж:",
+                    "en": "Foreign:"
                 }
                 
                 change_data = {
                     "ru": "Изменить данные",
                     "en": "Edit data"
+                }
+                
+                delete = {
+                    "ru": "Удалить информацию о доставке",
+                    "en": "Delete delivery information"
                 }

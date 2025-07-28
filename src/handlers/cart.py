@@ -1,0 +1,77 @@
+from typing import Iterable
+from aiogram import Router
+from src.classes.db_models import CartEntry, DeliveryInfo, DeliveryRequirement, DeliveryService
+from src.classes.config import SUPPORTED_LANGUAGES_TEXT
+from src.classes.helper_classes import Context
+from src.classes.states import Cart, CommonStates, Profile, call_state_handler
+from src.classes.translates import *
+
+router = Router(name="cart")
+
+@router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.cart.values()) if message.text else False)
+async def profile_entrance_handler(_, ctx: Context) -> None:
+    await ctx.fsm.update_data(current=1)
+    await call_state_handler(Cart.Menu, current=1, ctx=ctx)
+
+@router.message(Cart.Menu)
+async def cart_viewer_handler(_, ctx: Context):
+    text = ctx.message.text
+    
+    if text == UncategorizedTranslates.translate("back", ctx.lang):
+        await call_state_handler(CommonStates.MainMenu,
+                                ctx)
+        return
+    
+    amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
+    current = await ctx.fsm.get_value("current") or 1
+    
+    if text == '❌':
+        await call_state_handler(Cart.EntryRemoveConfirm, ctx)
+        return
+    elif text in ['⬅️', '➡️']:
+        new_order = 1
+        if text == '⬅️':
+            new_order = amount if current == 1 else current - 1
+        elif text == '➡️':
+            new_order = 1 if current == amount else current + 1
+        # if new_order > amount: new_order = 1
+        
+        await ctx.fsm.update_data(current=new_order)
+        await call_state_handler(Cart.Menu,
+                                ctx,
+                                current=new_order)
+    elif text in ['➖', '➕']:
+        entry: CartEntry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        if text == '➖':
+            entry.quantity = entry.quantity if entry.quantity == 1 else entry.quantity - 1
+        elif text == '➕':
+            entry.quantity = entry.quantity if entry.quantity == 99 else entry.quantity + 1
+        await ctx.db.cart_entries.save(entry)
+
+        await call_state_handler(Cart.Menu,
+                                ctx,
+                                current=current)
+    else:
+        await call_state_handler(Cart.Menu,
+                                ctx,
+                                current=current)
+        
+@router.message(Cart.EntryRemoveConfirm)
+async def entry_remove_confirm_handler(_, ctx: Context):
+    current = await ctx.fsm.get_value("current")
+    
+    if not current:
+        await call_state_handler(Cart.Menu,
+                                 ctx,
+                                 current=1,
+                                 send_before="Can't find this item in cart.")
+    
+    if ctx.message.text == UncategorizedTranslates.translate("yes", ctx.lang):
+        entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        await ctx.db.cart_entries.delete(entry)
+    
+    current = max(1, current - 1)
+    await ctx.fsm.update_data(current=current)
+    await call_state_handler(Cart.Menu,
+                                ctx,
+                                current=current)

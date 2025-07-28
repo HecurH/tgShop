@@ -10,7 +10,7 @@ from src.classes.helper_classes import AsyncCurrencyConverter
 T = TypeVar("T", bound="MongoModel")
 
 
-class DB:
+class DatabaseService:
     """Represents the database interface for the application.
 
     Provides methods for interacting with MongoDB collections, including CRUD operations and index management.
@@ -22,34 +22,21 @@ class DB:
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 
-        self.counters = {}
+        # self.counters = {}
 
         self.currency_converter = AsyncCurrencyConverter()
         self._init_collections()
 
     def _init_collections(self):
-        self.orders = OrdersRepository(self.db)
-        self.cart_entries = CartEntriesRepository(self.db)
-        self.delivery_services = DeliveryServicesRepository(self.db)
-        self.customers = CustomersRepository(self.db)
-        self.products = ProductsRepository(self.db)
-        self.additionals = AdditionalsRepository(self.db)
-        self.categories = CategoriesRepository(self.db)
-        self.inviters = InvitersRepository(self.db)
-        self.promocodes = PromocodesRepository(self.db)
-
-    async def get_counter(self, name):
-
-        counter = await self.db.counters.find_one_and_update(
-            {"name": name},
-            {"$inc": {"value": 1}},
-            upsert=True,
-            return_document=True  # Вернуть обновлённый документ
-        )
-        self.counters[name] = counter
-
-
-        return self.counters.get(name)["value"]
+        self.orders = OrdersRepository(self)
+        self.cart_entries = CartEntriesRepository(self)
+        self.delivery_services = DeliveryServicesRepository(self)
+        self.customers = CustomersRepository(self)
+        self.products = ProductsRepository(self)
+        self.additionals = AdditionalsRepository(self)
+        self.categories = CategoriesRepository(self)
+        self.inviters = InvitersRepository(self)
+        self.promocodes = PromocodesRepository(self)
 
     async def create_indexes(self):
         await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
@@ -58,7 +45,7 @@ class DB:
 
         await self.db["customers"].create_index([("user_id", pymongo.ASCENDING)], unique=True)
 
-        await self.db["products"].create_index([("order_no", pymongo.ASCENDING)], unique=True)
+        # await self.db["products"].create_index([("order_no", pymongo.ASCENDING)], unique=True)
 
         await self.db["categories"].create_index([("name", pymongo.ASCENDING)], unique=True)
 

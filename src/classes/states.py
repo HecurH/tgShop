@@ -1,13 +1,12 @@
+import asyncio
 from aiogram.fsm.state import StatesGroup, State
 from typing import Callable, Dict, Any, Awaitable
 
 from src.classes.helper_classes import Context
-from src.classes.message_tools import clear_keyboard_effect, edit_media_message, send_media_response
-from src.classes.texts import delivery_menu_text, generate_additionals_text, generate_choice_text, generate_custom_input_text, generate_presets_text, \
-    generate_product_configurating_main, generate_product_detailed_caption, generate_switches_text, \
-    generate_viewing_assortment_entry_caption, settings_menu_text
+from src.classes.message_tools import clear_keyboard_effect, send_media_response
+from src.classes.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
 from src.classes.keyboards import *
-from src.classes.translates import AssortmentTranslates, CommonTranslates, ProfileTranslates
+from src.classes.translates import AssortmentTranslates, CartTranslates, CommonTranslates, ProfileTranslates
 
 
 class StateHandlerRegistry:
@@ -38,7 +37,8 @@ state_handlers = StateHandlerRegistry()
 
 async def call_state_handler(state: State,
                              ctx: Context,
-                             change_state=True,
+                             change_state = True,
+                             send_before: str = None,
                              **kwargs
                              ) -> None:
     """
@@ -51,6 +51,11 @@ async def call_state_handler(state: State,
     if change_state: await ctx.fsm.set_state(state)
 
     try:
+        if send_before:
+            await ctx.message.answer(
+                send_before
+            )
+            
         await handler(ctx=ctx, **kwargs)
 
     except Exception as e:
@@ -61,23 +66,22 @@ async def call_state_handler(state: State,
         raise e
 
 
-class CommonStates(StatesGroup):
+class NewUserStates(StatesGroup):
     LangChoosing = State()
     CurrencyChoosing = State()
-    MainMenu = State()
 
-
-@state_handlers.register(CommonStates.LangChoosing)
+@state_handlers.register(NewUserStates.LangChoosing)
 async def handle_lang_choosing(ctx: Context, **_):
     await ctx.message.answer("Выберите язык:\n\nChoose language:",
                              reply_markup=CommonKBs.lang_choose())
 
-
-@state_handlers.register(CommonStates.CurrencyChoosing)
+@state_handlers.register(NewUserStates.CurrencyChoosing)
 async def handle_currency_choosing(ctx: Context, **_):
     await ctx.message.answer(CommonTranslates.translate("currency_choosing", ctx.lang),
                              reply_markup=CommonKBs.currency_choose(ctx.lang))
 
+class CommonStates(StatesGroup):
+    MainMenu = State()
 
 @state_handlers.register(CommonStates.MainMenu)
 async def main_menu_handler(ctx: Context, **_):
@@ -85,31 +89,8 @@ async def main_menu_handler(ctx: Context, **_):
                              reply_markup=CommonKBs.main_menu(ctx.lang))
 
 
-class MainMenuOptions(StatesGroup):
-    Assortment = State()
-    Cart = State()
-    Orders = State()
-    Profile = State()
-
-
-@state_handlers.register(MainMenuOptions.Assortment)
-async def assortment_menu_handler(ctx: Context, **_):
-    await ctx.message.answer(AssortmentTranslates.translate("choose_the_category", ctx.lang),
-                             reply_markup=await AssortmentKBs.assortment_menu(ctx.db, ctx.lang))
-    if ctx.is_query:
-        await ctx.message.delete()
-        await ctx.fsm.set_data({})
-
-@state_handlers.register(MainMenuOptions.Profile)
-async def profile_menu_handler(ctx: Context, **_):
-    await ctx.message.answer(ProfileTranslates.translate("menu", ctx.lang),
-                             reply_markup=ProfileKBs.menu(ctx.lang))
-    if ctx.is_query:
-        await ctx.message.delete()
-        await ctx.fsm.set_data({})
-
-
 class Assortment(StatesGroup):
+    Menu = State()
     ViewingAssortment = State()
     ViewingProductDetails = State()
     FormingOrderEntry = State()
@@ -118,129 +99,98 @@ class Assortment(StatesGroup):
     SwitchesEditing = State()
     AdditionalsEditing = State()
 
+@state_handlers.register(Assortment.Menu)
+async def assortment_menu_handler(ctx: Context, **_):
+    await ctx.message.answer(AssortmentTranslates.translate("choose_the_category", ctx.lang),
+                             reply_markup=await AssortmentKBs.assortment_menu(ctx.db, ctx.lang))
 
 @state_handlers.register(Assortment.ViewingAssortment)
 async def viewing_assortment_handler(ctx: Context,
-                                     edit: bool,
                                      category: str,
                                      current: int,
-                                     amount: int,
                                      **_):
+    amount = await ctx.db.products.count_in_category(category)
+
     if amount == 0:
         await ctx.message.answer(AssortmentTranslates.translate("no_products_in_category", ctx.lang))
-        await call_state_handler(MainMenuOptions.Assortment,
+        await call_state_handler(Assortment.Menu,
                                  ctx)
         return
-
-    product: Product = await ctx.db.products.find_one_by({'order_no': current, "category": category})
-    caption = generate_viewing_assortment_entry_caption(product,
+    
+    # product: Product = await ctx.db.products.find_one_by({'order_no': current, "category": category})
+    product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
+    caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx.customer,
                                                         ctx.lang)
 
-    if edit:
-        await edit_media_message(ctx.message,
-                                 product.short_description_photo_id,
-                                 caption,
-                                 AssortmentKBs.gen_assortment_view_kb(current, amount, ctx.lang))
-    else:
-        await clear_keyboard_effect(ctx.message)
-        await send_media_response(ctx.message,
-                                  product.short_description_photo_id,
-                                  caption,
-                                  AssortmentKBs.gen_assortment_view_kb(current, amount, ctx.lang))
-
-        await ctx.fsm.set_data({})
-
-    await ctx.fsm.update_data(current=current, category=category, amount=amount)
-
+    await send_media_response(ctx.message,
+                                product.short_description_photo_id,
+                                caption,
+                                AssortmentKBs.gen_assortment_view_kb(current, amount, ctx.lang))
 
 @state_handlers.register(Assortment.ViewingProductDetails)
 async def viewing_product_details_handler(ctx: Context,
                                           product: Product,
                                           **_):
-    caption = generate_product_detailed_caption(product, ctx.customer, ctx.lang)
+    caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx.customer, ctx.lang)
 
-    # if edit:
-    await edit_media_message(ctx.message,
-                             product.long_description_photo_id or product.long_description_video_id,
-                             caption,
-                             AssortmentKBs.detailed_view(ctx.lang),
-                             "photo" if product.long_description_photo_id
-                             else ("video" if product.long_description_video_id
-                                   else None))
+    # if ctx.is_query:
+    #     await edit_media_message(ctx.message,
+    #                             product.long_description_photo_id or product.long_description_video_id,
+    #                             caption,
+    #                             AssortmentKBs.detailed_view(ctx.lang),
+    #                             "photo" if product.long_description_photo_id
+    #                             else ("video" if product.long_description_video_id
+    #                                 else None))
     # else:
-    #     await ctx.message.delete()
+    #     await clear_keyboard_effect(ctx.message)
 
-    #     await send_media_response(ctx.message,
-    #                               product.long_description_photo_id,
-    #                               caption,
-    #                               AssortmentKBs.detailed_view(ctx.lang)
-    #                               )
-
-    #     await ctx.fsm.update_data(product=None)
-
+    await send_media_response(ctx.message,
+                                product.long_description_photo_id or product.long_description_video_id,
+                                caption,
+                                AssortmentKBs.detailed_view(ctx.lang)
+                                )
 
 @state_handlers.register(Assortment.FormingOrderEntry)
 async def forming_order_entry_handler(ctx: Context,
-                                      edit: bool,
                                       product: Product,
                                       **_):
     options: dict[str, ConfigurationOption] = product.configuration.options
     photo_id = product.configuration_photo_id
     video_id = product.configuration_video_id
 
-    if not ctx.is_query: await clear_keyboard_effect(ctx.message)
+    if ctx.is_query: await clear_keyboard_effect(ctx.message)
+    
+    additionals = await ctx.db.additionals.get(product)
 
-    await ctx.fsm.update_data(product=product.model_dump())
-
-    additionals = await ctx.db.additionals.get(product.category, product.id)
-
-    if edit:
-        await edit_media_message(ctx.message,
-                                 photo_id or video_id,
-                                 generate_product_configurating_main(product, ctx.lang, ctx.customer),
-                                 AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx.lang),
-                                 "photo" if photo_id else ("video" if video_id else None))
-    else:
-        await send_media_response(ctx.message,
-                                  photo_id or video_id,
-                                  generate_product_configurating_main(product, ctx.lang, ctx.customer),
-                                  AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx.lang),
-                                  "photo" if photo_id else ("video" if video_id else None))
-
+    # if edit: await ctx.message.delete()
+    await send_media_response(ctx.message,
+                                photo_id or video_id,
+                                AssortmentTextGen.generate_product_configurating_main(product, ctx.lang, ctx.customer),
+                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx.lang),
+                                "photo" if photo_id else ("video" if video_id else None))
 
 @state_handlers.register(Assortment.EntryOptionSelect)
 async def entry_option_select_handler(ctx: Context,
-                                      delete_prev: bool,
-                                      option: ConfigurationOption,
-                                      idx: int = None,
+                                      product: Product,
+                                      delete_prev: bool = False,
+                                      option: ConfigurationOption = None,
                                       **_):
     chosen = option.get_chosen()
-    text = generate_choice_text(option, ctx.lang)
-    kb = AssortmentKBs.generate_choice_kb(option, ctx.lang)
+    text = AssortmentTextGen.generate_choice_text(option, ctx.lang)
+    kb = AssortmentKBs.generate_choice_kb(product, option, ctx.customer, ctx.lang)
 
     await send_media_response(ctx.message, chosen.photo_id or chosen.video_id, text, kb,
                               media_type="video" if chosen.video_id else "photo" if chosen.photo_id else "text")
     if delete_prev: await ctx.message.delete()
 
-    await ctx.fsm.update_data(changing_option=option.model_dump())
-    
-    # \/\/\/\/\/\/\/\/ ВАЖНО, тк 0 == False
-    if idx is not None: await ctx.fsm.update_data(current_option_idx=idx)
-
-
 @state_handlers.register(Assortment.ChoiceEditValue)
 async def choice_edit_value_handler(ctx: Context,
-                                    changing_option: ConfigurationOption,
                                     choice,
                                     **_):
-    await ctx.fsm.update_data(before_option=changing_option.model_dump())
-    
-    changing_option.set_chosen(choice)
-
     await clear_keyboard_effect(ctx.message)
 
-    text = generate_presets_text(ctx.lang) if choice.existing_presets else generate_custom_input_text(choice,
+    text = AssortmentTextGen.generate_presets_text(ctx.lang) if choice.existing_presets else AssortmentTextGen.generate_custom_input_text(choice,
                                                                                                       ctx.lang)
     kb = UncategorizedKBs.inline_cancel(ctx.lang)
 
@@ -251,33 +201,12 @@ async def choice_edit_value_handler(ctx: Context,
                               "photo" if choice.photo_id else ("video" if choice.video_id else None)
                               )
 
-    await ctx.fsm.update_data(changing_option=changing_option.model_dump())
-
-
 @state_handlers.register(Assortment.SwitchesEditing)
 async def switches_editing_handler(ctx: Context,
                                    switches: ConfigurationSwitches,
-                                   switch_text: str = None,
                                    **_):
-    # if not switch_text: await clear_keyboard_effect(ctx.message)
-    if switch_text:
-        clean_text = switch_text.replace(" ✅", "")
-        for idx, switch in enumerate(switches.switches):
-            if switch.name.data[ctx.lang] == clean_text:
-                switches.switches[idx].enabled = not switch.enabled
-                break 
-        
-        product = Product(**await ctx.fsm.get_value("product"))
-        current_option_idx = await ctx.fsm.get_value("current_option_idx")
 
-        option = product.configuration.options[current_option_idx] # ссылка на текущую изменяемую главную опцию
-        idx = option.get_index_by_label(switches.label.data[ctx.lang], ctx.lang)
-        option.choices[idx] = switches
-
-        await ctx.fsm.update_data(product=product.model_dump())
-        await ctx.fsm.update_data(changing_option=option.model_dump())
-
-    text = generate_switches_text(switches, ctx.customer, ctx.lang)
+    text = AssortmentTextGen.generate_switches_text(switches, ctx.customer, ctx.lang)
     kb = AssortmentKBs.generate_switches_kb(switches, ctx.lang)
 
     await send_media_response(ctx.message,
@@ -287,30 +216,14 @@ async def switches_editing_handler(ctx: Context,
                               "photo" if switches.photo_id else ("video" if switches.video_id else None)
                               )
 
-    await ctx.fsm.update_data(switches=switches.model_dump())
-
 @state_handlers.register(Assortment.AdditionalsEditing)
 async def additionals_editing_handler(ctx: Context,
                                    product: Product,
-                                   additional_text: str = None,
+                                   allowed_additionals: List[ProductAdditional],
                                    **_):
-    
-    allowed_additionals = await ctx.db.additionals.get(product.category, product.id)
     additionals = product.configuration.additionals
-    
-    if additional_text:
-        additional_text = ctx.message.text.replace(" ✅", "")
-        additional = ctx.db.additionals.get_by_name(additional_text, allowed_additionals, ctx.lang)
 
-        if additional in additionals:
-            additionals.remove(additional)
-        else:
-            additionals.append(additional)
-            
-        
-        await ctx.fsm.update_data(product=product.model_dump())
-
-    text = generate_additionals_text(allowed_additionals, additionals, ctx.customer, ctx.lang)
+    text = AssortmentTextGen.generate_additionals_text(allowed_additionals, additionals, ctx.customer, ctx.lang)
     kb = AssortmentKBs.generate_additionals_kb(allowed_additionals, additionals, ctx.lang)
 
     if ctx.is_query: await ctx.message.delete()
@@ -319,8 +232,44 @@ async def additionals_editing_handler(ctx: Context,
         text,
         reply_markup=kb
     )
+
+class Cart(StatesGroup):
+    Menu = State()
+    EntryRemoveConfirm = State()
+
+@state_handlers.register(Cart.Menu)
+async def cart_menu_handler(ctx: Context, current: int, **_):
+    amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
+    if amount == 0:
+        await ctx.message.answer(CartTranslates.translate("no_products_in_cart", ctx.lang))
+        await call_state_handler(CommonStates.MainMenu,
+                                 ctx)
+        return
+    if current > amount: current = 1
+    
+    entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+    product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
+    
+    caption = CartTextGen.generate_cart_viewing_caption(entry,
+                                            product,
+                                            entry.configuration,
+                                            ctx.customer,
+                                            ctx.lang)
+    
+    price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+    await send_media_response(ctx.message,
+                            product.short_description_photo_id,
+                            caption,
+                            CartKBs.cart_view(entry, current, amount, price, ctx.customer, ctx.lang))
+
+@state_handlers.register(Cart.EntryRemoveConfirm)
+async def entry_remove_confirm_handler(ctx: Context, **_):
+    await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
+                             reply_markup=UncategorizedKBs.yes_no(ctx.lang))
+  
 class Profile(StatesGroup):
+    Menu = State()
     
     class Settings(StatesGroup):
         Menu = State()
@@ -328,25 +277,30 @@ class Profile(StatesGroup):
         ChangeCurrency = State()
     class Delivery(StatesGroup):
         Menu = State()
+        DeleteConfimation = State()
         
         class Editables(StatesGroup):
             IsForeign = State()
             Service = State()
-            RequirementLists = State()
+            RequirementsLists = State()
             Requirement = State()
-        
-    
+
+@state_handlers.register(Profile.Menu)
+async def profile_menu_handler(ctx: Context, **_):
+    await ctx.message.answer(ProfileTranslates.translate("menu", ctx.lang),
+                             reply_markup=ProfileKBs.menu(ctx.lang))
+
 @state_handlers.register(Profile.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        settings_menu_text(ctx.lang),
+        ProfileTextGen.settings_menu_text(ctx.lang),
         reply_markup=ProfileKBs.Settings.menu(ctx.lang)
     )
 
 @state_handlers.register(Profile.Delivery.Menu)
 async def delivery_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        delivery_menu_text(ctx.customer.delivery_info, ctx.lang),
+        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx.customer, ctx.lang),
         reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx.lang)
     )
     
@@ -362,8 +316,8 @@ async def settings_change_currency_handler(ctx: Context, **_):
                              reply_markup=ProfileKBs.Settings.currency_choose(ctx.lang))
 
 @state_handlers.register(Profile.Delivery.Editables.IsForeign)
-async def delivery_edit_value_handler(ctx: Context, **_):
-    first_setup: bool = await ctx.fsm.get_value("delivery_first_setup")
+async def delivery_edit_is_foreign_handler(ctx: Context, **_):
+    first_setup: bool = ctx.customer.delivery_info.service is None
     
     # serialized_service = await ctx.fsm.get_value("service")
     # service = DeliveryService(**serialized_service) if serialized_service else None
@@ -372,5 +326,60 @@ async def delivery_edit_value_handler(ctx: Context, **_):
         ProfileTranslates.Delivery.translate("is_foreign_text", ctx.lang),
         reply_markup=ProfileKBs.Delivery.Editables.is_foreign(
             first_setup, ctx.lang
+        )
+    )
+    
+@state_handlers.register(Profile.Delivery.Editables.Service)
+async def delivery_edit_service_handler(ctx: Context, **_):
+    first_setup: bool = ctx.customer.delivery_info.service is None
+    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    
+    
+    services = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
+    
+    await ctx.message.answer(
+        ProfileTranslates.Delivery.translate("service_text", ctx.lang),
+        reply_markup=ProfileKBs.Delivery.Editables.services(
+            first_setup, services, ctx.customer, ctx.lang
+        )
+    )
+    
+@state_handlers.register(Profile.Delivery.Editables.RequirementsLists)
+async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
+    first_setup: bool = ctx.customer.delivery_info.service is None
+    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    
+    
+    lists = delivery_info.service.requirements_options
+    
+    await ctx.message.answer(
+        ProfileTranslates.Delivery.translate("requirements_list_text", ctx.lang),
+        reply_markup=ProfileKBs.Delivery.Editables.requirements_lists(
+            first_setup, lists, ctx.lang
+        )
+    )
+
+@state_handlers.register(Profile.Delivery.Editables.Requirement)
+async def delivery_edit_requirement_handler(ctx: Context, **_):
+    first_setup: bool = ctx.customer.delivery_info.service is None
+    delivery_info: DeliveryInfo = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    requirement_index: int = await ctx.fsm.get_value("requirement_index")
+
+    
+    requirement = delivery_info.service.selected_option.requirements[requirement_index]
+    
+    await ctx.message.answer(
+        ProfileTranslates.Delivery.translate("requirement_value_text", ctx.lang).format(name=requirement.name.data[ctx.lang], description=requirement.description.data[ctx.lang]),
+        reply_markup=ProfileKBs.Delivery.Editables.requirement(
+            first_setup, ctx.lang
+        )
+    )
+
+@state_handlers.register(Profile.Delivery.DeleteConfimation)
+async def delivery_delete_confirmation_handler(ctx: Context, **_):
+    await ctx.message.answer(
+        ProfileTranslates.Delivery.translate("delete_confimation", ctx.lang),
+        reply_markup=ProfileKBs.Delivery.delete_confimation(
+            ctx.lang
         )
     )

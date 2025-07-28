@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router
 from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
+from src.classes.helper_classes import Context
 from src.classes.db import *
 from src.classes.middlewares import ContextMiddleware
 from src.handlers.common import command_start_handler
@@ -22,24 +23,18 @@ async def real_base_handler(message: Message, state: FSMContext, db, lang):
     await message.delete()
 
 @router.callback_query()
-async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DB, lang: str, middleware: ContextMiddleware) -> None:
+async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DatabaseService, lang: str, middleware: ContextMiddleware) -> None:
     await callback.answer()
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
-async def user_blocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
-    await state.clear()
-
-    user = await db.customers.get_customer_by_id(event.from_user.id)
-    if user:
-        user.kicked = True
-        await db.update(user)
+async def user_blocked_bot(_, ctx: Context):
+    if ctx.customer:
+        ctx.customer.kicked = True
+        await ctx.db.update(ctx.customer)
 
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
-async def user_unblocked_bot(event: ChatMemberUpdated, state: FSMContext, db: DB):
-    await state.clear()
-
-    user = await db.customers.get_customer_by_id(event.from_user.id)
-    if user:
-        user.kicked = False
-        await db.update(user)
+async def user_unblocked_bot(_, ctx: Context):
+    if ctx.customer:
+        ctx.customer.kicked = False
+        await ctx.db.update(ctx.customer)

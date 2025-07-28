@@ -12,13 +12,11 @@ from aiogram.enums import ParseMode
 from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
 
-from src.handlers import profile
-
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from handlers import admin, bottom, common, assortment
-from classes import middlewares
+from src.handlers import profile, admin, bottom, cart, common, assortment
+from src.classes import middlewares
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = getenv("BOT_TOKEN")
@@ -113,6 +111,7 @@ async def main() -> None:
     dp.include_routers(admin.router,
                        common.router,
                        assortment.router,
+                       cart.router,
                        profile.router,
                        bottom.router)
 

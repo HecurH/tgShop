@@ -3,10 +3,11 @@ from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import CallbackQuery
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
+from classes.config import SUPPORTED_LANGUAGES_TEXT
 from src.classes.db import *
 from src.classes.helper_classes import Context
 from src.classes.keyboards import CommonKBs
-from src.classes.states import CommonStates, call_state_handler
+from src.classes.states import CommonStates, NewUserStates, call_state_handler
 from src.classes.translates import CommonTranslates, ReplyButtonsTranslates
 
 router = Router(name="common")
@@ -17,21 +18,32 @@ router = Router(name="common")
 @router.message(CommandStart(deep_link=True))
 async def command_start_handler(_, ctx: Context, command: CommandObject) -> None:
     await ctx.fsm.clear()
+    print(ctx.message.from_user.language_code)
 
     user = await ctx.db.customers.get_customer_by_id(ctx.message.from_user.id)
     if not user:
         inviter = await ctx.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
-
-        await ctx.db.insert(
-            Customer(
+        
+        ctx.customer = Customer(
                 user_id=ctx.message.from_user.id,
                 invited_by=inviter.inviter_code if inviter else "",
                 lang="?",
                 currency="RUB"
             )
-        )
+
+        await ctx.db.insert(ctx.customer )
     if ctx.lang == "?":
-        await call_state_handler(CommonStates.LangChoosing, 
+        lang = ctx.message.from_user.language_code.split("-")[0]
+        print(lang)
+        if lang in SUPPORTED_LANGUAGES_TEXT.values():
+            ctx.customer.lang = lang
+            ctx.lang = lang
+
+            await ctx.db.update(ctx.customer)
+            await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
+            return
+        
+        await call_state_handler(NewUserStates.LangChoosing, 
                            ctx)
         return
     await ctx.message.reply(CommonTranslates.translate("hi", ctx.lang))
@@ -39,7 +51,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
     await call_state_handler(CommonStates.MainMenu, 
                        ctx)
 
-@router.callback_query(CommonStates.LangChoosing)
+@router.callback_query(NewUserStates.LangChoosing)
 async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
     if not ctx.customer:
         await callback.answer()
@@ -52,12 +64,11 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 
     await callback.message.delete()
 
-    await call_state_handler(CommonStates.CurrencyChoosing,
-                       ctx)
+    await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
 
     await callback.answer()
 
-@router.callback_query(CommonStates.CurrencyChoosing)
+@router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
     user = await ctx.db.customers.get_customer_by_id(ctx.event.from_user.id)
     user.currency = callback.data

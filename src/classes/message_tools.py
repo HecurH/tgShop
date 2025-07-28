@@ -32,5 +32,20 @@ async def edit_media_message(
     media_type: str = "photo"
 ) -> None:
     """Редактирование медиа-сообщения"""
+    # Получаем текущее содержимое сообщения
+    current_caption = message.caption if hasattr(message, "caption") else None
+    current_media_id = None
+    if media_type == "photo" and message.photo:
+        current_media_id = message.photo[-1].file_id
+    elif media_type == "video" and getattr(message, "video", None):
+        current_media_id = message.video.file_id
+
+    # Сравниваем содержимое
+    if current_caption == caption and current_media_id == media_id and (
+        (hasattr(message, "reply_markup") and message.reply_markup == reply_markup) or (not hasattr(message, "reply_markup") and not reply_markup)
+    ):
+        # Ничего не изменилось — не редактируем
+        return
+
     media = InputMediaPhoto(media=media_id, caption=caption) if media_type == 'photo' else InputMediaVideo(media=media_id, caption=caption)
     await message.edit_media(media=media, reply_markup=reply_markup)
