@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiogram import html
 
 from src.classes.db_models import *
