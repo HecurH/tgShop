@@ -1,7 +1,6 @@
 from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
-from src.classes.db import DatabaseService
 from src.classes.db_models import *
 from src.classes.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 

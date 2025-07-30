@@ -1,15 +1,14 @@
 import base64
 import datetime
 import logging
-from typing import Any, Dict, TypeVar, Generic, Optional, List, Iterable, TYPE_CHECKING
+from typing import Any, Dict, TypeVar, Optional, List, Iterable, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
-from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import PyMongoError
 
 from src.classes.helper_classes import Cryptography
-from src.classes.config import CURRENCY_CHANGE_COOLDOWN_DAYS, SUPPORTED_CURRENCIES
+from src.classes.config import SUPPORTED_CURRENCIES
 
 if TYPE_CHECKING:
     from db import DatabaseService
@@ -83,7 +82,7 @@ class SecureValue(BaseModel):
     def get(self) -> Optional[str]:
         """Дешифрует и возвращает строковое значение."""
         if not self.iv or not self.ciphertext or not self.tag:
-            return
+            return None
         return Cryptography.decrypt_data(
             base64.b64decode(self.iv),
             base64.b64decode(self.ciphertext),
@@ -158,7 +157,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     
     async def calculate_customer_cart_price(self, customer: "Customer"):
         # sourcery skip: comprehension-to-generator
-        entries: List[CartEntry] = await self.find_by({"customer_id": str(customer.id), "order_id": None})
+        entries: Iterable[CartEntry] = await self.find_by({"customer_id": str(customer.id), "order_id": None})
         return sum(
             [
                 (((await self.dbs.products.find_one_by_id(entry.product_id)).base_price + entry.configuration.price) * entry.quantity)
@@ -285,12 +284,12 @@ class ConfigurationOption(BaseModel):
     def set_chosen(self, choice: ConfigurationChoice):
         self.chosen = next((key for key, value in self.choices.items() if value == choice), None)
     
-    def get_key_by_label(self, label: str, lang: str) -> str:
+    def get_key_by_label(self, label: str, lang: str) -> Optional[str]:
         for key, choice in self.choices.items():
             if hasattr(choice, "label") and choice.label.data[lang] == label:
                 return key
     
-    def get_by_label(self, label: str, lang: str) -> ConfigurationChoice | ConfigurationSwitches:
+    def get_by_label(self, label: str, lang: str) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
         for choice in self.choices.values():
             if hasattr(choice, "label") and choice.label.data[lang] == label:
                 return choice
@@ -615,7 +614,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
 
-    def __init__(self, database: AsyncDatabase):
+    def __init__(self, database: DatabaseService):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
@@ -640,7 +639,7 @@ class CategoriesRepository(AppAbstractRepository[Category]):
     class Meta:
         collection_name = 'categories'
 
-    def __init__(self, database: AsyncDatabase):
+    def __init__(self, database: DatabaseService):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
