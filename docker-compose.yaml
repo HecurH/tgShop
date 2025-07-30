@@ -3,6 +3,7 @@ services:
     container_name: tg_bot_container
     build: ./src
     restart: unless-stopped
+    network_mode: host
 
     command: python /src/run.py
     volumes:
