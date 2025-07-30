@@ -228,7 +228,7 @@ class CartKBs:
             #     types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("edit", lang))
             # ],
             [
-                types.KeyboardButton(text="❌"),
+                types.KeyboardButton(text='❌'),
                 types.KeyboardButton(text="➖"),
                 types.KeyboardButton(text=f"{entry.quantity} {UncategorizedTranslates.translate('unit', lang, count=entry.quantity)}"),
                 types.KeyboardButton(text="➕")

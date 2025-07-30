@@ -79,7 +79,7 @@ class AssortmentTextGen:
     @staticmethod
     def generate_switches_text(conf_switches: ConfigurationSwitches, customer: Customer, lang: str):
         switches = conf_switches.switches
-        switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if switch.enabled else "❌"} )" for switch in switches])
+        switches_info = "\n".join([f"{switch.name.data[lang]} — {switch.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
         return (
             f"{conf_switches.description.data[lang]}\n\n{switches_info}\n\n"
             + AssortmentTranslates.translate("switches_enter", lang)
@@ -87,7 +87,7 @@ class AssortmentTextGen:
         
     @staticmethod
     def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], customer: Customer, lang: str):
-        additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if additional in additionals else "❌"} )\n    {additional.short_description.data[lang]}\n" for additional in available])
+        additionals_info = "\n".join([f"{additional.name.data[lang]} — {additional.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.data[lang]}\n" for additional in available])
         return f"\n{additionals_info}\n\n" + AssortmentTranslates.translate(
             "switches_enter", lang
         )
