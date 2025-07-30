@@ -233,6 +233,11 @@ class CartTranslates(Translatable):
         "en": "Are you sure you want to remove this item from the cart?"
     }
     
+    delivery_not_configured = {
+        "ru": "Перед оформлением заказа необходимо настроить доставку.",
+        "en": "Before placing an order, you need to set up delivery."
+    }
+    
 class ProfileTranslates(Translatable):
     menu = {
         "ru": "Выберите пункт вашего профиля:",
@@ -272,7 +277,7 @@ class ProfileTranslates(Translatable):
         }
         
         choose_currency = {
-            "ru": "Ваша текущая валюта — {currency}.\nВыберите ввлюту:",
+            "ru": "Ваша текущая валюта — {currency}.\nВыберите валюту:",
             "en": "Your current currency is {currency}.\nSelect a currency:"
         }
         
@@ -284,6 +289,11 @@ class ProfileTranslates(Translatable):
         currency_changed = { # currency = [рубль, доллар, ruble, dollar]
             "ru": "Вы успешно изменили валюту на {currency}.",
             "en": "You have successfully changed the currency to {currency}."
+        }
+        
+        nothing_changed = {
+            "ru": "Вы успешно ничего не изменили.",
+            "en": "You have successfully changed absolutely nothing."
         }
         
     class Delivery(Translatable):

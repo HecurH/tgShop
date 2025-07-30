@@ -1,6 +1,6 @@
 import asyncio
 from aiogram.fsm.state import StatesGroup, State
-from typing import Callable, Dict, Any, Awaitable
+from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from src.classes.helper_classes import Context
 from src.classes.message_tools import clear_keyboard_effect, send_media_response
@@ -38,7 +38,7 @@ state_handlers = StateHandlerRegistry()
 async def call_state_handler(state: State,
                              ctx: Context,
                              change_state = True,
-                             send_before: str = None,
+                             send_before: Union[str, Tuple[str, float], None] = None,
                              **kwargs
                              ) -> None:
     """
@@ -52,9 +52,13 @@ async def call_state_handler(state: State,
 
     try:
         if send_before:
-            await ctx.message.answer(
-                send_before
-            )
+            if isinstance(send_before, str):
+                await ctx.message.answer(send_before)
+            elif isinstance(send_before, tuple):
+                text, sleep_time = send_before
+                
+                await ctx.message.answer(text)
+                await asyncio.sleep(sleep_time)
             
         await handler(ctx=ctx, **kwargs)
 
@@ -101,8 +105,13 @@ class Assortment(StatesGroup):
 
 @state_handlers.register(Assortment.Menu)
 async def assortment_menu_handler(ctx: Context, **_):
+    
+    categories = await ctx.db.categories.get_all()
+    if not categories:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before="Err: There's no categroies!")
+        return
     await ctx.message.answer(AssortmentTranslates.translate("choose_the_category", ctx.lang),
-                             reply_markup=await AssortmentKBs.assortment_menu(ctx.db, ctx.lang))
+                             reply_markup=AssortmentKBs.assortment_menu(categories, ctx.lang))
 
 @state_handlers.register(Assortment.ViewingAssortment)
 async def viewing_assortment_handler(ctx: Context,

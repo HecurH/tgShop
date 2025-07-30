@@ -586,26 +586,40 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
 
 
     await ctx.db.delivery_services.save(service)
-    await ctx.db.delivery_services.save(cdek)
+    # await ctx.db.delivery_services.save(cdek)
     await ctx.db.delivery_services.save(boxberry)
     await ctx.db.delivery_services.save(ya_delivery)
     # await ctx.db.delivery_services.save(ozon_delivery)
 
-@router.message(Command("get"))
-async def getto(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
+@router.message(Command("add_additionals"))
+async def add_additionals_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
     additional = ProductAdditional(
         name=LocalizedString(data={
             "ru":"Страпон",
-            "en":"Strap onchik"}
+            "en":"DB PLACEHOLDER"}
         ),
         category="dildos",
         short_description=LocalizedString(data={
-            "ru":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да",
-            "en":"Ну там эта кароче хуйня чтобы надеть на пояс и ебать ок да"}
+            "ru":"DB PLACEHOLDER",
+            "en":"DB PLACEHOLDER"}
+        ),
+        price=LocalizedPrice(data={"RUB": 400, "USD": 10}),
+        disallowed_products=[]
+    )
+    await db.additionals.save(additional)
+    
+    additional = ProductAdditional(
+        name=LocalizedString(data={
+            "ru":"Стержень",
+            "en":"Стержень"}
+        ),
+        category="dildos",
+        short_description=LocalizedString(data={
+            "ru":"DB PLACEHOLDER",
+            "en":"DB PLACEHOLDER"}
         ),
         price=LocalizedPrice(data={"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
     await db.additionals.save(additional)
 
-    print(await db.additionals.get("dildos", PydanticObjectId("681fc67be2f9eecf62c8a750")))

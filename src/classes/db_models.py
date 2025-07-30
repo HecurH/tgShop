@@ -459,7 +459,6 @@ class ProductsRepository(AppAbstractRepository[Product]):
     
     async def count_in_category(self, category) -> int:
         return await self.get_collection().count_documents({"category": category})
-        
 
 class ProductAdditional(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -493,11 +492,6 @@ class Promocode(BaseModel):
 
     expire_date: datetime.datetime
 
-
-    # # Метод для получения связанного документа
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
-
 class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
         collection_name = 'promocodes'
@@ -507,11 +501,6 @@ class Inviter(BaseModel):
     inviter_code: str
 
     name: str
-
-
-    # # Метод для получения связанного документа
-    # def get_updateable(self, db: "DB") -> Updateable:
-    #     return db.get_updateable(self.updateable_id)
 
 class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:

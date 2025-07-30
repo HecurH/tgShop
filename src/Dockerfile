@@ -5,4 +5,4 @@ WORKDIR /src/
 COPY requirements.txt .
 
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --no-warn-script-location -r requirements.txt

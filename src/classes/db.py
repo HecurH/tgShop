@@ -18,7 +18,7 @@ class DatabaseService:
 
 
     def __init__(self, db_name="Shop"):
-        self.client = AsyncMongoClient(getenv("MONGO_URI"))
+        self.client = AsyncMongoClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 

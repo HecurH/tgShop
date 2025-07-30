@@ -53,9 +53,9 @@ class CommonKBs:
 class AssortmentKBs:
 
     @staticmethod
-    async def assortment_menu(db: DatabaseService, lang: str) -> types.ReplyKeyboardMarkup:
+    def assortment_menu(categories: Iterable[Category], lang: str) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
-        for category in await db.categories.get_all():
+        for category in categories:
 
             builder.add(types.KeyboardButton(text=category.localized_name.data[lang]))
 

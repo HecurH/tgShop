@@ -3,6 +3,7 @@ import logging
 import shutil
 import sys
 from os import getenv
+import os
 from colorlog import ColoredFormatter
 
 from aiogram import Bot, Dispatcher, F
@@ -22,8 +23,8 @@ from src.classes import middlewares
 TOKEN = getenv("BOT_TOKEN")
 
 # All handlers should be attached to the Router (or Dispatcher)
-
-dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
+print(os.getcwd())
+dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())

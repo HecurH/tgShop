@@ -18,7 +18,7 @@ router = Router(name="common")
 @router.message(CommandStart(deep_link=True))
 async def command_start_handler(_, ctx: Context, command: CommandObject) -> None:
     await ctx.fsm.clear()
-    print(ctx.message.from_user.language_code)
+    # print(ctx.message.from_user.language_code)
 
     user = await ctx.db.customers.get_customer_by_id(ctx.message.from_user.id)
     if not user:

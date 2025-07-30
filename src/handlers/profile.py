@@ -3,7 +3,7 @@ from aiogram import Router
 from src.classes.db_models import DeliveryInfo, DeliveryRequirement, DeliveryService
 from src.classes.config import SUPPORTED_LANGUAGES_TEXT
 from src.classes.helper_classes import Context
-from src.classes.states import CommonStates, Profile, call_state_handler
+from src.classes.states import Cart, CommonStates, Profile, call_state_handler
 from src.classes.translates import *
 
 router = Router(name="profile")
@@ -86,6 +86,11 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         return
     
     if ctx.message.text in SUPPORTED_LANGUAGES_TEXT.keys():
+        iso_code = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
+        if ctx.lang == iso_code:
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=ProfileTranslates.Settings.translate("nothing_changed", ctx.lang))
+            return
+        
         ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         await ctx.db.update(ctx.customer)
@@ -103,7 +108,12 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         return
     
     if ctx.message.text in UncategorizedTranslates.Currencies.get_all_attributes(ctx.lang):
-        ctx.customer.currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
+        currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
+        if ctx.customer.currency == currency:
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=ProfileTranslates.Settings.translate("nothing_changed", ctx.lang))
+            return
+        
+        ctx.customer.currency = currency
         await ctx.db.update(ctx.customer)
         
         text = ProfileTranslates.Settings.translate("currency_changed", ctx.lang).format(currency=ctx.message.text)
@@ -235,6 +245,12 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
         await ctx.db.customers.save(ctx.customer)
         
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
+        
+        if await ctx.fsm.get_value("back_to_cart_after_delivery"):
+            await ctx.fsm.update_data(back_to_cart_after_delivery=None)
+            await call_state_handler(Cart.Menu, ctx, current=await ctx.fsm.get_value("current") or 1)
+            return
+        
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return
         
@@ -243,7 +259,6 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
     await ctx.fsm.update_data(requirement_index=requirement_index+1)
     await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
     
-
 @router.message(Profile.Delivery.DeleteConfimation)
 async def delete_confimation_handler(_, ctx: Context) -> None:
 
