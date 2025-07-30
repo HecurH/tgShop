@@ -1,5 +1,5 @@
 from typing import Optional
-from aiogram.types import PreCheckoutQuery, Message, LabeledPrice, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove, \
+from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
 

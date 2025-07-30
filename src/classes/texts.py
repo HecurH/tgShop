@@ -104,7 +104,7 @@ class AssortmentTextGen:
             if chosen.custom_input_text
             else content
         )
-        content = f"{content}\n\n{AssortmentTranslates.translate("enter_custom", lang)}"
+        content = f"{content}\n\n{AssortmentTranslates.translate('enter_custom', lang)}"
 
         return content
     
