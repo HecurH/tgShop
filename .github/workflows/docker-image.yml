@@ -23,5 +23,4 @@ jobs:
             cd /opt/mapp
             git pull origin main
             docker-compose down
-            docker-compose build
-            docker-compose up -d
+            docker-compose up -d --force-recreate
