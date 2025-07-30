@@ -9,4 +9,4 @@ ENV LANG=C.UTF-8 \
 COPY requirements.txt .
 
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir --no-warn-script-location --root-user-action -r requirements.txt
+    && pip install --no-cache-dir --no-warn-script-location --root-user-action ignore -r requirements.txt
