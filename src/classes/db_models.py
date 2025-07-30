@@ -614,7 +614,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
 
-    def __init__(self, database: DatabaseService):
+    def __init__(self, database: "DatabaseService"):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
@@ -639,7 +639,7 @@ class CategoriesRepository(AppAbstractRepository[Category]):
     class Meta:
         collection_name = 'categories'
 
-    def __init__(self, database: DatabaseService):
+    def __init__(self, database: "DatabaseService"):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
