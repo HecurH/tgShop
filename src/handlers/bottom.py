@@ -6,7 +6,7 @@ from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
 from core.helper_classes import Context
 from core.db import *
 from core.middlewares import ContextMiddleware
-from src.handlers.common import command_start_handler
+from handlers.common import command_start_handler
 
 router = Router(name="bottom")
 

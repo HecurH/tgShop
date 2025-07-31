@@ -23,4 +23,4 @@ jobs:
             cd /opt/mapp
             git pull origin main
             docker compose down
-            docker compose up -d --force-recreate
+            docker compose up -d --force-recreate --remove-orphans

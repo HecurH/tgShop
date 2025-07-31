@@ -8,7 +8,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
 from core.helper_classes import Cryptography
-from src.configs.supported import SUPPORTED_CURRENCIES
+from configs.supported import SUPPORTED_CURRENCIES
 
 if TYPE_CHECKING:
     from core.db import DatabaseService

@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import CallbackQuery
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
-from src.configs.supported import SUPPORTED_LANGUAGES_TEXT
+from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.db import *
 from core.helper_classes import Context
 from ui.keyboards import CommonKBs

@@ -1,7 +1,7 @@
 from typing import Iterable
 from aiogram import Router
 from schemas.db_models import DeliveryInfo, DeliveryRequirement, DeliveryService
-from src.configs.supported import SUPPORTED_LANGUAGES_TEXT
+from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
 from ui.translates import *
