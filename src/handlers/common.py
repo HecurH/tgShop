@@ -3,12 +3,12 @@ from aiogram.filters import CommandStart, CommandObject, Command
 from aiogram.types import CallbackQuery
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
-from classes.config import SUPPORTED_LANGUAGES_TEXT
-from src.classes.db import *
-from src.classes.helper_classes import Context
-from src.classes.keyboards import CommonKBs
-from src.classes.states import CommonStates, NewUserStates, call_state_handler
-from src.classes.translates import CommonTranslates, ReplyButtonsTranslates
+from src.configs.supported import SUPPORTED_LANGUAGES_TEXT
+from core.db import *
+from core.helper_classes import Context
+from ui.keyboards import CommonKBs
+from core.states import CommonStates, NewUserStates, call_state_handler
+from ui.translates import CommonTranslates, ReplyButtonsTranslates
 
 router = Router(name="common")
 

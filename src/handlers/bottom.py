@@ -3,9 +3,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router
 from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
-from src.classes.helper_classes import Context
-from src.classes.db import *
-from src.classes.middlewares import ContextMiddleware
+from core.helper_classes import Context
+from core.db import *
+from core.middlewares import ContextMiddleware
 from src.handlers.common import command_start_handler
 
 router = Router(name="bottom")

@@ -1,12 +1,12 @@
 from typing import Any
-
+import time
 from aiogram import BaseMiddleware
 from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
-from src.classes.db import DatabaseService
-from src.classes.helper_classes import Context
-from src.classes.states import NewUserStates
+from core.db import DatabaseService
+from core.helper_classes import Context
+from core.states import NewUserStates
 
 
 class ContextMiddleware(BaseMiddleware):
@@ -17,19 +17,19 @@ class ContextMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         if not self.initialized:
             await self.db.create_indexes()
-            await self.db.currency_converter.init_session()
+            # await self.db.currency_converter.init_session()
             self.initialized = True
 
         user_id = data["event_from_user"].id
 
         customer = await self.db.customers.get_customer_by_id(user_id)
 
-        ### remove when redo funcs that depends
-        data["lang"] = customer.lang if customer and customer.lang else "?"
-
-        data["middleware"] = self
-        data["db"] = self.db
-        ### remove when redo funcs that depends
+        ### remove when redo funcs that depends                              |
+        data["lang"] = customer.lang if customer and customer.lang else "?"# |
+        ###                                                                  |
+        data["middleware"] = self #                                          |
+        data["db"] = self.db #                                               |
+        ### remove when redo funcs that depends                              |
 
         data["ctx"] = Context(event.message or event.callback_query,
                               data.get("state"),
@@ -42,9 +42,6 @@ class ContextMiddleware(BaseMiddleware):
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
         return await handler(event, data)
-
-
-import time
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
@@ -87,13 +84,11 @@ class RoleCheckMiddleware(BaseMiddleware):
         self.allowed = allowed
 
     async def __call__(self, handler, event, data):
-        db: DatabaseService = data["db"]
-        user = await db.customers.get_customer_by_id(data["event_from_user"].id)
+        ctx: Context = data["ctx"]
 
-
-        if (not db or
-                not user or
-                ((user.role != self.allowed) if isinstance(self.allowed, str) else (user.role in self.allowed))):
+        if (not ctx or
+                not ctx.customer or
+                ((ctx.customer.role != self.allowed) if isinstance(self.allowed, str) else (ctx.customer.role in self.allowed))):
 
             return
 

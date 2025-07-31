@@ -1,10 +1,10 @@
 from typing import Iterable
 from aiogram import Router
-from src.classes.db_models import DeliveryInfo, DeliveryRequirement, DeliveryService
-from src.classes.config import SUPPORTED_LANGUAGES_TEXT
-from src.classes.helper_classes import Context
-from src.classes.states import Cart, CommonStates, Profile, call_state_handler
-from src.classes.translates import *
+from schemas.db_models import DeliveryInfo, DeliveryRequirement, DeliveryService
+from src.configs.supported import SUPPORTED_LANGUAGES_TEXT
+from core.helper_classes import Context
+from core.states import Cart, CommonStates, Profile, call_state_handler
+from ui.translates import *
 
 router = Router(name="profile")
 

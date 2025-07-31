@@ -1,6 +1,6 @@
 services:
-  tg_bot:
-    container_name: tg_bot_container
+  gss_bot:
+    container_name: gss_container
     build: ./src
     restart: unless-stopped
     network_mode: host
@@ -9,5 +9,6 @@ services:
     volumes:
       - ./src/:/src/
       - ./ssl/:/ssl/
+      - ./logs/:/gss_logs/
     env_file:
       - .env

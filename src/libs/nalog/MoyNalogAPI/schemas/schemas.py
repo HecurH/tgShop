@@ -18,7 +18,6 @@ class Service(BaseModel):
     amount : float
     quantity : int
 
-
 class Client(BaseModel):
     """
     Модель клиента.
@@ -33,7 +32,6 @@ class Client(BaseModel):
     displayName : str = Field(default=None)
     inn : str = Field(default=None)
     incomeType : str = Field(default="FROM_INDIVIDUAL")
-
 
 class ProfileStorage(BaseModel):
     """
@@ -52,41 +50,43 @@ class ProfileStorage(BaseModel):
     sourceDeviceId: str
     profile: dict
 
+    def get_auth_headers(self) -> dict:
+        return {"Authorization": f"Bearer {self.token}"}
+
     @classmethod
-    def get(cls):
+    def get(cls, storage_path: str):
         """
         Метод для получения экземпляра класса ProfileStorage из файла конфигурации.
 
         :return: экземпляр класса ProfileStorage
         :raises FileNotFoundError: если файл конфигурации не найден
         """
-        profile_path = 'profile.json'
+        profile_path = os.path.join(storage_path, 'profile.json')
 
         if not os.path.exists(profile_path):
             raise FileNotFoundError(
                 "Файл конфигурации не найден. Выполните авторизацию."
             )
-
         with open(profile_path, 'r') as f:
             data = json.loads(f.read())
             return cls.model_validate(data)
 
-    def save(self):
+    def save(self, storage_path: str):
         """
         Метод для сохранения экземпляра класса ProfileStorage в файл конфигурации.
         Создаёт директорию ~/.moy-nalog если она не существует.
 
         :return: None
         """
-        profile_path = 'profile.json'
+        profile_path = os.path.join(storage_path, 'profile.json')
 
         with open(profile_path, 'w') as f:
             try:
                 # Пробуем использовать model_dump() (Pydantic v2)
-                f.write(json.dumps(self.model_dump()))
+                f.write(json.dumps(self.model_dump(), default=str))
             except AttributeError:
                 # Запасной вариант для Pydantic v1
-                f.write(json.dumps(self.dict()))
+                f.write(json.dumps(self.dict(), default=str))
 
 
 class CancellationInfo(BaseModel):
@@ -207,8 +207,8 @@ class UserProfile(BaseModel):
     avatarExists: bool
     initialRegistrationDate: datetime
     registrationDate: datetime
-    firstReceiptRegisterTime: datetime
-    firstReceiptCancelTime: datetime
+    firstReceiptRegisterTime: Optional[datetime]
+    firstReceiptCancelTime: Optional[datetime]
     hideCancelledReceipt: bool
     registerAvailable: Optional[bool] = None
     status: str

@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
-from src.classes.helper_classes import Cryptography
-from src.classes.config import SUPPORTED_CURRENCIES
+from core.helper_classes import Cryptography
+from src.configs.supported import SUPPORTED_CURRENCIES
 
 if TYPE_CHECKING:
-    from db import DatabaseService
+    from core.db import DatabaseService
 
 T = TypeVar("T")
 

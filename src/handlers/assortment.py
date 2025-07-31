@@ -3,11 +3,11 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, LabeledPrice, CallbackQuery
 
-from classes.texts import AssortmentTextGen
-from src.classes.helper_classes import Context
-from src.classes.db_models import Product, ConfigurationOption, ConfigurationChoice, ConfigurationSwitches
-from src.classes.states import Assortment, CommonStates, call_state_handler
-from src.classes.translates import *
+from ui.texts import AssortmentTextGen
+from core.helper_classes import Context
+from schemas.db_models import Product, ConfigurationOption, ConfigurationChoice, ConfigurationSwitches
+from core.states import Assortment, CommonStates, call_state_handler
+from ui.translates import *
 
 router = Router(name="assortment")
 

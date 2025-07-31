@@ -4,8 +4,8 @@ from typing import Type, TypeVar, Union
 import pymongo
 from pymongo import AsyncMongoClient
 
-from src.classes.db_models import *
-from src.classes.helper_classes import AsyncCurrencyConverter
+from schemas.db_models import *
+from core.helper_classes import AsyncCurrencyConverter
 
 T = TypeVar("T", bound="MongoModel")
 

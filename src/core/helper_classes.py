@@ -1,26 +1,22 @@
 import asyncio
 import time
-import logging
 import os
-import base64
 from os import getenv
 from dataclasses import dataclass
-from typing import Union, TYPE_CHECKING
-
+from typing import Union
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding, hashes, hmac
+from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 import aiohttp
 
-from src.classes.config import SUPPORTED_CURRENCIES
-from src.classes.db_models import *
+from schemas.db_models import *
 
 if TYPE_CHECKING:
-    from db import DatabaseService
+    from core.db import DatabaseService
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -90,10 +86,11 @@ class AsyncCurrencyConverter:
         self._cache: dict = {}  # {валюта: курсы}
         self._last_update: float = 0
         self._lock = asyncio.Lock()  # Одна блокировка для всего кэша
-        
         self._logger = logging.getLogger(__name__)
+
+        # self.init_session()
         
-    async def init_session(self):
+    def init_session(self):
         if self._session is None:
             self._session = aiohttp.ClientSession()
             self._logger.debug("CurrencyConverter aiohttp session created.")
@@ -113,7 +110,7 @@ class AsyncCurrencyConverter:
             RuntimeError: Если возникает ошибка при получении или обработке данных от API.
             Exception: Для неожиданных ошибок во время обновления курсов.
         """
-        await self.init_session()
+        self.init_session()
 
         all_rates = {}
         for currency in SUPPORTED_CURRENCIES.keys():

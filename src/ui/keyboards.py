@@ -1,10 +1,10 @@
 from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
-from src.classes.db_models import *
-from src.classes.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
+from schemas.db_models import *
+from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
-from src.classes.config import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
+from src.configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
 
 class CommonKBs:
 

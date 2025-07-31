@@ -157,3 +157,4 @@ cython_debug/
 /logs/
 *.pem
 profile.json
+src/libs/nalog/test.py

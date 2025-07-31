@@ -3,7 +3,7 @@ import random
 import requests
 import json
 
-from MoyNalogPy.schemas import ProfileStorage
+from MoyNalogAPI.schemas import ProfileStorage
 
 
 def generate_device_id(length=16):
@@ -58,7 +58,7 @@ def authenticate():
 
         ds = ProfileStorage(**data)
 
-        with open('profile.json', 'w') as f:
+        with open('../configs/profile.json', 'w') as f:
             try:
                 # Пробуем использовать model_dump() (Pydantic v2)
                 f.write(json.dumps(ds.model_dump()))

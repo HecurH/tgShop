@@ -4,9 +4,9 @@ from aiogram import Router
 from aiogram.filters import CommandObject, Command
 from aiogram.types import Message, BufferedInputFile
 
-from src.classes.db import *
-from src.classes.helper_classes import Context
-from src.classes.middlewares import RoleCheckMiddleware
+from core.db import *
+from core.helper_classes import Context
+from core.middlewares import RoleCheckMiddleware
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")

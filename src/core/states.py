@@ -2,11 +2,11 @@ import asyncio
 from aiogram.fsm.state import StatesGroup, State
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
-from src.classes.helper_classes import Context
-from src.classes.message_tools import clear_keyboard_effect, send_media_response
-from src.classes.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
-from src.classes.keyboards import *
-from src.classes.translates import AssortmentTranslates, CartTranslates, CommonTranslates, ProfileTranslates
+from core.helper_classes import Context
+from ui.message_tools import clear_keyboard_effect, send_media_response
+from ui.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
+from ui.keyboards import *
+from ui.translates import AssortmentTranslates, CartTranslates, CommonTranslates, ProfileTranslates
 
 
 class StateHandlerRegistry:

@@ -1,7 +1,7 @@
 from aiogram import html
 
-from src.classes.db_models import *
-from src.classes.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
+from schemas.db_models import *
+from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
 
 
 def gen_product_configurable_info_text(configuration, lang, customer):

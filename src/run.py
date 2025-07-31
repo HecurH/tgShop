@@ -16,8 +16,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from src.handlers import profile, admin, bottom, cart, common, assortment
-from src.classes import middlewares
+from handlers import profile, admin, bottom, cart, common, assortment
+from core import middlewares
 
 # Bot token can be obtained via https://t.me/BotFather
 TOKEN = getenv("BOT_TOKEN")
@@ -63,14 +63,13 @@ class AlignedFormatter(ColoredFormatter):
         ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
         return ansi_escape.sub('', text)
 
-
 formatter = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
 stream = logging.StreamHandler()
 stream.setFormatter(formatter)
 
 from logging.handlers import TimedRotatingFileHandler
 
-logs_dir = Path("logs")
+logs_dir = Path("/gss_logs/")
 logs_dir.mkdir(exist_ok=True)
 
 # TimedRotatingFileHandler будет создавать новый файл каждый день
