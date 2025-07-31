@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import time
 import os
 from os import getenv
