@@ -10,9 +10,6 @@ jobs:
     environment: deploy
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
