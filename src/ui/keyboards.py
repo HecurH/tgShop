@@ -2,6 +2,7 @@ from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from schemas.db_models import *
+from schemas.types import LocalizedPrice
 from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
@@ -56,7 +57,7 @@ class AssortmentKBs:
         builder = ReplyKeyboardBuilder()
         for category in categories:
 
-            builder.add(types.KeyboardButton(text=category.localized_name.data[lang]))
+            builder.add(types.KeyboardButton(text=category.localized_name.get(lang)))
 
         builder.adjust(2)
         builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]]))
@@ -112,7 +113,7 @@ class AssortmentKBs:
         for option in options.values():
             builder.add(
                 types.KeyboardButton(
-                    text=option.name.data[lang]
+                    text=option.name.get(lang)
                 )
             )
         builder.adjust(2)
@@ -153,7 +154,7 @@ class AssortmentKBs:
             is_blocked = choice.check_blocked_all(product.configuration.options) if isinstance(choice, ConfigurationChoice) else False
             def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"
 
-            label = f"{strike(choice.label.data[lang] + price_text)} 🔒" if is_blocked else f"{choice.label.data[lang]}{price_text}"
+            label = f"{strike(choice.label.get(lang) + price_text)} 🔒" if is_blocked else f"{choice.label.get(lang)}{price_text}"
             builder.add(types.KeyboardButton(text=f">{label}<"
                                             if option.get_chosen().label == choice.label
                                             else label))
@@ -175,7 +176,7 @@ class AssortmentKBs:
         builder = ReplyKeyboardBuilder()
 
         for switch in switches.switches:
-            label = switch.name.data[lang]
+            label = switch.name.get(lang)
             builder.add(types.KeyboardButton(text=f"{label} ✅"
                                             if switch.enabled
                                             else label))
@@ -196,7 +197,7 @@ class AssortmentKBs:
         builder = ReplyKeyboardBuilder()
 
         for additional in available_additionals:
-            label = additional.name.data[lang]
+            label = additional.name.get(lang)
             builder.add(types.KeyboardButton(text=f"{label} ✅"
                                             if additional in additionals
                                             else label))
@@ -330,10 +331,10 @@ class ProfileKBs:
                 keyboard = [
                     [
                         types.KeyboardButton(text=foreign_text),
-                        types.KeyboardButton(text=delivery_info.service.name.data[lang])
+                        types.KeyboardButton(text=delivery_info.service.name.get(lang))
                     ],
                     [
-                        types.KeyboardButton(text=delivery_info.service.selected_option.name.data[lang]),
+                        types.KeyboardButton(text=delivery_info.service.selected_option.name.get(lang)),
                         types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Delivery.Edit.translate("change_data", lang))
                     ],
                     [
@@ -397,7 +398,7 @@ class ProfileKBs:
                 builder = ReplyKeyboardBuilder()
             
                 for service in services:
-                    builder.add(types.KeyboardButton(text=f"{service.name.data[lang]} ({service.price.data[customer.currency]}{customer.get_selected_currency_symbol()})"))
+                    builder.add(types.KeyboardButton(text=f"{service.name.get(lang)} ({service.price.data[customer.currency]}{customer.get_selected_currency_symbol()})"))
 
                 builder.adjust(2)
                 
@@ -420,7 +421,7 @@ class ProfileKBs:
                 builder = ReplyKeyboardBuilder()
             
                 for lst in lists:
-                    builder.add(types.KeyboardButton(text=lst.name.data[lang]))
+                    builder.add(types.KeyboardButton(text=lst.name.get(lang)))
 
                 builder.adjust(2)
                 

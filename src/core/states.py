@@ -378,7 +378,7 @@ async def delivery_edit_requirement_handler(ctx: Context, **_):
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("requirement_value_text", ctx.lang).format(name=requirement.name.data[ctx.lang], description=requirement.description.data[ctx.lang]),
+        ProfileTranslates.Delivery.translate("requirement_value_text", ctx.lang).format(name=requirement.name.get(ctx.lang), description=requirement.description.data.get(ctx.lang)),
         reply_markup=ProfileKBs.Delivery.Editables.requirement(
             first_setup, ctx.lang
         )

@@ -24,7 +24,7 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
 
     category = next(
         (category.name for category in await ctx.db.categories.get_all()
-         if category.localized_name.data[ctx.lang] == message.text),
+         if category.localized_name.get(ctx.lang) == message.text),
         None  # значение по умолчанию, если ничего не найдено
     )
 
@@ -230,7 +230,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
-        key = option.get_key_by_label(switches.label.data[ctx.lang], ctx.lang)
+        key = option.get_key_by_label(switches.label.data.get(ctx.lang), ctx.lang)
         option.choices[key] = switches
         
         product.configuration.update_price()

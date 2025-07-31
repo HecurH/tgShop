@@ -58,11 +58,11 @@ async def delivery_command_handler(_, ctx: Context) -> None:
     if text.split()[0] == ReplyButtonsTranslates.Profile.Delivery.Edit.translate("foreign", ctx.lang):
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
-    elif text == delivery_info.service.name.data[ctx.lang]:
+    elif text == delivery_info.service.name.get(ctx.lang):
         await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
         await call_state_handler(Profile.Delivery.Editables.Service, ctx)
         return
-    elif text == delivery_info.service.selected_option.name.data[ctx.lang]:
+    elif text == delivery_info.service.selected_option.name.get(ctx.lang):
         await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
         await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
         return
@@ -170,7 +170,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
 
     services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
     service_name = ctx.message.text.rsplit(" ", 1)[0]
-    service = next((ser for ser in services if ser.name.data[ctx.lang] == service_name), None)
+    service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     
     if service is None:
         await call_state_handler(Profile.Delivery.Editables.Service, ctx)
@@ -201,7 +201,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
         return
 
     lists = delivery_info.service.requirements_options
-    req_list = next((lst for lst in lists if lst.name.data[ctx.lang] == ctx.message.text), None)
+    req_list = next((lst for lst in lists if lst.name.get(ctx.lang) == ctx.message.text), None)
     
     if req_list is None:
         await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)

@@ -1,4 +1,3 @@
-import base64
 import datetime
 import logging
 from typing import Any, Dict, TypeVar, Optional, List, Iterable, TYPE_CHECKING
@@ -7,8 +6,8 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
-from core.helper_classes import Cryptography
 from configs.supported import SUPPORTED_CURRENCIES
+from schemas.types import LocalizedPrice, LocalizedString, SecureValue
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -20,82 +19,6 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         super().__init__(dbs.db)
         self.dbs = dbs
     
-class LocalizedString(BaseModel):
-    data: dict[str, str]
-
-class LocalizedPrice(BaseModel):
-    data: dict[str, float] = {}
-    
-    def to_text(self, currency: str) -> str:
-        return f"{self.data[currency]:.2f}{SUPPORTED_CURRENCIES.get(currency, currency)}"
-    
-    def __add__(self, other):
-        if not isinstance(other, LocalizedPrice):
-            return NotImplemented
-        # Складываем значения по ключам, если ключа нет — считаем 0
-        result = {cur: self.data.get(cur, 0) + other.data.get(cur, 0)
-                  for cur in set(self.data) | set(other.data)}
-        return LocalizedPrice(data=result)
-
-    def __iadd__(self, other):
-        if not isinstance(other, LocalizedPrice):
-            return NotImplemented
-        for cur in set(self.data) | set(other.data):
-            self.data[cur] = self.data.get(cur, 0) + other.data.get(cur, 0)
-        return self
-    
-    def __radd__(self, other):
-        if other == 0:
-            return LocalizedPrice(data=self.data.copy())
-        return self.__add__(other)
-    
-    
-    def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return LocalizedPrice(data={cur: val * other for cur, val in self.data.items()})
-        if isinstance(other, LocalizedPrice):
-            # Поэлементное умножение по ключам
-            result = {cur: self.data.get(cur, 0) * other.data.get(cur, 0)
-                      for cur in set(self.data) | set(other.data)}
-            return LocalizedPrice(data=result)
-        return NotImplemented
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-    def __imul__(self, other):
-        if isinstance(other, (int, float)):
-            for cur in self.data:
-                self.data[cur] *= other
-            return self
-        if isinstance(other, LocalizedPrice):
-            for cur in set(self.data) | set(other.data):
-                self.data[cur] = self.data.get(cur, 0) * other.data.get(cur, 0)
-            return self
-        return NotImplemented
-
-class SecureValue(BaseModel):
-    iv: str = ""
-    ciphertext: str = ""
-    tag: str = ""
-
-    def get(self) -> Optional[str]:
-        """Дешифрует и возвращает строковое значение."""
-        if not self.iv or not self.ciphertext or not self.tag:
-            return None
-        return Cryptography.decrypt_data(
-            base64.b64decode(self.iv),
-            base64.b64decode(self.ciphertext),
-            base64.b64decode(self.tag)
-        )
-
-    def update(self, text: str):
-        """Шифрует строку и сохраняет результат в поля."""
-        iv, ciphertext, tag = Cryptography.encrypt_data(text)
-        self.iv = base64.b64encode(iv).decode()
-        self.ciphertext = base64.b64encode(ciphertext).decode()
-        self.tag = base64.b64encode(tag).decode()
-
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
@@ -207,7 +130,7 @@ class ConfigurationSwitches(BaseModel):
     
     def toggle_by_localized_name(self, name, lang):
         for switch in self.switches:
-            if switch.name.data[lang] == name:
+            if switch.name.get(lang) == name:
                 switch.enabled = not switch.enabled
                 break 
 
@@ -264,7 +187,7 @@ class ConfigurationChoice(BaseModel):
         if option.choices.get(last_key) == chosen and len(opt_keys) == 1:
             return True
         if isinstance(chosen, ConfigurationSwitches) and len(opt_keys) > 1:
-            enabled_names = [sw.name.data["en"] for sw in chosen.get_enabled()]
+            enabled_names = [sw.name.get("en") for sw in chosen.get_enabled()]
             if opt_keys[1] in enabled_names:
                 return True
         return False
@@ -286,12 +209,12 @@ class ConfigurationOption(BaseModel):
     
     def get_key_by_label(self, label: str, lang: str) -> Optional[str]:
         for key, choice in self.choices.items():
-            if hasattr(choice, "label") and choice.label.data[lang] == label:
+            if hasattr(choice, "label") and choice.label.get(lang) == label:
                 return key
     
     def get_by_label(self, label: str, lang: str) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
         for choice in self.choices.values():
-            if hasattr(choice, "label") and choice.label.data[lang] == label:
+            if hasattr(choice, "label") and choice.label.get(lang) == label:
                 return choice
 
     def calculate_price(self):
@@ -359,11 +282,11 @@ class ProductConfiguration(BaseModel):
         self.additionals = [add for add in self.additionals if add.id in base_additional_ids]
 
     def get_all_options_localized_names(self, lang):
-        return [option.name.data[lang] for option in self.options.values()]
+        return [option.name.get(lang) for option in self.options.values()]
     
     def get_option_by_name(self, name, lang):
         return next((key, option) for key, option in self.options.items()
-                    if option.name.data[lang] == name)
+                    if option.name.get(lang) == name)
         
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
@@ -478,7 +401,7 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
         return await self.find_by({"category": product.category, "disallowed_products": {"$nin": [str(product.id)]}})
     
     def get_by_name(self, name, allowed_additionals, lang):
-        return next((a for a in allowed_additionals if a.name.data[lang] == name), None)
+        return next((a for a in allowed_additionals if a.name.get(lang) == name), None)
 
 class Promocode(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -609,7 +532,6 @@ class Customer(BaseModel):
         )
         return await db.insert(new_entry)
 
-
 class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
@@ -628,12 +550,10 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         except PyMongoError as e:
             handle_error(self.logger, e)
 
-
 class Category(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: str
     localized_name: LocalizedString
-
 
 class CategoriesRepository(AppAbstractRepository[Category]):
     class Meta:
@@ -643,7 +563,6 @@ class CategoriesRepository(AppAbstractRepository[Category]):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
-
     async def get_all(self) -> Optional[Iterable[Category]]:
         try:
             doc = await self.find_by({})
@@ -652,4 +571,4 @@ class CategoriesRepository(AppAbstractRepository[Category]):
             handle_error(self.logger, e)
 
 def handle_error(logger, error: PyMongoError):
-    logger.error(f"Database error: {error}")
+    logger.error(f"Database error: {error}") 

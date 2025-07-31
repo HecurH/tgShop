@@ -7,6 +7,7 @@ from aiogram.types import Message, BufferedInputFile
 from core.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
+from schemas.types import LocalizedPrice, LocalizedString
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
