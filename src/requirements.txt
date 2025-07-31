@@ -7,3 +7,4 @@ pydantic==2.11.4
 pydantic-mongo==3.1.0
 motor==3.7.0
 cachetools==5.5.2
+-e libs/nalog
