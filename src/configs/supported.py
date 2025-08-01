@@ -1,5 +1,6 @@
 
-from schemas.types import LocalizedString, PaymentMethodsRepository, PaymentMethod
+from schemas.payment_models import PaymentMethod, PaymentMethodsRepository
+from schemas.types import LocalizedString
 
 
 SUPPORTED_CURRENCIES = {
