@@ -61,11 +61,16 @@ class LocalizedMoney(BaseModel):
         else:
             return f"0.00{SUPPORTED_CURRENCIES.get(currency, currency)}"
 
-    def __add__(self, other: "LocalizedMoney") -> "LocalizedMoney":
-        result = self.data.copy()
-        for cur, money in other.data.items():
-            result[cur] = result[cur] + money if cur in result else money
+    def __add__(self, other):
+        if not isinstance(other, LocalizedMoney):
+            return NotImplemented
+        result = {
+            cur: self.data.get(cur, Money(currency=cur, amount=0.0)).amount +
+                other.data.get(cur, Money(currency=cur, amount=0.0)).amount
+            for cur in set(self.data) | set(other.data)
+        }
         return LocalizedMoney.from_dict(result)
+
 
     def __iadd__(self, other: "LocalizedMoney") -> "LocalizedMoney":
         for cur, money in other.data.items():
