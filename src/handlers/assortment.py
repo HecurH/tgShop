@@ -122,7 +122,7 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
         await ctx.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
                                 ctx,
-                                send_before=AssortmentTranslates.translate("add_to_cart_finished", ctx.lang))
+                                send_before=(AssortmentTranslates.translate("add_to_cart_finished", ctx.lang), 1))
         
     elif text == "+":
         allowed_additionals = await ctx.db.additionals.get(product)
