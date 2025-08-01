@@ -7,7 +7,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
 from configs.supported import SUPPORTED_CURRENCIES
-from schemas.types import LocalizedMoney, LocalizedString, SecureValue
+from schemas.types import LocalizedMoney, LocalizedString, Money, SecureValue
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -24,8 +24,7 @@ class Order(BaseModel):
     customer_id: PydanticObjectId
     promocodes: list[PydanticObjectId]
     
-    total_price: float
-    total_price_currency
+    total_price: Money
 
     async def add_promocode(self, promocode: "Promocode", db: "DatabaseService") -> Optional[bool]:
         user: "Customer" = await db.get_by_id(Customer, self.customer_id)
