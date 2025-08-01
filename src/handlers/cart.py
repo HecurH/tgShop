@@ -50,12 +50,15 @@ async def cart_viewer_handler(_, ctx: Context):
                                 ctx,
                                 current=current)
     elif text.rsplit(" ", 1)[0] == ReplyButtonsTranslates.Cart.translate("place", ctx.lang).format(price="").strip():
-       if not ctx.customer.delivery_info.service:
-           await ctx.fsm.update_data(back_to_cart_after_delivery=True)
-           await call_state_handler(Profile.Delivery.Menu,
-                                    ctx,
-                                    send_before=(CartTranslates.translate("delivery_not_configured", ctx.lang), 1))
-           return
+        if not ctx.customer.delivery_info.service:
+            await ctx.fsm.update_data(back_to_cart_after_delivery=True)
+            await call_state_handler(Profile.Delivery.Menu,
+                                     ctx,
+                                     send_before=(CartTranslates.translate("delivery_not_configured", ctx.lang), 1))
+            return
+        await call_state_handler(Cart.OrderConfigurationMenu,
+                                 ctx)
+
     else:
         await call_state_handler(Cart.Menu,
                                 ctx,

@@ -7,7 +7,7 @@ from aiogram.types import Message, BufferedInputFile
 from core.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
-from schemas.types import LocalizedPrice, LocalizedString
+from schemas.types import LocalizedMoney, LocalizedString
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -94,7 +94,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedPrice(data={"RUB":-1000.00, "USD":-30.00})
+                    price=LocalizedMoney.from_dict({"RUB":-1000.00, "USD":-30.00})
                 ),
                 "medium": ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
@@ -110,7 +110,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                         "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedPrice(data={"RUB":1000.00, "USD":30.00})
+                    price=LocalizedMoney.from_dict({"RUB":1000.00, "USD":30.00})
                 )
             }
         ),
@@ -207,7 +207,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
-                    price=LocalizedPrice(data={"RUB":500.00, "USD":10.00}),
+                    price=LocalizedMoney.from_dict({"RUB":500.00, "USD":10.00}),
 
                     description=LocalizedString(data={
                         "ru": "Выберите до трёх цветов для вихревой раскраски. Просто напишите, какие цвета хотите смешать. Если хотите шиммер, блёстки или люминофор — не забудьте выбрать их в разделе «Дополнительно».",
@@ -233,22 +233,22 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     switches=[
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Градиент", "en": "Gradient"}),
-                            price=LocalizedPrice(data={"RUB":100.00, "USD":6.00})
+                            price=LocalizedMoney.from_dict({"RUB":100.00, "USD":6.00})
 
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Блёстки", "en": "Glitter"}),
-                            price=LocalizedPrice(data={"RUB":100.00, "USD":6.00})
+                            price=LocalizedMoney.from_dict({"RUB":100.00, "USD":6.00})
 
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Шиммер", "en": "Shimmer"}),
-                            price=LocalizedPrice(data={"RUB": 100.00, "USD": 6.00})
+                            price=LocalizedMoney.from_dict({"RUB": 100.00, "USD": 6.00})
 
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Люминофор", "en": "Phosphor"}),
-                            price=LocalizedPrice(data={"RUB": 100.00, "USD": 6.00})
+                            price=LocalizedMoney.from_dict({"RUB": 100.00, "USD": 6.00})
 
                         )
                     ]
@@ -278,7 +278,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
             "en":"Hiden Dragon"}
         ),
         long_description_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
-        base_price=LocalizedPrice(data={
+        base_price=LocalizedMoney.from_dict({
             "RUB": 5000.00,
             "USD": 100.00
         }),
@@ -301,7 +301,7 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
             "ru":"Заглушка хд",
             "en":"Заглушка хд"}
         ),
-        price=LocalizedPrice(data={"RUB": 1000, "USD": 10})
+        price=LocalizedMoney.from_dict({"RUB": 1000, "USD": 10})
     )
 
     await db.additionals.save(additional)
@@ -538,7 +538,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
             "en":"Ozon Delivery"
             }
         ),
-        price=LocalizedPrice(data={
+        price=LocalizedMoney.from_dict({
             "RUB": 200,
             "USD": 3
             }
@@ -604,7 +604,7 @@ async def add_additionals_handler(message: Message, command: CommandObject, stat
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
-        price=LocalizedPrice(data={"RUB": 400, "USD": 10}),
+        price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
     await db.additionals.save(additional)
@@ -619,7 +619,7 @@ async def add_additionals_handler(message: Message, command: CommandObject, stat
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
-        price=LocalizedPrice(data={"RUB": 400, "USD": 10}),
+        price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
     await db.additionals.save(additional)

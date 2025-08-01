@@ -17,9 +17,9 @@ def gen_product_configurable_info_text(configuration, lang, customer):
             price = option.calculate_price()
             presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
             custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
-            price_val = price.data[currency]
-            if (len(option.get_switches()) > 1 or conf_choice.price.data[currency] != 0) and price.data[currency] != 0:
-                sign = "+" if price.data[currency] > 0 else ""
+            price_val = price.data[currency].amount
+            if (len(option.get_switches()) > 1 or conf_choice.price.data[currency].amount != 0) and price.data[currency].amount != 0:
+                sign = "+" if price.data[currency].amount > 0 else ""
                 price_info = f" {sign}{price.to_text(currency)}"
             else:
                 price_info = ""
@@ -35,7 +35,7 @@ def gen_product_configurable_info_text(configuration, lang, customer):
                 for switch in enabled_switches:
                     name = switch.name.get(lang)
                     price = switch.price
-                    price_val = price.data[currency]
+                    price_val = price.data[currency].amount
                     price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
 
                     switches_text += f"\n      — {name}{price_info}"
@@ -44,12 +44,12 @@ def gen_product_configurable_info_text(configuration, lang, customer):
 
     if additionals := configuration.additionals:
         price = configuration.calculate_additionals_price()
-        add_price = f" ({price.to_text(currency)})" if price.data[currency] > 0 and len(additionals) > 1 else ""
+        add_price = f" ({price.to_text(currency)})" if price.data[currency].amount > 0 and len(additionals) > 1 else ""
         selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', lang)}{add_price}:"
         for additional in additionals:
             name = additional.name.get(lang)
             price = additional.price
-            price_val = price.data[currency]
+            price_val = price.data[currency].amount
             price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
             selected_options += f"\n    • {name}{price_info}"
 
@@ -58,11 +58,11 @@ def gen_product_configurable_info_text(configuration, lang, customer):
 class AssortmentTextGen:
     @staticmethod
     def generate_viewing_entry_caption(product, customer: Customer, lang: str):
-        return f"{product.name.get(lang)} — {product.base_price.data[customer.currency]} {customer.get_selected_currency_symbol()}\n\n{product.short_description.get(lang)}"
+        return f"{product.name.get(lang)} — {product.base_price.to_text(customer.currency)}\n\n{product.short_description.get(lang)}"
     
     @staticmethod
     def generate_product_detailed_caption(product, customer: Customer, lang: str):
-        return f"{product.name.get(lang)} — {product.base_price.data[customer.currency]} {customer.get_selected_currency_symbol()}\n\n{product.long_description.get(lang)}"
+        return f"{product.name.get(lang)} — {product.base_price.to_text(customer.currency)}\n\n{product.long_description.get(lang)}"
 
     @staticmethod
     def generate_choice_text(option: ConfigurationOption, lang: str):
@@ -79,7 +79,7 @@ class AssortmentTextGen:
     @staticmethod
     def generate_switches_text(conf_switches: ConfigurationSwitches, customer: Customer, lang: str):
         switches = conf_switches.switches
-        switches_info = "\n".join([f"{switch.name.get(lang)} — {switch.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
+        switches_info = "\n".join([f"{switch.name.get(lang)} — {switch.price.to_text(customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
         return (
             f"{conf_switches.description.get(lang)}\n\n{switches_info}\n\n"
             + AssortmentTranslates.translate("switches_enter", lang)
@@ -87,7 +87,7 @@ class AssortmentTextGen:
         
     @staticmethod
     def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], customer: Customer, lang: str):
-        additionals_info = "\n".join([f"{additional.name.get(lang)} — {additional.price.data[customer.currency]} {customer.get_selected_currency_symbol()} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(lang)}\n" for additional in available])
+        additionals_info = "\n".join([f"{additional.name.get(lang)} — {additional.price.to_text(customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(lang)}\n" for additional in available])
         return f"\n{additionals_info}\n\n" + AssortmentTranslates.translate(
             "switches_enter", lang
         )
@@ -142,7 +142,7 @@ class ProfileTextGen:
         requirements = service.selected_option.requirements
         
         requirements_info_text = "\n".join([f"  {requirement.name.get(lang)}: <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in requirements])
-        return ProfileTranslates.Delivery.translate("menu", lang).format(delivery_service=service.name.get(lang), service_price=f"{service.price.data[customer.currency]} {customer.get_selected_currency_symbol()}", delivery_req_lists_name=service.selected_option.name.get(lang), requirements=requirements_info_text)
+        return ProfileTranslates.Delivery.translate("menu", lang).format(delivery_service=service.name.get(lang), service_price=service.price.to_text(customer.currency), delivery_req_lists_name=service.selected_option.name.get(lang), requirements=requirements_info_text)
 
 class CartTextGen:
     @staticmethod

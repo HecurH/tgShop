@@ -7,7 +7,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
 from configs.supported import SUPPORTED_CURRENCIES
-from schemas.types import LocalizedPrice, LocalizedString, SecureValue
+from schemas.types import LocalizedMoney, LocalizedString, SecureValue
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -23,6 +23,9 @@ class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
     promocodes: list[PydanticObjectId]
+    
+    total_price: float
+    total_price_currency
 
     async def add_promocode(self, promocode: "Promocode", db: "DatabaseService") -> Optional[bool]:
         user: "Customer" = await db.get_by_id(Customer, self.customer_id)
@@ -86,12 +89,12 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
                 (((await self.dbs.products.find_one_by_id(entry.product_id)).base_price + entry.configuration.price) * entry.quantity)
                 for entry in entries
             ],
-            LocalizedPrice()
+            LocalizedMoney()
         )
         
 class ConfigurationSwitch(BaseModel):
     name: LocalizedString
-    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"ru": 0, "en": 0}))
+    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"ru": 0, "en": 0}))
 
     enabled: bool = False
     
@@ -114,7 +117,7 @@ class ConfigurationSwitches(BaseModel):
     @staticmethod
     def calculate_price(switches: list[ConfigurationSwitch]):
         """Возвращает сумму цен всех переданных переключателей."""
-        return sum((switch.price for switch in switches), LocalizedPrice())
+        return sum((switch.price for switch in switches), LocalizedMoney())
 
     def update(self, base_choice: "ConfigurationSwitches"):
         self.label=base_choice.label
@@ -149,7 +152,7 @@ class ConfigurationChoice(BaseModel):
     
     can_be_blocked_by: List[str] = [] # формат типо 'option/choice'
     blocks_price_determination: bool = Field(default=False)
-    price: LocalizedPrice = Field(default_factory=lambda: LocalizedPrice(data={"RUB": 0, "USD": 0}))
+    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"RUB": 0, "USD": 0}))
 
     def update(self, base_choice: "ConfigurationChoice"):
         self.label=base_choice.label
@@ -219,8 +222,8 @@ class ConfigurationOption(BaseModel):
 
     def calculate_price(self):
         conf_choice = self.get_chosen().model_copy(deep=True)
-        price = conf_choice.price.model_copy(deep=True) if isinstance(conf_choice, ConfigurationChoice) else LocalizedPrice()
-        price += sum((choice.calculate_price(choice.get_enabled()) for choice in self.choices.values() if isinstance(choice, ConfigurationSwitches)), LocalizedPrice())
+        price = conf_choice.price.model_copy(deep=True) if isinstance(conf_choice, ConfigurationChoice) else LocalizedMoney()
+        price += sum((choice.calculate_price(choice.get_enabled()) for choice in self.choices.values() if isinstance(choice, ConfigurationSwitches)), LocalizedMoney())
         return price
     
     def get_switches(self):
@@ -252,7 +255,7 @@ class ConfigurationOption(BaseModel):
 class ProductConfiguration(BaseModel):
     options: Dict[str, ConfigurationOption]
     additionals: list["ProductAdditional"] = []
-    price: LocalizedPrice = None
+    price: LocalizedMoney = None
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -324,10 +327,10 @@ class ProductConfiguration(BaseModel):
         return result
         
     def calculate_additionals_price(self):
-        return sum((additional.price.model_copy(deep=True) for additional in self.additionals), LocalizedPrice())
+        return sum((additional.price.model_copy(deep=True) for additional in self.additionals), LocalizedMoney())
     
     def calculate_options_price(self):
-        return sum((option.calculate_price() for option in self.options.values()), LocalizedPrice())
+        return sum((option.calculate_price() for option in self.options.values()), LocalizedMoney())
     
     def update_price(self):
         self.price = self.calculate_additionals_price() + self.calculate_options_price()
@@ -344,7 +347,7 @@ class Product(BaseModel):
     long_description_photo_id: Optional[str] = None
     long_description_video_id: Optional[str] = None
 
-    base_price: LocalizedPrice
+    base_price: LocalizedMoney
 
     configuration_photo_id: Optional[str] = None
     configuration_video_id: Optional[str] = None
@@ -389,7 +392,7 @@ class ProductAdditional(BaseModel):
 
     short_description: LocalizedString
 
-    price: LocalizedPrice
+    price: LocalizedMoney
     disallowed_products: list[PydanticObjectId] = []
 
 class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
@@ -429,17 +432,17 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         collection_name = 'inviters'
 
 class CustomerBonusWallet(BaseModel):
-    bonus_balance: dict[str, float] = Field(default_factory=lambda: {cur: 0.0 for cur in SUPPORTED_CURRENCIES.keys()})
+    bonus_balance: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({cur: 0.0 for cur in SUPPORTED_CURRENCIES.keys()}))
 
     def add_bonus_funds(self, amount: float, currency: str):
         """Пополнить бонусный баланс для указанной валюты"""
-        if currency not in self.bonus_balance:
-            self.bonus_balance[currency] = 0.0
-        self.bonus_balance[currency] += amount
+        if currency not in self.bonus_balance.data.keys():
+            self.bonus_balance.data[currency] = 0.0
+        self.bonus_balance.data[currency] += amount
 
     def get_bonus_balance(self, currency: str) -> float:
         """Получить бонусный баланс для указанной валюты"""
-        return self.bonus_balance.get(currency, 0.0)
+        return self.bonus_balance.data.get(currency, 0.0)
 
 class DeliveryRequirement(BaseModel):
     name: LocalizedString
@@ -456,7 +459,7 @@ class DeliveryService(BaseModel):
     name: LocalizedString  # Название сервиса
     is_foreign: bool = False
     
-    price: LocalizedPrice = LocalizedPrice(data=
+    price: LocalizedMoney = LocalizedMoney.from_dict(
                                            {
                                             "RUB": 500.0,
                                             "USD": 7.0

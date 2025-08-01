@@ -23,7 +23,6 @@ from core import middlewares
 TOKEN = getenv("BOT_TOKEN")
 
 # All handlers should be attached to the Router (or Dispatcher)
-print(os.getcwd())
 dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))))
 
 dp.message.filter(F.chat.type == "private")

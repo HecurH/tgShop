@@ -245,6 +245,8 @@ async def additionals_editing_handler(ctx: Context,
 class Cart(StatesGroup):
     Menu = State()
     EntryRemoveConfirm = State()
+    
+    OrderConfigurationMenu = State()
 
 @state_handlers.register(Cart.Menu)
 async def cart_menu_handler(ctx: Context, current: int, **_):
@@ -276,6 +278,10 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
 async def entry_remove_confirm_handler(ctx: Context, **_):
     await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
                              reply_markup=UncategorizedKBs.yes_no(ctx.lang))
+
+@state_handlers.register(Cart.OrderConfigurationMenu)
+async def order_configuration__handler(ctx: Context, **_):
+    pass
   
 class Profile(StatesGroup):
     Menu = State()
