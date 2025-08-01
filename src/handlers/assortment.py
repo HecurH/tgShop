@@ -170,7 +170,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         if choice.check_blocked_all(product.configuration.options):
             await call_state_handler(Assortment.EntryOptionSelect,
                                     ctx,
-                                    send_before=AssortmentTranslates.translate("cannot_choose", ctx.lang).format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)),
+                                    send_before=(AssortmentTranslates.translate("cannot_choose", ctx.lang).format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)), 1),
                                     product=product,
                                     option=changing_option)
             return
