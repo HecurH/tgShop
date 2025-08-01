@@ -65,12 +65,12 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
                       configuration=product.configuration))
         
     async def count_customer_cart_entries(self, customer: "Customer"):
-        return await self.get_collection().count_documents({"customer_id": str(customer.id), "order_id": None})
+        return await self.get_collection().count_documents({"customer_id": customer.id, "order_id": None})
     
     async def get_customer_cart_ids_by_customer_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         cursor = self.get_collection().find(
-            {"customer_id": str(customer.id),
+            {"customer_id": customer.id,
              "order_id": None},
             projection={"_id": 1}
         ).sort("_id", 1)
@@ -82,7 +82,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     
     async def calculate_customer_cart_price(self, customer: "Customer"):
         # sourcery skip: comprehension-to-generator
-        entries: Iterable[CartEntry] = await self.find_by({"customer_id": str(customer.id), "order_id": None})
+        entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
         return sum(
             [
                 (((await self.dbs.products.find_one_by_id(entry.product_id)).base_price + entry.configuration.price) * entry.quantity)
@@ -507,10 +507,10 @@ class Customer(BaseModel):
         self.currency = iso
 
     async def get_cart(self, db: "DatabaseService") -> Iterable[CartEntry]:
-        return await db.get_by_query(CartEntry, {"customer_id": str(self.id)})
+        return await db.get_by_query(CartEntry, {"customer_id": self.id})
 
     async def get_orders(self, db: "DatabaseService") -> Iterable[Order]:
-        return await db.get_by_query(Order, {"customer_id": str(self.id)})
+        return await db.get_by_query(Order, {"customer_id": self.id})
 
     async def add_to_cart(self, db: "DatabaseService", product: Product,
         configuration: ProductConfiguration):

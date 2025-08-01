@@ -152,40 +152,6 @@ class DatabaseService:
             return self.promocodes
         raise ValueError(f"No collection for model {model.__name__}")
 
-    # Специфичные методы
-
-
-
-    # def get_posts(self, query: dict) -> Optional[Iterable[Post]]:
-    #     try:
-    #         docs = self.posts.find_by(query)
-    #         return docs if docs else None
-    #     except PyMongoError as e:
-    #         self._handle_error(e)
-    #         return None
-
-    # def get_count_by_updateable(self, updateable: Updateable) -> int | None:
-    #     try:
-    #         return self.db['posts'].count_documents({"updateable_id": str(updateable.id), "deleted": False})
-    #     except PyMongoError as e:
-    #         self._handle_error(e)
-    #         return None
-    #
-    # def get_updateables(self) -> Iterable[Updateable] | None:
-    #     try:
-    #         docs = self.updateables.find_by({})
-    #         return docs
-    #     except PyMongoError as e:
-    #         self._handle_error(e)
-    #         return None
-    #
-    # def get_blacklist(self) -> list[str] | None:
-    #     try:
-    #         docs = self.blacklist.find_by({})
-    #         return [doc.name for doc in list(docs)]
-    #     except PyMongoError as e:
-    #         self._handle_error(e)
-    #         return None
 
     def _handle_error(self, error: PyMongoError):
         self.logger.error(f"Database error: {error}")
