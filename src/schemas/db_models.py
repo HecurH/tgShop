@@ -7,6 +7,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
 from configs.supported import SUPPORTED_CURRENCIES
+from core.helper_classes import AsyncCurrencyConverter
 from schemas.types import LocalizedMoney, LocalizedString, Money, SecureValue
 
 if TYPE_CHECKING:
@@ -487,9 +488,8 @@ class Customer(BaseModel):
     lang: str
     
     currency: str
-    bonus_wallet: CustomerBonusWallet = CustomerBonusWallet()
+    bonus_wallet: CustomerBonusWallet
     delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
-
     
     def get_currency_symbol(self, iso_code: str) -> str:
         return SUPPORTED_CURRENCIES.get(iso_code, iso_code)
@@ -497,12 +497,18 @@ class Customer(BaseModel):
     def get_selected_currency_symbol(self) -> str:
         return self.get_currency_symbol(self.currency)
 
-    def change_selected_currency(self, iso: str):
+    async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
         """Изменить основную валюту"""
         if iso not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
 
+        bon_wal = self.bonus_wallet.get()
+        if bon_wal.amount > 0:
+            amount = await acc.convert(bon_wal.amount, self.currency, iso)
+            self.bonus_wallet.bonus_balance = Money(iso, amount)
+            
         self.currency = iso
+        
 
     async def get_cart(self, db: "DatabaseService") -> Iterable[CartEntry]:
         return await db.get_by_query(CartEntry, {"customer_id": self.id})
@@ -540,6 +546,17 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         super().__init__(database)
         self.logger = logging.getLogger(__name__)
 
+    async def new_customer(self, user_id, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
+        customer = Customer(
+                user_id=user_id,
+                invited_by=inviter.inviter_code if inviter else "",
+                lang=lang,
+                currency=currency,
+                bonus_wallet=CustomerBonusWallet(Money(currency, 0.0))
+            )
+        
+        await self.save(customer)
+        return customer
 
     async def get_customer_by_id(self, user_id: int) -> Optional[Customer]:
         """Возвращает пользователя по его user_id. Если пользователь не найден, возвращает None."""

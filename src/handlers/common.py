@@ -24,14 +24,13 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
     if not user:
         inviter = await ctx.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
         
-        ctx.customer = Customer(
-                user_id=ctx.message.from_user.id,
-                invited_by=inviter.inviter_code if inviter else "",
-                lang="?",
-                currency="RUB"
-            )
-
-        await ctx.db.insert(ctx.customer )
+        ctx.customer = await ctx.db.customers.new_customer(
+            user_id=ctx.message.from_user.id,
+            inviter=inviter,
+            lang="?",
+            currency="RUB"
+        )
+        
     if ctx.lang == "?":
         lang = ctx.message.from_user.language_code.split("-")[0]
         print(lang)
@@ -70,10 +69,9 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
-    user = await ctx.db.customers.get_customer_by_id(ctx.event.from_user.id)
-    user.currency = callback.data
+    await ctx.customer.change_selected_currency(callback.data, ctx.db.currency_converter)
 
-    await ctx.db.update(user)
+    await ctx.db.update(ctx.customer)
 
     await callback.message.delete()
 
