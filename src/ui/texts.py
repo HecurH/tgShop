@@ -4,7 +4,7 @@ from schemas.db_models import *
 from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
 
 
-def gen_product_configurable_info_text(configuration, lang, customer):
+def gen_product_configurable_info_text(configuration: ProductConfiguration, lang: str, customer: Customer):
     options = configuration.options
     currency = customer.currency
     selected_options = ""
@@ -17,9 +17,9 @@ def gen_product_configurable_info_text(configuration, lang, customer):
             price = option.calculate_price()
             presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
             custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
-            price_val = price.data[currency].amount
-            if (len(option.get_switches()) > 1 or conf_choice.price.data[currency].amount != 0) and price.data[currency].amount != 0:
-                sign = "+" if price.data[currency].amount > 0 else ""
+            price_val = price.get_amount(currency)
+            if (len(option.get_switches()) > 1 or conf_choice.price.get_amount(currency) != 0) and price.get_amount(currency) != 0:
+                sign = "+" if price.get_amount(currency) > 0 else ""
                 price_info = f" {sign}{price.to_text(currency)}"
             else:
                 price_info = ""
@@ -35,7 +35,7 @@ def gen_product_configurable_info_text(configuration, lang, customer):
                 for switch in enabled_switches:
                     name = switch.name.get(lang)
                     price = switch.price
-                    price_val = price.data[currency].amount
+                    price_val = price.get_amount(currency)
                     price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
 
                     switches_text += f"\n      — {name}{price_info}"
@@ -44,12 +44,12 @@ def gen_product_configurable_info_text(configuration, lang, customer):
 
     if additionals := configuration.additionals:
         price = configuration.calculate_additionals_price()
-        add_price = f" ({price.to_text(currency)})" if price.data[currency].amount > 0 and len(additionals) > 1 else ""
+        add_price = f" ({price.to_text(currency)})" if price.get_amount(currency) > 0 and len(additionals) > 1 else ""
         selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', lang)}{add_price}:"
         for additional in additionals:
             name = additional.name.get(lang)
             price = additional.price
-            price_val = price.data[currency].amount
+            price_val = price.get_amount(currency)
             price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
             selected_options += f"\n    • {name}{price_info}"
 

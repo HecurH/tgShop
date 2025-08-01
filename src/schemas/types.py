@@ -54,6 +54,12 @@ class LocalizedMoney(BaseModel):
     @classmethod
     def from_dict(cls, raw: dict[str, float]) -> "LocalizedMoney":
         return cls(data={cur: Money(currency=cur, amount=amt) for cur, amt in raw.items()})
+    
+    def get_amount(self, cur: str) -> float:
+        return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
+    
+    def set_amount(self, cur: str, amount: float):
+        self.data[cur] = Money(cur, amount)
 
     def to_text(self, currency: str) -> str:
         if money := self.data.get(currency):
@@ -65,12 +71,10 @@ class LocalizedMoney(BaseModel):
         if not isinstance(other, LocalizedMoney):
             return NotImplemented
         result = {
-            cur: self.data.get(cur, Money(currency=cur, amount=0.0)).amount +
-                other.data.get(cur, Money(currency=cur, amount=0.0)).amount
+            cur: self.get_amount(cur) + other.get_amount(cur)
             for cur in set(self.data) | set(other.data)
         }
         return LocalizedMoney.from_dict(result)
-
 
     def __iadd__(self, other: "LocalizedMoney") -> "LocalizedMoney":
         for cur, money in other.data.items():

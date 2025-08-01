@@ -149,7 +149,7 @@ class AssortmentKBs:
         builder = ReplyKeyboardBuilder()
 
         for choice in option.choices.values():
-            price_text = f" {choice.price.to_text(customer.currency)}" if isinstance(choice, ConfigurationChoice) and choice.price.data[customer.currency].amount != 0 else ""
+            price_text = f" {choice.price.to_text(customer.currency)}" if isinstance(choice, ConfigurationChoice) and choice.price.get_amount(customer.currency) != 0 else ""
 
             is_blocked = choice.check_blocked_all(product.configuration.options) if isinstance(choice, ConfigurationChoice) else False
             def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"

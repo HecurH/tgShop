@@ -436,12 +436,12 @@ class CustomerBonusWallet(BaseModel):
     def add_bonus_funds(self, amount: float, currency: str):
         """Пополнить бонусный баланс для указанной валюты"""
         if currency not in self.bonus_balance.data.keys():
-            self.bonus_balance.data[currency] = 0.0
-        self.bonus_balance.data[currency] += amount
+            self.bonus_balance.set_amount(currency, 0.0)
+        self.bonus_balance.data[currency] += Money(currency, amount)
 
     def get_bonus_balance(self, currency: str) -> float:
         """Получить бонусный баланс для указанной валюты"""
-        return self.bonus_balance.data.get(currency, 0.0)
+        return self.bonus_balance.get_amount(currency)
 
 class DeliveryRequirement(BaseModel):
     name: LocalizedString
