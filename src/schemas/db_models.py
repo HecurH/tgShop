@@ -431,17 +431,15 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         collection_name = 'inviters'
 
 class CustomerBonusWallet(BaseModel):
-    bonus_balance: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({cur: 0.0 for cur in SUPPORTED_CURRENCIES.keys()}))
+    bonus_balance: Money
 
-    def add_bonus_funds(self, amount: float, currency: str):
+    def add_bonus_funds(self, amount: float):
         """Пополнить бонусный баланс для указанной валюты"""
-        if currency not in self.bonus_balance.data.keys():
-            self.bonus_balance.set_amount(currency, 0.0)
-        self.bonus_balance.data[currency] += Money(currency, amount)
+        self.bonus_balance.amount += amount
 
-    def get_bonus_balance(self, currency: str) -> float:
-        """Получить бонусный баланс для указанной валюты"""
-        return self.bonus_balance.get_amount(currency)
+    def get(self) -> Money:
+        """Получить бонусный баланс"""
+        return self.bonus_balance
 
 class DeliveryRequirement(BaseModel):
     name: LocalizedString

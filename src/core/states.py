@@ -187,7 +187,7 @@ async def entry_option_select_handler(ctx: Context,
                                       **_):
     chosen = option.get_chosen()
     text = AssortmentTextGen.generate_choice_text(option, ctx.lang)
-    kb = AssortmentKBs.generate_choice_kb(product, option, ctx.customer, ctx.lang)
+    kb = AssortmentKBs.generate_choice_kb(product, option, ctx)
 
     await send_media_response(ctx.message, chosen.photo_id or chosen.video_id, text, kb,
                               media_type="video" if chosen.video_id else "photo" if chosen.photo_id else "text")
@@ -272,7 +272,7 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
     await send_media_response(ctx.message,
                             product.short_description_photo_id,
                             caption,
-                            CartKBs.cart_view(entry, current, amount, price, ctx.customer, ctx.lang))
+                            CartKBs.cart_view(entry, current, amount, price, ctx))
 
 @state_handlers.register(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
@@ -280,8 +280,14 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
                              reply_markup=UncategorizedKBs.yes_no(ctx.lang))
 
 @state_handlers.register(Cart.OrderConfigurationMenu)
-async def order_configuration__handler(ctx: Context, **_):
-    pass
+async def order_configuration_handler(ctx: Context, **_):
+    used_bonus_money: bool = await ctx.fsm.get_value("used_bonus_money") or False
+    has_bonus_money = ctx.customer.bonus_wallet.get().amount > 0.0
+    
+    total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+    
+    await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
+                             reply_markup=CartKBs.cart_order_configuration(has_bonus_money, used_bonus_money, total_price, ctx))
   
 class Profile(StatesGroup):
     Menu = State()

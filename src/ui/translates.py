@@ -238,6 +238,8 @@ class CartTranslates(Translatable):
         "en": "Before placing an order, you need to set up delivery."
     }
     
+    
+    
 class ProfileTranslates(Translatable):
     menu = {
         "ru": "Выберите пункт вашего профиля:",
@@ -403,6 +405,22 @@ class ReplyButtonsTranslates(Translatable):
             "ru": "Редактировать",
             "en": "Edit"
         }
+        
+        class OrderConfiguration(Translatable):
+            use_promocode = {
+                "ru": "Использовать промокод",
+                "en": "Use a promo code"
+            }
+            
+            use_bonus_money = {
+                "ru": "Использовать бонусную валюту",
+                "en": "Use the bonus currency"
+            }
+            
+            change_payment_method = {
+                "ru": "Изменить метод оплаты",
+                "en": "Change the payment method"
+            }
     
     class Profile(Translatable):
         settings = {

@@ -1,8 +1,10 @@
 from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
+from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.types import LocalizedMoney
+from ui.message_tools import strike
 from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
@@ -145,16 +147,15 @@ class AssortmentKBs:
             input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
 
     @staticmethod
-    def generate_choice_kb(product: Product, option: ConfigurationOption, customer: Customer, lang: str) -> types.ReplyKeyboardMarkup:
+    def generate_choice_kb(product: Product, option: ConfigurationOption, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
 
         for choice in option.choices.values():
-            price_text = f" {choice.price.to_text(customer.currency)}" if isinstance(choice, ConfigurationChoice) and choice.price.get_amount(customer.currency) != 0 else ""
+            price_text = f" {choice.price.to_text(ctx.customer.currency)}" if isinstance(choice, ConfigurationChoice) and choice.price.get_amount(ctx.customer.currency) != 0 else ""
 
             is_blocked = choice.check_blocked_all(product.configuration.options) if isinstance(choice, ConfigurationChoice) else False
-            def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"
 
-            label = f"{strike(choice.label.get(lang) + price_text)} 🔒" if is_blocked else f"{choice.label.get(lang)}{price_text}"
+            label = f"{strike(choice.label.get(ctx.lang) + price_text)} 🔒" if is_blocked else f"{choice.label.get(ctx.lang)}{price_text}"
             builder.add(types.KeyboardButton(text=f">{label}<"
                                             if option.get_chosen().label == choice.label
                                             else label))
@@ -162,14 +163,14 @@ class AssortmentKBs:
         builder.adjust(3)
 
         builder.attach(ReplyKeyboardBuilder([
-            [types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]
+            [types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang))]
         ]
         ))
 
         return builder.as_markup(
             resize_keyboard=True,
             # one_time_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang))
 
     @staticmethod
     def generate_switches_kb(switches: ConfigurationSwitches, lang: str) -> types.ReplyKeyboardMarkup:
@@ -214,7 +215,7 @@ class AssortmentKBs:
 
 class CartKBs:
     @staticmethod
-    def cart_view(entry: CartEntry, current: int, amount: int, cart_price: LocalizedMoney, customer: Customer, lang: str) -> types.ReplyKeyboardMarkup:
+    def cart_view(entry: CartEntry, current: int, amount: int, cart_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
         controls = [
             types.KeyboardButton(text="⬅️"),
             types.KeyboardButton(text=f"{current}/{amount}"),
@@ -224,59 +225,55 @@ class CartKBs:
         ]
         
         kb = [
-            # [
-            #     types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("edit", lang))
-            # ],
             [
                 types.KeyboardButton(text='❌'),
                 types.KeyboardButton(text="➖"),
-                types.KeyboardButton(text=f"{entry.quantity} {UncategorizedTranslates.translate('unit', lang, count=entry.quantity)}"),
+                types.KeyboardButton(text=f"{entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}"),
                 types.KeyboardButton(text="➕")
             ],
             controls,
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("place", lang).format(price=cart_price.to_text(customer.currency)))
+                types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
+                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("place", ctx.lang).format(price=cart_price.to_text(ctx.customer.currency)))
             ]
         ]
 
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang)
         )
     
     @staticmethod
-    def cart_order_configuration(lang: str) -> types.ReplyKeyboardMarkup:
-        controls = [
-            types.KeyboardButton(text="⬅️"),
-            types.KeyboardButton(text=f"{current}/{amount}"),
-            types.KeyboardButton(text="➡️")
-        ] if amount > 1 else [
-            types.KeyboardButton(text=f"{current}/{amount}")
+    def cart_order_configuration(has_bonus_money: bool, used_bonus_money: bool, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
+        use_promocode = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_promocode", ctx.lang)
+        use_bonus_money = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_bonus_money", ctx.lang)
+        place = ReplyButtonsTranslates.Cart.translate("place", ctx.lang)
+        change_payment_method = ReplyButtonsTranslates.Cart.translate("change_payment_method", ctx.lang)
+        
+        first_line = [
+            types.KeyboardButton(text=use_promocode),
+            types.KeyboardButton(
+                text=f"{use_bonus_money} ✅" if has_bonus_money and used_bonus_money
+                else (use_bonus_money if has_bonus_money else f"{strike(use_bonus_money)} 🔒")
+            )
         ]
         
         kb = [
-            # [
-            #     types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("edit", lang))
-            # ],
+            first_line,
             [
-                types.KeyboardButton(text='❌'),
-                types.KeyboardButton(text="➖"),
-                types.KeyboardButton(text=f"{entry.quantity} {UncategorizedTranslates.translate('unit', lang, count=entry.quantity)}"),
-                types.KeyboardButton(text="➕")
+                types.KeyboardButton(text=change_payment_method)
             ],
-            controls,
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("place", lang).format(price=cart_price.to_text(customer.currency)))
+                types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
+                types.KeyboardButton(text=place.format(price=total_price.to_text(ctx.currency)))
             ]
         ]
 
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang)
         )
         
 

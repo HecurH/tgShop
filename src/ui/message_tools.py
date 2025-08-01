@@ -49,3 +49,5 @@ async def edit_media_message(
 
     media = InputMediaPhoto(media=media_id, caption=caption) if media_type == 'photo' else InputMediaVideo(media=media_id, caption=caption)
     await message.edit_media(media=media, reply_markup=reply_markup)
+
+def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"
