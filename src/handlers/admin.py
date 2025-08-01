@@ -172,7 +172,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
             chosen="sel_existing",
             choices={
                 "sel_existing": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Выбрать существующий", "en": "Select an existing one"}),
+                    label=LocalizedString(data={"ru": "Существующий", "en": "Existing one"}),
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     existing_presets=True,
                     existing_presets_chosen=1,
