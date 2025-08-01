@@ -1,7 +1,7 @@
 services:
   gss_bot:
     build: ./src
-    restart: unless-stopped
+    restart: always
     network_mode: host
 
     command: python /src/run.py
