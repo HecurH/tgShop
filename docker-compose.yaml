@@ -1,6 +1,5 @@
 services:
   gss_bot:
-    container_name: gss_container
     build: ./src
     restart: unless-stopped
     network_mode: host
