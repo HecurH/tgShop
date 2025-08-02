@@ -266,7 +266,7 @@ class CartKBs:
             ],
             [
                 types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
-                types.KeyboardButton(text=place.format(price=total_price.to_text(ctx.currency)))
+                types.KeyboardButton(text=place.format(price=total_price.to_text(ctx.customer.currency)))
             ]
         ]
 
