@@ -431,17 +431,6 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
 
-class CustomerBonusWallet(BaseModel):
-    bonus_balance: Money
-
-    def add_bonus_funds(self, amount: float):
-        """Пополнить бонусный баланс для указанной валюты"""
-        self.bonus_balance.amount += amount
-
-    def get(self) -> Money:
-        """Получить бонусный баланс"""
-        return self.bonus_balance
-
 class DeliveryRequirement(BaseModel):
     name: LocalizedString
     description: LocalizedString
@@ -488,7 +477,7 @@ class Customer(BaseModel):
     lang: str
     
     currency: str
-    bonus_wallet: CustomerBonusWallet
+    bonus_wallet: Money
     delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
     
     def get_currency_symbol(self, iso_code: str) -> str:
@@ -502,13 +491,19 @@ class Customer(BaseModel):
         if iso not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
 
-        bon_wal = self.bonus_wallet.get()
+        bon_wal = self.bonus_wallet
         if bon_wal.amount > 0:
-            amount = await acc.convert(bon_wal.amount, self.currency, iso)
-            self.bonus_wallet.bonus_balance = Money(iso, amount)
-            
+            try:
+                amount = await acc.convert(bon_wal.amount, self.currency, iso)
+            except Exception as e:
+                # Логируем ошибку и не меняем валюту
+                logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
+                raise RuntimeError(
+                    "Сервис конвертации валют временно недоступен. Попробуйте позже."
+                ) from e
+            self.bonus_wallet = Money(iso, amount)
+
         self.currency = iso
-        
 
     async def get_cart(self, db: "DatabaseService") -> Iterable[CartEntry]:
         return await db.get_by_query(CartEntry, {"customer_id": self.id})
@@ -552,7 +547,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
                 invited_by=inviter.inviter_code if inviter else "",
                 lang=lang,
                 currency=currency,
-                bonus_wallet=CustomerBonusWallet(Money(currency, 0.0))
+                bonus_wallet=Money(currency, 0.0)
             )
         
         await self.save(customer)

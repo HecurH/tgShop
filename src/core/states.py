@@ -129,8 +129,7 @@ async def viewing_assortment_handler(ctx: Context,
     # product: Product = await ctx.db.products.find_one_by({'order_no': current, "category": category})
     product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
-                                                        ctx.customer,
-                                                        ctx.lang)
+                                                        ctx)
 
     await send_media_response(ctx.message,
                                 product.short_description_photo_id,
@@ -141,7 +140,7 @@ async def viewing_assortment_handler(ctx: Context,
 async def viewing_product_details_handler(ctx: Context,
                                           product: Product,
                                           **_):
-    caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx.customer, ctx.lang)
+    caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx)
 
     # if ctx.is_query:
     #     await edit_media_message(ctx.message,
@@ -175,7 +174,7 @@ async def forming_order_entry_handler(ctx: Context,
     # if edit: await ctx.message.delete()
     await send_media_response(ctx.message,
                                 photo_id or video_id,
-                                AssortmentTextGen.generate_product_configurating_main(product, ctx.lang, ctx.customer),
+                                AssortmentTextGen.generate_product_configurating_main(product, ctx),
                                 AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx.lang),
                                 "photo" if photo_id else ("video" if video_id else None))
 
@@ -215,7 +214,7 @@ async def switches_editing_handler(ctx: Context,
                                    switches: ConfigurationSwitches,
                                    **_):
 
-    text = AssortmentTextGen.generate_switches_text(switches, ctx.customer, ctx.lang)
+    text = AssortmentTextGen.generate_switches_text(switches, ctx)
     kb = AssortmentKBs.generate_switches_kb(switches, ctx.lang)
 
     await send_media_response(ctx.message,
@@ -265,8 +264,7 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
     caption = CartTextGen.generate_cart_viewing_caption(entry,
                                             product,
                                             entry.configuration,
-                                            ctx.customer,
-                                            ctx.lang)
+                                            ctx)
     
     price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     await send_media_response(ctx.message,
@@ -285,6 +283,8 @@ async def order_configuration_handler(ctx: Context, **_):
     has_bonus_money = ctx.customer.bonus_wallet.get().amount > 0.0
     
     total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+    
+    text = CartTextGen
     
     await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
                              reply_markup=CartKBs.cart_order_configuration(has_bonus_money, used_bonus_money, total_price, ctx))
@@ -321,7 +321,7 @@ async def settings_menu_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Menu)
 async def delivery_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx.customer, ctx.lang),
+        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
         reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx.lang)
     )
     

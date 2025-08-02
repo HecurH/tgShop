@@ -237,6 +237,21 @@ class CartTranslates(Translatable):
         "ru": "Перед оформлением заказа необходимо настроить доставку.",
         "en": "Before placing an order, you need to set up delivery."
     }
+    class OrderConfiguration(Translatable):
+    
+        order_configuration_menu = {
+            "ru": """<b>🛒 ДЕТАЛИ ЗАКАЗА</b>
+━━━━━━━━━━━━━━━━━━━━
+🎫 <b>Промокод:</b> {promocode_info}
+💎 <b>Оплата бонусами:</b> {bonus_money_info}
+💳 <b>Способ оплаты:</b> {payment_method_info}
+━━━━━━━━━━━━━━━━━━━━
+🚚 <b>Доставка:</b> {delivery_service}
+{delivery_requirements_info}
+━━━━━━━━━━━━━━━━━━━━
+💸 <b>ИТОГО:</b> <code>{total}</code>""",
+            "en": "PLACEHOLDER"
+        }
     
     
     

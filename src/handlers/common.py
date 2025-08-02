@@ -1,6 +1,8 @@
+import contextlib
+import logging
 from aiogram import Router
 from aiogram.filters import CommandStart, CommandObject, Command
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, ErrorEvent
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
@@ -90,9 +92,14 @@ async def about_command_handler(_, ctx: Context) -> None:
 
     await ctx.fsm.set_state(CommonStates.MainMenu)
 
+@router.error()
+async def global_error_handler(event: ErrorEvent):
+    # event.update contains context, message, callback, etc.
+    # Можно определить тип события и отправить сообщение пользователю
+    with contextlib.suppress(Exception):
+        if hasattr(event.update, "message") and event.update.message:
+            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.")
+        elif hasattr(event.update, "callback_query") and event.update.callback_query:
+            await event.update.callback_query.answer("Произошла ошибка. Пожалуйста, попробуйте позже.", show_alert=True)
 
-# @router.message(CommonStates.main_menu)
-# async def bad_menu_handler(message: Message, ctx: Context) -> None:
-#     await call_state_handler(CommonStates.main_menu,
-#                        ctx)
-
+    logging.getLogger(__name__).exception("Ошибка в хендлере:")
