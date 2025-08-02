@@ -249,7 +249,7 @@ class CartKBs:
         use_promocode = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_promocode", ctx.lang)
         use_bonus_money = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_bonus_money", ctx.lang)
         place = ReplyButtonsTranslates.Cart.translate("place", ctx.lang)
-        change_payment_method = ReplyButtonsTranslates.Cart.translate("change_payment_method", ctx.lang)
+        change_payment_method = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("change_payment_method", ctx.lang)
         
         first_line = [
             types.KeyboardButton(text=use_promocode),
