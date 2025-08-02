@@ -94,11 +94,9 @@ async def about_command_handler(_, ctx: Context) -> None:
 
 @router.error()
 async def global_error_handler(event: ErrorEvent):
-    # event.update contains context, message, callback, etc.
-    # Можно определить тип события и отправить сообщение пользователю
     with contextlib.suppress(Exception):
         if hasattr(event.update, "message") and event.update.message:
-            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.")
+            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.\nЕсли ошибка повторяется, напишите @hecurh или смиритесь.")
         elif hasattr(event.update, "callback_query") and event.update.callback_query:
             await event.update.callback_query.answer("Произошла ошибка. Пожалуйста, попробуйте позже.", show_alert=True)
 
