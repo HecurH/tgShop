@@ -62,7 +62,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         delivery_info = customer.delivery_info
         currency = customer.currency
         
-        price_details = OrderPriceDetails(products_price=products_price.get_money(),
+        price_details = OrderPriceDetails(products_price=products_price.get_money(currency),
                                           delivery_price=delivery_info.service.price.get_money(currency)
                                           )
         price_details.recalculate_price()
