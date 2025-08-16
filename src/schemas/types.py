@@ -39,7 +39,10 @@ class Money(BaseModel):
     
     def to_text(self) -> str:
         template = SUPPORTED_CURRENCIES.get(self.currency, f"{{amount}}{self.currency}")
-        return template.format(amount=round(self.amount, 2))
+        amount = round(self.amount, 2)
+        return template.format(
+            amount=f"{int(amount)}" if amount == int(amount) else f"{amount:.2f}"
+        )
 
     def __add__(self, other):
         if not isinstance(other, Money):
@@ -76,7 +79,7 @@ class LocalizedMoney(BaseModel):
             return str(money)
         
         template = SUPPORTED_CURRENCIES.get(self.currency, f"{{amount}}{self.currency}")
-        return template.format(amount=0.00)
+        return template.format(amount=0)
 
     def __add__(self, other):
         if not isinstance(other, LocalizedMoney):
