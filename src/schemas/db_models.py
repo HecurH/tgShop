@@ -8,7 +8,10 @@ from pymongo.errors import PyMongoError
 
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import AsyncCurrencyConverter
-from schemas.types import LocalizedMoney, LocalizedString, Money, SecureValue
+from schemas.db_schemas import DeliveryInfo, DeliveryRequirementsList, ProductConfiguration
+from schemas.enums import PromocodeCheckResult, OrderState
+from schemas.payment_models import PaymentMethod
+from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, PromocodeAction
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -20,23 +23,52 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         super().__init__(dbs.db)
         self.dbs = dbs
     
+class OrderPriceDetails(BaseModel):
+    products_price: Money  # сумма товаров без скидок и доставки
+    promocode_discount: Optional[Money] = None  # скидка по промокоду
+    
+    delivery_price: Money  # доставка
+    bonuses_applied: Optional[Money] = None # сколько бонусных средств для оплаты
+    
+    total_price: Money  # сколько надо заплатить настоящими деньгами
+    paid_total: Optional[Money] = None  # сколько всего заплатил пользователь
+    
+    def recalculate_price(self):
+        products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
+        self.total_price = products_price_after_promocode + self.delivery_price - self.bonuses_applied
+    
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
-    promocodes: list[PydanticObjectId]
-    
-    total_price: Money
+    state: OrderState = OrderState(OrderState.forming)
+    delivery_info: Optional[DeliveryInfo] = None # при запросе удаления перс данных, обычно не должен быть пуст
 
-    async def add_promocode(self, promocode: "Promocode", db: "DatabaseService") -> Optional[bool]:
-        user: "Customer" = await db.get_by_id(Customer, self.customer_id)
-        if promocode.only_newbies:
-            count = await db.get_count_by_query(Order, {"customer_id": self.customer_id})
-            if count != 0:
-                return False
+    promocode: Optional[PydanticObjectId] = None
+
+    price_details: OrderPriceDetails
+    payment_method: Optional[PaymentMethod] = None
+
+    async def set_promocode(self, promocode: Optional["Promocode"]):
+        self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None
+        self.price_details.recalculate_price()
+    
+    async def update_applied_bonuses(self, customer_bonus_balance: Money):
+        self.price_details.bonuses_applied = min(self.price_details.bonuses_applied, customer_bonus_balance)
 
 class OrdersRepository(AppAbstractRepository[Order]):
     class Meta:
         collection_name = 'orders'
+        
+    def new_order(self, customer: "Customer", products_price: LocalizedMoney) -> Order:
+        delivery_info = customer.delivery_info
+        currency = customer.currency
+        
+        price_details = OrderPriceDetails(products_price=products_price.get_money(),
+                                          delivery_price=delivery_info.service.price.get_money(currency)
+                                          )
+        price_details.recalculate_price()
+        
+        return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
 
 class CartEntry(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -81,7 +113,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         ids = await self.get_customer_cart_ids_by_customer_sorted_by_date(customer)
         return await self.find_one_by_id(ids[idx])
     
-    async def calculate_customer_cart_price(self, customer: "Customer"):
+    async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
         # sourcery skip: comprehension-to-generator
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
         return sum(
@@ -91,250 +123,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
             ],
             LocalizedMoney()
         )
-        
-class ConfigurationSwitch(BaseModel):
-    name: LocalizedString
-    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"ru": 0, "en": 0}))
-
-    enabled: bool = False
     
-    def update(self, base_sw: "ConfigurationSwitch"):
-        self.name=base_sw.name
-        self.price=base_sw.price
-
-class ConfigurationSwitches(BaseModel):
-    label: LocalizedString
-    description: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
-
-    switches: list[ConfigurationSwitch]
-
-    def get_enabled(self):
-        """Возвращает список включённых переключателей из списка switches."""
-        return [switch for switch in self.switches if switch.enabled]
-
-    @staticmethod
-    def calculate_price(switches: list[ConfigurationSwitch]):
-        """Возвращает сумму цен всех переданных переключателей."""
-        return sum((switch.price for switch in switches), LocalizedMoney())
-
-    def update(self, base_choice: "ConfigurationSwitches"):
-        self.label=base_choice.label
-        self.description=base_choice.description
-        self.photo_id=base_choice.photo_id
-        self.video_id=base_choice.video_id
-        
-        for i, switch in enumerate(base_choice.switches):
-            if len(self.switches)-1 < i:
-                self.switches.append(switch)
-                continue
-            self.switches[i].update(switch)
-    
-    def toggle_by_localized_name(self, name, lang):
-        for switch in self.switches:
-            if switch.name.get(lang) == name:
-                switch.enabled = not switch.enabled
-                break 
-
-class ConfigurationChoice(BaseModel):
-    label: LocalizedString
-    description: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
-
-    existing_presets: bool = Field(default=False)
-    existing_presets_chosen: int = 1
-    existing_presets_quantity: int = 0
-
-    is_custom_input: bool = Field(default=False)
-    custom_input_text: Optional[str] = None
-    
-    can_be_blocked_by: List[str] = [] # формат типо 'option/choice'
-    blocks_price_determination: bool = Field(default=False)
-    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"RUB": 0, "USD": 0}))
-
-    def update(self, base_choice: "ConfigurationChoice"):
-        self.label=base_choice.label
-        self.description=base_choice.description
-        self.photo_id=base_choice.photo_id
-        self.video_id=base_choice.video_id
-        self.existing_presets=base_choice.existing_presets
-        self.existing_presets_quantity=base_choice.existing_presets_quantity
-        self.is_custom_input=base_choice.is_custom_input
-        self.blocks_price_determination=base_choice.blocks_price_determination
-        self.price=base_choice.price
-    
-    def check_blocked_all(self, options: Dict[str, Any]) -> bool:
-        return any(
-            self.check_blocked_path(path, options)
-            for path in self.can_be_blocked_by
-        )
-        
-    def get_blocking_path(self, options: Dict[str, Any]) -> Optional[str]:
-        return next(
-            (
-                path
-                for path in self.can_be_blocked_by
-                if self.check_blocked_path(path, options)
-            ),
-            None
-        )
-    
-    def check_blocked_path(self, path, options: Dict[str, Any]) -> bool:
-        *opt_keys, last_key = path.split("/")
-        
-        option = options.get(opt_keys[0]) if opt_keys else None
-        
-        chosen = option.get_chosen()
-        if option.choices.get(last_key) == chosen and len(opt_keys) == 1:
-            return True
-        if isinstance(chosen, ConfigurationSwitches) and len(opt_keys) > 1:
-            enabled_names = [sw.name.get("en") for sw in chosen.get_enabled()]
-            if opt_keys[1] in enabled_names:
-                return True
-        return False
-
-class ConfigurationOption(BaseModel):
-    name: LocalizedString
-    text: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
-    chosen: str
-
-    choices: Dict[str, ConfigurationChoice | ConfigurationSwitches]
-    
-    def get_chosen(self):
-        return self.choices.get(self.chosen)
-    
-    def set_chosen(self, choice: ConfigurationChoice):
-        self.chosen = next((key for key, value in self.choices.items() if value == choice), None)
-    
-    def get_key_by_label(self, label: str, lang: str) -> Optional[str]:
-        for key, choice in self.choices.items():
-            if hasattr(choice, "label") and choice.label.get(lang) == label:
-                return key
-    
-    def get_by_label(self, label: str, lang: str) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
-        for choice in self.choices.values():
-            if hasattr(choice, "label") and choice.label.get(lang) == label:
-                return choice
-
-    def calculate_price(self):
-        conf_choice = self.get_chosen().model_copy(deep=True)
-        price = conf_choice.price.model_copy(deep=True) if isinstance(conf_choice, ConfigurationChoice) else LocalizedMoney()
-        price += sum((choice.calculate_price(choice.get_enabled()) for choice in self.choices.values() if isinstance(choice, ConfigurationSwitches)), LocalizedMoney())
-        return price
-    
-    def get_switches(self):
-        switch_list = []
-        for choice in self.choices.values():
-            if isinstance(choice, ConfigurationSwitches):
-                switch_list.extend(choice.get_enabled())
-        return switch_list
-                
-
-    def update(self, option: "ConfigurationOption"):
-        self.name = option.name
-        self.text = option.text
-        self.photo_id = option.photo_id
-        self.video_id = option.video_id
-        
-        # Обновляем choices
-        for choice_key, base_choice in option.choices.items():
-            if choice_key not in option.choices:
-                self.choices[choice_key] = base_choice
-                continue
-            
-            self.choices[choice_key].update(base_choice)
-        # Удаляем choices, которых больше нет в base
-        for choice_key in list(option.choices.keys()):
-            if choice_key not in option.choices:
-                del option.choices[choice_key]
-
-class ProductConfiguration(BaseModel):
-    options: Dict[str, ConfigurationOption]
-    additionals: list["ProductAdditional"] = []
-    price: LocalizedMoney = None
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        if not self.price: self.update_price()
-    
-    
-    def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
-        """
-        Обновляет текущую конфигурацию на основе base_configuration,
-        сохраняя пользовательские выборы.
-        """
-        # Обновляем опции
-        for key, base_option in base_configuration.options.items():
-            if key not in self.options:
-                # Если опция новая, просто добавляем
-                self.options[key] = base_option
-                continue
-
-            self.options[key].update(base_option)
-
-        # Удаляем опции, которых больше нет в base
-        for key in list(self.options.keys()):
-            if key not in base_configuration.options:
-                del self.options[key]
-
-        base_additional_ids = {add.id for add in allowed_additionals}
-        self.additionals = [add for add in self.additionals if add.id in base_additional_ids]
-
-    def get_all_options_localized_names(self, lang):
-        return [option.name.get(lang) for option in self.options.values()]
-    
-    def get_option_by_name(self, name, lang):
-        return next((key, option) for key, option in self.options.items()
-                    if option.name.get(lang) == name)
-        
-    def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
-        return [add.id for add in self.additionals]
-    
-    def get_localized_names_by_path(self, path, lang) -> List[str]:
-        *opt_keys, last_key = path.split("/")
-        result = []
-        # Получаем опцию
-        option = self.options.get(opt_keys[0]) if opt_keys else None
-        if not option:
-            return result
-        # Добавляем имя опции
-        result.append(option.name.data.get(lang))
-        # Получаем выбор
-        choice = option.choices.get(opt_keys[1]) if len(opt_keys) > 1 else option.choices.get(last_key)
-        if not choice:
-            return result
-        # Добавляем имя выбора
-        if hasattr(choice, "label"):
-            result.append(choice.label.data.get(lang))
-        # Если есть переключатель (switch)
-        if len(opt_keys) > 2 and hasattr(choice, "switches"):
-            if switch := next(
-                (
-                    sw
-                    for sw in choice.switches
-                    if sw.name.data.get(
-                        "ru", next(iter(sw.name.data.values()), "")
-                    )
-                    == last_key
-                ),
-                None,
-            ):
-                result.append(switch.name.data.get(lang))
-        return result
-        
-    def calculate_additionals_price(self):
-        return sum((additional.price.model_copy(deep=True) for additional in self.additionals), LocalizedMoney())
-    
-    def calculate_options_price(self):
-        return sum((option.calculate_price() for option in self.options.values()), LocalizedMoney())
-    
-    def update_price(self):
-        self.price = self.calculate_additionals_price() + self.calculate_options_price()
-        
 class Product(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
@@ -409,13 +198,26 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
 class Promocode(BaseModel):
     id: Optional[PydanticObjectId] = None
     code: str
+    action: PromocodeAction
+    
+    description: LocalizedString
     only_newbies: bool
-    product_restriction: list[PydanticObjectId]
 
     already_used: int = 0
     max_usages: int = -1
 
-    expire_date: datetime.datetime
+    expire_date: Optional[datetime.datetime] = None
+    
+    
+    async def check_promocode(self, customer_orders_amount: int) -> PromocodeCheckResult:
+        if self.expire_date and self.expire_date < datetime.datetime():
+            return PromocodeCheckResult.expired
+        elif self.only_newbies and customer_orders_amount > 0:
+            return PromocodeCheckResult.only_newbies
+        elif self.max_usages != -1 and self.max_usages <= self.already_used:
+            return PromocodeCheckResult.max_usages_reached
+        
+        return PromocodeCheckResult.ok
 
 class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
@@ -430,16 +232,6 @@ class Inviter(BaseModel):
 class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
-
-class DeliveryRequirement(BaseModel):
-    name: LocalizedString
-    description: LocalizedString
-    value: SecureValue = SecureValue() # для заполнения в будущем при конфигурации
-
-class DeliveryRequirementsList(BaseModel):
-    name: LocalizedString # типо "По номеру", или "По адресу и ФИО"
-    description: LocalizedString
-    requirements: list[DeliveryRequirement]
 
 class DeliveryService(BaseModel):
     id: Optional[PydanticObjectId] = None
@@ -461,10 +253,6 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     
     async def get_all(self, is_foreign: bool) -> Iterable[DeliveryService]:
         return await self.find_by({"is_foreign": is_foreign})
-
-class DeliveryInfo(BaseModel):
-    is_foreign: bool = False  # Вне РФ?
-    service: Optional[DeliveryService] = None
 
 class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None

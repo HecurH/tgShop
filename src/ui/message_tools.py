@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
@@ -51,3 +51,7 @@ async def edit_media_message(
     await message.edit_media(media=media, reply_markup=reply_markup)
 
 def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"
+
+def build_list(entries: List[str], before: str = "—", padding: int = 1, default_padding_spaces: int = 2) -> str:
+    spaces_amount = default_padding_spaces * padding
+    return "\n".join(f"{(spaces_amount * " ") + before} {entry}" for entry in entries)

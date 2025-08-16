@@ -3,6 +3,7 @@ from aiogram.fsm.state import StatesGroup, State
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from core.helper_classes import Context
+from schemas.db_schemas import *
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
 from ui.keyboards import *
@@ -278,16 +279,14 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
                              reply_markup=UncategorizedKBs.yes_no(ctx.lang))
 
 @state_handlers.register(Cart.OrderConfigurationMenu)
-async def order_configuration_handler(ctx: Context, **_):
-    used_bonus_money: bool = await ctx.fsm.get_value("used_bonus_money") or False
-    has_bonus_money = ctx.customer.bonus_wallet.get().amount > 0.0
-    
+async def order_configuration_handler(ctx: Context, order: Order, **_):
+    used_bonus_money: bool = bool(order.price_details.bonuses_applied)
     total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
-    
-    text = CartTextGen
-    
-    await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
-                             reply_markup=CartKBs.cart_order_configuration(has_bonus_money, used_bonus_money, total_price, ctx))
+
+    text = CartTextGen.generate_order_forming_caption(order, ctx)
+
+    await ctx.message.answer(text,
+                             reply_markup=CartKBs.cart_order_configuration(used_bonus_money, total_price, ctx))
   
 class Profile(StatesGroup):
     Menu = State()

@@ -1,10 +1,14 @@
 from typing import Dict, Optional
+from enum import Enum
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Cryptography
 
 from pydantic import BaseModel
 
 import base64
+
+from schemas.enums import *
+from ui.translates import EnumTranslates
 
 
 class SecureValue(BaseModel):
@@ -32,6 +36,10 @@ class SecureValue(BaseModel):
 class Money(BaseModel):
     currency: str  # ISO
     amount: float
+    
+    def to_text(self) -> str:
+        symbol = SUPPORTED_CURRENCIES.get(self.currency, self.currency)
+        return f"{self.amount:.2f}{symbol}"
 
     def __add__(self, other):
         if not isinstance(other, Money):
@@ -44,8 +52,7 @@ class Money(BaseModel):
         return Money(currency=self.currency, amount=self.amount * factor)
 
     def __str__(self):
-        symbol = SUPPORTED_CURRENCIES.get(self.currency, self.currency)
-        return f"{self.amount:.2f}{symbol}"
+        return self.to_text()
 
 
 class LocalizedMoney(BaseModel):
@@ -57,6 +64,9 @@ class LocalizedMoney(BaseModel):
     
     def get_amount(self, cur: str) -> float:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
+
+    def get_money(self, cur: str) -> Money:
+        return self.data.get(cur, Money(currency=cur, amount=0.0))
     
     def set_amount(self, cur: str, amount: float):
         self.data[cur] = Money(cur, amount)
@@ -102,3 +112,28 @@ class LocalizedString(BaseModel):
     
     def get(self, lang: str) -> str:
         return self.data.get(lang) or self.data.get("en")
+
+class OrderState(BaseModel):
+    key: OrderState
+
+    def get_localized_name(self, lang: str) -> str:
+        return EnumTranslates.OrderState.translate(self.key.value, lang)
+    
+    def set_state(self, key: OrderState):
+        self.key = key 
+        
+class PromocodeAction(BaseModel):
+    action_type: PromocodeActionType  # тип действия: фиксированная сумма или процент
+    value: LocalizedMoney     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
+
+    def get_discount(self, amount: Money) -> Money:
+        # округляем результат до двух знаков после запятой
+        if self.action_type == PromocodeActionType.percent:
+            discount_amount = round(amount.amount * (self.value.get_amount(amount.currency) / 100), 2)
+            return Money(currency=amount.currency, amount=discount_amount)
+        elif self.action_type == PromocodeActionType.fixed:
+            discount = min(self.value.get_amount(amount.currency), amount.amount)
+            discount = round(discount, 2)
+            return Money(currency=amount.currency, amount=discount)
+        # если тип не распознан — скидка 0
+        return Money(currency=amount.currency, amount=0.0)

@@ -3,6 +3,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from core.helper_classes import Context
 from schemas.db_models import *
+from schemas.db_schemas import *
 from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
@@ -245,11 +246,13 @@ class CartKBs:
         )
     
     @staticmethod
-    def cart_order_configuration(has_bonus_money: bool, used_bonus_money: bool, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def cart_order_configuration(used_bonus_money: bool, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
         use_promocode = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_promocode", ctx.lang)
         use_bonus_money = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_bonus_money", ctx.lang)
         place = ReplyButtonsTranslates.Cart.translate("place", ctx.lang)
         change_payment_method = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("change_payment_method", ctx.lang)
+        
+        has_bonus_money = ctx.customer.bonus_wallet.amount > 0.0
         
         first_line = [
             types.KeyboardButton(text=use_promocode),

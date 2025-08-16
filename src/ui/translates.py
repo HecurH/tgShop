@@ -80,7 +80,37 @@ class Translatable(metaclass=TranslationMeta):
             for lang in trans.keys()
         }
 
+class EnumTranslates(Translatable):
+    class OrderState(Translatable):
+        forming = {
+            "ru": "Формирование заказа",
+            "en": "Order forming"
+        }
 
+        waiting_for_payment = {
+            "ru": "Ожидание оплаты",
+            "en": "Waiting for payment"
+        }
+
+        waiting_for_payment_confirm = {
+            "ru": "Ожидание подтверждения оплаты",
+            "en": "Waiting for payment confirmation"
+        }
+        
+        assembled_waiting_for_send = {
+            "ru": "Собран, ожидает отправки",
+            "en": "Assembled, waiting to be shipped"
+        }
+
+        sended = {
+            "ru": "Отправлен",
+            "en": "Sent"
+        }
+
+        received = {
+            "ru": "Получен",
+            "en": "Received"
+        }
 
 class UncategorizedTranslates(Translatable):
     oopsie = {
@@ -128,6 +158,7 @@ class UncategorizedTranslates(Translatable):
             "ru": "Рубль",
             "en": "Ruble"
         }
+        
         USD = {
             "ru": "Доллар",
             "en": "Dollar"
@@ -251,6 +282,21 @@ class CartTranslates(Translatable):
 ━━━━━━━━━━━━━━━━━━━━
 💸 <b>ИТОГО:</b> <code>{total}</code>""",
             "en": "PLACEHOLDER"
+        }
+        
+        no_promocode_applied = {
+            "ru": "Не применён.",
+            "en": "Not applied."
+        }
+        
+        not_using_bonus_money = {
+            "ru": "Не используются.",
+            "en": "Not used."
+        }
+
+        no_payment_method_selected = {
+            "ru": "Не выбран.",
+            "en": "Not selected."
         }
     
     

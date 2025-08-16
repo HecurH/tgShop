@@ -2,6 +2,9 @@ from aiogram import html
 
 from core.helper_classes import Context
 from schemas.db_models import *
+from schemas.db_schemas import *
+from schemas.payment_models import PaymentMethod
+from ui.message_tools import build_list
 from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
 
 
@@ -158,6 +161,29 @@ class CartTextGen:
         return CartTranslates.translate("cart_view_menu", ctx.lang).format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
 
     @staticmethod
-    def generate_order_forming_caption(ctx):
+    def generate_order_forming_caption(order: Order, ctx: Context):
+        promocode = order.promocode
+        price_details = order.price_details
+        payment_method = order.payment_method
+        
         order_configuration_menu_text = CartTranslates.OrderConfiguration.translate("order_configuration_menu", ctx.lang)
+        promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else CartTranslates.OrderConfiguration.translate("no_promocode_applied", ctx.lang)
+        bonus_money_info = f"{price_details.bonuses_applied.to_text()}" if price_details.bonuses_applied else CartTranslates.OrderConfiguration.translate("not_using_bonus_money", ctx.lang)
+        
+        payment_method_info = payment_method.name.get(ctx.lang) if payment_method else CartTranslates.OrderConfiguration.translate("no_payment_method_selected", ctx.lang)
+        
+        delivery_info = ctx.customer.delivery_info
+        delivery_service = f"{delivery_info.service.name.get(ctx.lang)} — {price_details.delivery_price.to_text()}"
+        delivery_requirements_info = build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements])
+        
+        total = price_details.total_price.to_text()
+        
+        return order_configuration_menu_text.format(
+            promocode_info=promocode_info,
+            bonus_money_info=bonus_money_info,
+            payment_method_info=payment_method_info,
+            delivery_service=delivery_service,
+            delivery_requirements_info=delivery_requirements_info,
+            total=total
+        )
         

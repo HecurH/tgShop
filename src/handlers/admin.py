@@ -5,6 +5,7 @@ from aiogram.filters import CommandObject, Command
 from aiogram.types import Message, BufferedInputFile
 
 from core.db import *
+from schemas.db_schemas import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from schemas.types import LocalizedMoney, LocalizedString

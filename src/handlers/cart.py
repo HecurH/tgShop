@@ -1,5 +1,5 @@
 from aiogram import Router
-from schemas.db_models import CartEntry
+from schemas.db_models import CartEntry, Order, OrderPriceDetails
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
 from ui.translates import *
@@ -56,8 +56,15 @@ async def cart_viewer_handler(_, ctx: Context):
                                      ctx,
                                      send_before=(CartTranslates.translate("delivery_not_configured", ctx.lang), 1))
             return
+        
+        products_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+        
+        order = ctx.db.orders.new_order(ctx.customer, products_price)
+        await ctx.fsm.update_data(order=order)
+        
         await call_state_handler(Cart.OrderConfigurationMenu,
-                                 ctx)
+                                 order=order,
+                                 ctx=ctx)
 
     else:
         await call_state_handler(Cart.Menu,
