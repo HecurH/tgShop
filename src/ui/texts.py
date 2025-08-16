@@ -174,7 +174,9 @@ class CartTextGen:
             
         entries = await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
         cart_entries_description = await asyncio.gather(*(form_entry_desc(entry) for entry in entries))
+        print(cart_entries_description)
         cart_entries_description = build_list(cart_entries_description, before="▫️")
+        print(cart_entries_description)
         
         order_configuration_menu_text = CartTranslates.OrderConfiguration.translate("order_configuration_menu", ctx.lang)
         promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else CartTranslates.OrderConfiguration.translate("no_promocode_applied", ctx.lang)
