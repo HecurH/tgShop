@@ -34,7 +34,9 @@ class OrderPriceDetails(BaseModel):
     
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
-        self.total_price = products_price_after_promocode + self.delivery_price - self.bonuses_applied
+        total = products_price_after_promocode + self.delivery_price
+        
+        self.total_price = total - self.bonuses_applied if self.bonuses_applied else total
     
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
