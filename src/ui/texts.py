@@ -168,7 +168,7 @@ class CartTextGen:
         
         async def form_entry_desc(entry):
             product = await ctx.db.products.find_one_by_id(entry.product_id)
-            quantity_text = f"{entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
+            quantity_text = f" {entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
             price = product.base_price + entry.configuration.price
             
             return f"{product.name.get(ctx.lang)}{quantity_text} — {price.to_text(ctx.customer.currency)}"
