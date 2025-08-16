@@ -60,7 +60,7 @@ async def cart_viewer_handler(_, ctx: Context):
         products_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         
         order = ctx.db.orders.new_order(ctx.customer, products_price)
-        await ctx.fsm.update_data(order=order)
+        await ctx.fsm.update_data(order=order.model_dump())
         
         await call_state_handler(Cart.OrderConfigurationMenu,
                                  order=order,
