@@ -54,4 +54,4 @@ def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + 
 
 def build_list(entries: List[str], before: str = "—", padding: int = 1, default_padding_spaces: int = 2) -> str:
     spaces_amount = default_padding_spaces * padding
-    return "\n".join(f"{(spaces_amount * " ") + before} {entry}" for entry in entries)
+    return "\n".join(f"{(spaces_amount * ' ') + before} {entry}" for entry in entries)
