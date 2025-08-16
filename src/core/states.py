@@ -3,7 +3,6 @@ from aiogram.fsm.state import StatesGroup, State
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from core.helper_classes import Context
-from schemas.db_schemas import *
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
 from ui.keyboards import *

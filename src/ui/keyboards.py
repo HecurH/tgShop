@@ -3,7 +3,6 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.db_schemas import *
 from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates

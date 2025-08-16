@@ -2,7 +2,6 @@ from aiogram import html
 
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.db_schemas import *
 from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
 from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
