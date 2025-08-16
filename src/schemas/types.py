@@ -114,12 +114,12 @@ class LocalizedString(BaseModel):
         return self.data.get(lang) or self.data.get("en")
 
 class OrderState(BaseModel):
-    key: OrderState
+    key: OrderStateKey
 
     def get_localized_name(self, lang: str) -> str:
         return EnumTranslates.OrderState.translate(self.key.value, lang)
     
-    def set_state(self, key: OrderState):
+    def set_state(self, key: OrderStateKey):
         self.key = key 
         
 class PromocodeAction(BaseModel):

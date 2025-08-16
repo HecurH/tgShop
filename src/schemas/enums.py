@@ -11,7 +11,7 @@ class PromocodeCheckResult(str, Enum):
     expired = "expired"
     error = "error"
 
-class OrderState(str, Enum):
+class OrderStateKey(str, Enum):
     forming = "forming"
     waiting_for_payment = "waiting_for_payment"
     waiting_for_payment_confirm = "waiting_for_payment_confirm"

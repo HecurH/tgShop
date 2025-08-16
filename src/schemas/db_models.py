@@ -9,7 +9,7 @@ from pymongo.errors import PyMongoError
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import AsyncCurrencyConverter
 from schemas.db_schemas import DeliveryInfo, DeliveryRequirementsList, ProductConfiguration
-from schemas.enums import PromocodeCheckResult, OrderState
+from schemas.enums import OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, PromocodeAction
 
@@ -40,7 +40,7 @@ class OrderPriceDetails(BaseModel):
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
-    state: OrderState = OrderState.forming
+    state: OrderState = OrderState(OrderStateKey.forming)
     delivery_info: Optional[DeliveryInfo] = None # при запросе удаления перс данных, обычно не должен быть пуст
 
     promocode: Optional[PydanticObjectId] = None
