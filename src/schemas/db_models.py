@@ -29,7 +29,7 @@ class OrderPriceDetails(BaseModel):
     delivery_price: Money  # доставка
     bonuses_applied: Optional[Money] = None # сколько бонусных средств для оплаты
     
-    total_price: Money  # сколько надо заплатить настоящими деньгами
+    total_price: Optional[Money] = None  # сколько надо заплатить настоящими деньгами
     paid_total: Optional[Money] = None  # сколько всего заплатил пользователь
     
     def recalculate_price(self):
