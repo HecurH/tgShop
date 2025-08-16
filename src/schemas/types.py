@@ -38,11 +38,12 @@ class Money(BaseModel):
     amount: float
     
     def to_text(self) -> str:
+        sign = "-" if self.amount < 0 else ""
         template = SUPPORTED_CURRENCIES.get(self.currency, f"{{amount}}{self.currency}")
-        amount = round(self.amount, 2)
-        return template.format(
-            amount=f"{int(amount)}" if amount == int(amount) else f"{amount:.2f}"
-        )
+        
+        num = round(abs(self.amount), 2)
+        amount = template.format(amount=f"{int(num)}" if num == int(num) else f"{num:.2f}")
+        return f"{sign}{amount}"
 
     def __add__(self, other):
         if not isinstance(other, Money):
