@@ -262,4 +262,4 @@ class DeliveryRequirementsList(BaseModel):
 
 class DeliveryInfo(BaseModel):
     is_foreign: bool = False  # Вне РФ?
-    service: Optional[DeliveryService] = None
+    service: Optional["DeliveryService"] = None
