@@ -528,15 +528,9 @@ class Customer(BaseModel):
     bonus_wallet: Money
     delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
     
-    def get_currency_symbol(self, iso_code: str) -> str:
-        return SUPPORTED_CURRENCIES.get(iso_code, iso_code)
-
-    def get_selected_currency_symbol(self) -> str:
-        return self.get_currency_symbol(self.currency)
-
     async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
         """Изменить основную валюту"""
-        if iso not in SUPPORTED_CURRENCIES:
+        if iso not in SUPPORTED_CURRENCIES.keys():
             raise ValueError(f"Unsupported currency: {iso}")
 
         bon_wal = self.bonus_wallet

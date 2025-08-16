@@ -173,7 +173,8 @@ class CartTextGen:
         
         delivery_info = ctx.customer.delivery_info
         delivery_service = f"{delivery_info.service.name.get(ctx.lang)} — {price_details.delivery_price.to_text()}"
-        delivery_requirements_info = build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements])
+        delivery_requirements_info = build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+                                                padding=2)
         
         total = price_details.total_price.to_text()
         

@@ -276,11 +276,11 @@ class CartTranslates(Translatable):
 🎫 <b>Промокод:</b> {promocode_info}
 💎 <b>Оплата бонусами:</b> {bonus_money_info}
 💳 <b>Способ оплаты:</b> {payment_method_info}
-━━━━━━━━━━━━━━━━━━━━
+
 🚚 <b>Доставка:</b> {delivery_service}
 {delivery_requirements_info}
-━━━━━━━━━━━━━━━━━━━━
-💸 <b>ИТОГО:</b> <code>{total}</code>""",
+
+💸 <b>ИТОГО:</b> {total}""",
             "en": "PLACEHOLDER"
         }
         

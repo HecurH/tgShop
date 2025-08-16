@@ -1,7 +1,7 @@
 
 SUPPORTED_CURRENCIES = {
-    "USD": "$",
-    "RUB": "₽"
+    "USD": "${amount}",
+    "RUB": "{amount}₽"
     # "EUR": "€",
     # "BTC": "₿"
     # во прикол
