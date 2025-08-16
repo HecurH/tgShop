@@ -282,7 +282,7 @@ async def order_configuration_handler(ctx: Context, order: Order, **_):
     used_bonus_money: bool = bool(order.price_details.bonuses_applied)
     total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
 
-    text = CartTextGen.generate_order_forming_caption(order, ctx)
+    text = await CartTextGen.generate_order_forming_caption(order, ctx)
 
     await ctx.message.answer(text,
                              reply_markup=CartKBs.cart_order_configuration(used_bonus_money, total_price, ctx))
