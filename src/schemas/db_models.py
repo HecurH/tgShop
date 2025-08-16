@@ -423,7 +423,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
             {"_id": product_id},
             projection={"name": 1}
         )
-        return LocalizedString(cursor["name"]) if cursor and "name" in cursor else None
+        return LocalizedString(**cursor["name"]) if cursor and "name" in cursor else None
     
     async def count_in_category(self, category) -> int:
         return await self.get_collection().count_documents({"category": category})
