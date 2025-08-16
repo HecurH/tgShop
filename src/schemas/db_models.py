@@ -40,7 +40,7 @@ class OrderPriceDetails(BaseModel):
 class Order(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
-    state: OrderState = OrderState(OrderStateKey.forming)
+    state: OrderState = OrderState(key=OrderStateKey.forming)
     delivery_info: Optional[DeliveryInfo] = None # при запросе удаления перс данных, обычно не должен быть пуст
 
     promocode: Optional[PydanticObjectId] = None
