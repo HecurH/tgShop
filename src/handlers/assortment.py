@@ -6,7 +6,7 @@ from aiogram.types import Message, LabeledPrice, CallbackQuery
 from ui.texts import AssortmentTextGen
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.db_schemas import *
+
 from core.states import Assortment, CommonStates, call_state_handler
 from ui.translates import *
 
