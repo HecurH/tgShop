@@ -283,7 +283,18 @@ class CartTranslates(Translatable):
 {delivery_requirements_info}
 
 💸 <b>ИТОГО:</b> {total}""",
-            "en": "PLACEHOLDER"
+            "en": """<b>🛒 ORDER DETAILS</b>
+━━━━━━━━━━━━━━━━━━━━
+{cart_entries_description}
+━━━━━━━━━━━━━━━━━━━━
+🎫 <b>Promo code:</b> {promocode_info}
+💎 <b>Bonus payment:</b> {bonus_money_info}
+💳 <b>Payment method:</b> {payment_method_info}
+
+🚚 <b>Delivery:</b> {delivery_service}
+{delivery_requirements_info}
+
+💸 <b>TOTAL</b> {total}"""
         }
         
         no_promocode_applied = {
