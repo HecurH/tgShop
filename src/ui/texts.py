@@ -167,10 +167,11 @@ class CartTextGen:
         payment_method = order.payment_method
         
         async def form_entry_desc(entry):
-            name = await ctx.db.products.get_name_by_id(entry.product_id)
+            product = await ctx.db.products.find_one_by_id(entry.product_id)
             quantity_text = f"{entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
+            price = product.base_price + entry.configuration.price
             
-            return f"{name.get(ctx.lang)}{quantity_text} — {entry.configuration.price.to_text(ctx.customer.currency)}"
+            return f"{product.name.get(ctx.lang)}{quantity_text} — {price.to_text(ctx.customer.currency)}"
             
         entries = await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
         cart_entries_description = await asyncio.gather(*(form_entry_desc(entry) for entry in entries))
