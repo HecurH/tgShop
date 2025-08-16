@@ -171,7 +171,7 @@ class CartTextGen:
             quantity_text = f" {entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
             price = product.base_price + entry.configuration.price
             price_text = price.to_text(ctx.customer.currency)
-            price_text = f"{price_text} * {entry.quantity} = {(price_text*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
+            price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
             
             return f"{product.name.get(ctx.lang)}{quantity_text} — {price_text}"
             
