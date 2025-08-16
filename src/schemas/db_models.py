@@ -254,6 +254,10 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     async def get_all(self, is_foreign: bool) -> Iterable[DeliveryService]:
         return await self.find_by({"is_foreign": is_foreign})
 
+class DeliveryInfo(BaseModel):
+    is_foreign: bool = False  # Вне РФ?
+    service: Optional[DeliveryService] = None
+
 class Customer(BaseModel):
     id: Optional[PydanticObjectId] = None
     user_id: int
