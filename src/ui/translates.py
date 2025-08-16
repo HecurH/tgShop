@@ -273,6 +273,8 @@ class CartTranslates(Translatable):
         order_configuration_menu = {
             "ru": """<b>🛒 ДЕТАЛИ ЗАКАЗА</b>
 ━━━━━━━━━━━━━━━━━━━━
+{cart_entries_description}
+━━━━━━━━━━━━━━━━━━━━
 🎫 <b>Промокод:</b> {promocode_info}
 💎 <b>Оплата бонусами:</b> {bonus_money_info}
 💳 <b>Способ оплаты:</b> {payment_method_info}

@@ -1,10 +1,11 @@
+import asyncio
 from aiogram import html
 
 from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
-from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates
+from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates, UncategorizedTranslates
 
 
 def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx):
@@ -160,10 +161,20 @@ class CartTextGen:
         return CartTranslates.translate("cart_view_menu", ctx.lang).format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
 
     @staticmethod
-    def generate_order_forming_caption(order: Order, ctx: Context):
+    async def generate_order_forming_caption(order: Order, ctx: Context):
         promocode = order.promocode
         price_details = order.price_details
         payment_method = order.payment_method
+        
+        async def form_entry_desc(entry):
+            name = await ctx.db.products.get_name_by_id(entry.product_id)
+            quantity_text = f"{entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
+            
+            return f"{name.get(ctx.lang)}{quantity_text} — {entry.configuration.price.to_text(ctx.customer.currency)}"
+            
+        entries = await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
+        cart_entries_description = await asyncio.gather(*(form_entry_desc(entry) for entry in entries))
+        cart_entries_description = build_list(cart_entries_description, before="▫️")
         
         order_configuration_menu_text = CartTranslates.OrderConfiguration.translate("order_configuration_menu", ctx.lang)
         promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else CartTranslates.OrderConfiguration.translate("no_promocode_applied", ctx.lang)
@@ -179,6 +190,7 @@ class CartTextGen:
         total = price_details.total_price.to_text()
         
         return order_configuration_menu_text.format(
+            cart_entries_description=cart_entries_description,
             promocode_info=promocode_info,
             bonus_money_info=bonus_money_info,
             payment_method_info=payment_method_info,

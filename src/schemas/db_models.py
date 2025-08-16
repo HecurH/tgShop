@@ -101,7 +101,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def count_customer_cart_entries(self, customer: "Customer"):
         return await self.get_collection().count_documents({"customer_id": customer.id, "order_id": None})
     
-    async def get_customer_cart_ids_by_customer_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
+    async def get_customer_cart_ids_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         cursor = self.get_collection().find(
             {"customer_id": customer.id,
@@ -110,8 +110,11 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
+    async def get_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
+        return await self.find_by({"customer_id": customer.id}, sort=[("_id", 1)])
+
     async def get_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> CartEntry:
-        ids = await self.get_customer_cart_ids_by_customer_sorted_by_date(customer)
+        ids = await self.get_customer_cart_ids_sorted_by_date(customer)
         return await self.find_one_by_id(ids[idx])
     
     async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
@@ -285,7 +288,6 @@ class ConfigurationOption(BaseModel):
             if choice_key not in option.choices:
                 del option.choices[choice_key]
 
-
 class ProductConfiguration(BaseModel):
     options: Dict[str, ConfigurationOption]
     additionals: list["ProductAdditional"] = []
@@ -369,7 +371,6 @@ class ProductConfiguration(BaseModel):
     def update_price(self):
         self.price = self.calculate_additionals_price() + self.calculate_options_price()
 
-
 class Product(BaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
@@ -416,6 +417,13 @@ class ProductsRepository(AppAbstractRepository[Product]):
     async def get_by_category_and_index(self, category: str, idx: int) -> Product:
         ids = await self.get_ids_by_category_sorted_by_date(category)
         return await self.find_one_by_id(ids[idx])
+    
+    async def get_name_by_id(self, product_id: PydanticObjectId) -> Optional[LocalizedString]:
+        cursor = await self.get_collection().find_one(
+            {"_id": product_id},
+            projection={"name": 1}
+        )
+        return LocalizedString(cursor["name"]) if cursor and "name" in cursor else None
     
     async def count_in_category(self, category) -> int:
         return await self.get_collection().count_documents({"category": category})
