@@ -295,8 +295,8 @@ class CartTranslates(Translatable):
         }
 
         no_payment_method_selected = {
-            "ru": "Не выбран.",
-            "en": "Not selected."
+            "ru": "Не выбран. ❗️",
+            "en": "Not selected. ❗️"
         }
     
     
