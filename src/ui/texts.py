@@ -13,7 +13,7 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
     currency = ctx.customer.currency
     def generate_option_description(option) -> str:
         conf_choice = option.get_chosen()
-        selected_options = "\n"
+        selected_options = ""
         
         if isinstance(conf_choice, ConfigurationChoice):
             label = conf_choice.label.get(ctx.lang)
