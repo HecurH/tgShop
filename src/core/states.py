@@ -1,5 +1,6 @@
 import asyncio
 from aiogram.fsm.state import StatesGroup, State
+from aiogram.types import ReplyKeyboardRemove
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from core.helper_classes import Context
@@ -53,11 +54,11 @@ async def call_state_handler(state: State,
     try:
         if send_before:
             if isinstance(send_before, str):
-                await ctx.message.answer(send_before)
+                await ctx.message.answer(send_before, reply_markup=ReplyKeyboardRemove())
             elif isinstance(send_before, tuple):
                 text, sleep_time = send_before
                 
-                await ctx.message.answer(text)
+                await ctx.message.answer(text, reply_markup=ReplyKeyboardRemove())
                 await asyncio.sleep(sleep_time)
             
         await handler(ctx=ctx, **kwargs)
