@@ -36,14 +36,15 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
                     break
                 
                 switches_text = ""
-                for switch in enabled_switches:
+                def switch_text(switch):
                     name = switch.name.get(ctx.lang)
                     price = switch.price
                     price_val = price.get_amount(currency)
                     price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
 
-                    switches_text += f"\n      — {name}{price_info}"
-
+                    return f"{name}{price_info}"
+                    
+                switches_text = build_list([switch_text(switch) for switch in enabled_switches], padding=3)
                 selected_options += switches_text
 
     if additionals := configuration.additionals:
@@ -61,12 +62,12 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
 
 class AssortmentTextGen:
     @staticmethod
-    def generate_viewing_entry_caption(product, ctx: Context):
-        return f"{product.name.get(ctx.lang)} — {product.base_price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx.lang)}"
+    def generate_viewing_entry_caption(product: Product, ctx: Context):
+        return f"{product.name.get(ctx.lang)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx.lang)}"
     
     @staticmethod
-    def generate_product_detailed_caption(product, ctx: Context):
-        return f"{product.name.get(ctx.lang)} — {product.base_price.to_text(ctx.customer.currency)}\n\n{product.long_description.get(ctx.lang)}"
+    def generate_product_detailed_caption(product: Product, ctx: Context):
+        return f"{product.name.get(ctx.lang)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.long_description.get(ctx.lang)}"
 
     @staticmethod
     def generate_choice_text(option: ConfigurationOption, lang: str):
@@ -115,7 +116,7 @@ class AssortmentTextGen:
     @staticmethod
     def generate_product_configurating_main(product: Product, ctx: Context):
         currency = ctx.customer.currency
-        total_price = product.base_price + product.configuration.price
+        total_price = product.price + product.configuration.price
         cannot_determine_price = False
 
 
@@ -152,7 +153,7 @@ class CartTextGen:
     @staticmethod
     def generate_cart_viewing_caption(entry: CartEntry, product: Product, configuration: ProductConfiguration, ctx: Context):
         
-        configuration_price = product.base_price + entry.configuration.price
+        configuration_price = product.price + entry.configuration.price
         configuration_price_text = configuration_price.to_text(ctx.customer.currency)
         total_price = (configuration_price * entry.quantity).to_text(ctx.customer.currency)
         
@@ -169,7 +170,7 @@ class CartTextGen:
         async def form_entry_desc(entry):
             product = await ctx.db.products.find_one_by_id(entry.product_id)
             quantity_text = f" {entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
-            price = product.base_price + entry.configuration.price
+            price = product.price + entry.configuration.price
             price_text = price.to_text(ctx.customer.currency)
             price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
             

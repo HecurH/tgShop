@@ -127,16 +127,16 @@ class OrderState(BaseModel):
     def set_state(self, key: OrderStateKey):
         self.key = key 
         
-class PromocodeAction(BaseModel):
-    action_type: PromocodeActionType  # тип действия: фиксированная сумма или процент
+class Discount(BaseModel):
+    action_type: DiscountType  # тип действия: фиксированная сумма или процент
     value: LocalizedMoney     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
 
     def get_discount(self, amount: Money) -> Money:
         # округляем результат до двух знаков после запятой
-        if self.action_type == PromocodeActionType.percent:
+        if self.action_type == DiscountType.percent:
             discount_amount = round(amount.amount * (self.value.get_amount(amount.currency) / 100), 2)
             return Money(currency=amount.currency, amount=discount_amount)
-        elif self.action_type == PromocodeActionType.fixed:
+        elif self.action_type == DiscountType.fixed:
             discount = min(self.value.get_amount(amount.currency), amount.amount)
             discount = round(discount, 2)
             return Money(currency=amount.currency, amount=discount)

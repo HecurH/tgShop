@@ -1,6 +1,6 @@
 from enum import Enum
 
-class PromocodeActionType(str, Enum):
+class DiscountType(str, Enum):
     fixed = "fixed"      # фиксированная сумма
     percent = "percent"  # процент от суммы
 

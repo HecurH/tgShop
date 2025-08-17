@@ -10,7 +10,7 @@ from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import AsyncCurrencyConverter
 from schemas.enums import OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
-from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, PromocodeAction, SecureValue
+from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -75,6 +75,8 @@ class CartEntry(BaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
     product_id: PydanticObjectId
+    frozen_product: Optional["Product"] = None # только для сформированных заказов
+    
     order_id: Optional[PydanticObjectId] = None
 
     quantity: int = Field(default=1, gt=0)
@@ -122,7 +124,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
         return sum(
             [
-                (((await self.dbs.products.find_one_by_id(entry.product_id)).base_price + entry.configuration.price) * entry.quantity)
+                (((await self.dbs.products.find_one_by_id(entry.product_id)).price + entry.configuration.price) * entry.quantity)
                 for entry in entries
             ],
             LocalizedMoney()
@@ -382,8 +384,14 @@ class Product(BaseModel):
     long_description: LocalizedString
     long_description_photo_id: Optional[str] = None
     long_description_video_id: Optional[str] = None
-
+    
     base_price: LocalizedMoney
+    discount: Optional[Discount] = None
+
+    @property
+    def price(self) -> LocalizedMoney:
+        return self.base_price - self.discount.get_discount(self.base_price) if self.discount else self.base_price
+        
 
     configuration_photo_id: Optional[str] = None
     configuration_video_id: Optional[str] = None
@@ -452,7 +460,7 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
 class Promocode(BaseModel):
     id: Optional[PydanticObjectId] = None
     code: str
-    action: PromocodeAction
+    action: Discount
     
     description: LocalizedString
     only_newbies: bool
