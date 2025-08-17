@@ -53,5 +53,16 @@ async def edit_media_message(
 def strike(text:str): return "\u0336".join(f"{text} ".replace(" ", "\u00a0")) + "\u0336"
 
 def build_list(entries: List[str], before: str = "—", padding: int = 1, default_padding_spaces: int = 2) -> str:
+    """
+    Создает форматированную строку-список с поддержкой вложенности.
+    """
     spaces_amount = default_padding_spaces * padding
-    return "\n".join(f"{(spaces_amount * ' ') + before} {entry}" for entry in entries)
+    indent = " " * spaces_amount
+    formatted_entries = []
+    for entry in entries:
+        # Разбиваем строку по переводам строки и добавляем отступы к каждой части
+        lines = entry.split('\n')
+        first_line = f"{indent}{before} {lines[0]}"
+        other_lines = [f"{indent}  {line}" for line in lines[1:]]
+        formatted_entries.append('\n'.join([first_line] + other_lines))
+    return "\n".join(formatted_entries)
