@@ -13,7 +13,7 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
     currency = ctx.customer.currency
     def generate_option_description(option) -> str:
         conf_choice = option.get_chosen()
-        selected_options = ""
+        selected_options = "\n"
         
         if isinstance(conf_choice, ConfigurationChoice):
             label = conf_choice.label.get(ctx.lang)
@@ -49,52 +49,19 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
     
     selected_options = build_list([generate_option_description(option) for option in options.values()], '▫️', 0)
 
-    # for option in options.values():
-    #     conf_choice = option.get_chosen()
-        
-            
-
-    #     if isinstance(conf_choice, ConfigurationChoice):
-    #         label = conf_choice.label.get(ctx.lang)
-    #         price = option.calculate_price()
-    #         presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
-    #         custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
-    #         price_val = price.get_amount(currency)
-    #         if (len(option.get_switches()) > 1 or price_val != 0) and price_val != 0:
-    #             sign = "+" if price_val > 0 else ""
-    #             price_info = f" {sign}{price.to_text(currency)}"
-    #         else:
-    #             price_info = ""
-    #         value = f"{label}{presets}{price_info}{custom}"
-    #         selected_options += f"\n▫️ {option.name.get(ctx.lang)}: {value}"
-    #     for choice in option.choices.values():
-    #         if isinstance(choice, ConfigurationSwitches):
-    #             enabled_switches = choice.get_enabled()
-    #             if not enabled_switches: 
-    #                 break
-                
-    #             switches_text = "\n"
-    #             def switch_text(switch):
-    #                 name = switch.name.get(ctx.lang)
-    #                 price = switch.price
-    #                 price_val = price.get_amount(currency)
-    #                 price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
-
-    #                 return f"{name}{price_info}"
-                    
-    #             switches_text += build_list([switch_text(switch) for switch in enabled_switches], padding=3)
-    #             selected_options += switches_text
-
     if additionals := configuration.additionals:
         price = configuration.calculate_additionals_price()
         add_price = f" ({price.to_text(currency)})" if price.get_amount(currency) > 0 and len(additionals) > 1 else ""
         selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', ctx.lang)}{add_price}:"
-        for additional in additionals:
+        
+        def gen_additional_text(additional):
             name = additional.name.get(ctx.lang)
             price = additional.price
-            price_val = price.get_amount(currency)
-            price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
-            selected_options += f"\n    • {name}{price_info}"
+            price_text = price.to_text(currency)
+            price_info = f" +{price_text}" if price.get_amount(currency) > 0 else price.to_text(currency)
+            return f"{name}{price_info}"
+        
+        selected_options += build_list([gen_additional_text(additional) for additional in additionals], '•', 2)
 
     return f"{AssortmentTranslates.translate('currently_selected', ctx.lang)}\n{selected_options}"
 
