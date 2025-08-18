@@ -8,43 +8,49 @@ from ui.message_tools import build_list
 from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates, UncategorizedTranslates
 
 
-def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx):
+def gen_product_configurable_info_text(
+    configuration: ProductConfiguration,
+    ctx: Context
+) -> str:
     options = configuration.options
     currency = ctx.customer.currency
-    def generate_option_description(option) -> str:
+    
+    def gen_price_info(price: LocalizedMoney):
+        sign = "+" if price.get_amount(currency) > 0 else ""
+        return f"{sign}{price.to_text(currency)}"
+    
+    def generate_option_description(option: ConfigurationOption) -> str:
         conf_choice = option.get_chosen()
-        selected_options = ""
+        price = option.calculate_price()
         
-        if isinstance(conf_choice, ConfigurationChoice):
-            label = conf_choice.label.get(ctx.lang)
-            price = option.calculate_price()
-            presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
-            custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
-            price_val = price.get_amount(currency)
-            if (len(option.get_switches()) > 1 or price_val != 0) and price_val != 0:
-                sign = "+" if price_val > 0 else ""
-                price_info = f" {sign}{price.to_text(currency)}"
-            else:
-                price_info = ""
-            value = f"{label}{presets}{price_info}{custom}"
-            selected_options += f"{option.name.get(ctx.lang)}: {value}"
+        label = conf_choice.label.get(ctx.lang)
+        
+        presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
+        
+        price_info = ""
+        if len(option.get_switches()) > 1 or price.get_amount(currency) != 0:
+            price_info = f" {gen_price_info(price)}"
+            
+        custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
+        
+        value = f"{label}{presets}{price_info}{custom}"
+        selected_options = f"{option.name.get(ctx.lang)}: {value}"
+        
         for choice in option.choices.values():
-            if isinstance(choice, ConfigurationSwitches):
-                enabled_switches = choice.get_enabled()
-                if not enabled_switches: 
-                    break
-                
-                switches_text = "\n"
-                def switch_text(switch):
-                    name = switch.name.get(ctx.lang)
-                    price = switch.price
-                    price_val = price.get_amount(currency)
-                    price_info = f" +{price.to_text(currency)}" if price_val > 0 else price.to_text(currency)
-
-                    return f"{name}{price_info}"
-                    
-                switches_text += build_list([switch_text(switch) for switch in enabled_switches], padding=3)
-                selected_options += switches_text
+            if not isinstance(choice, ConfigurationSwitches):
+                continue
+            
+            enabled_switches = choice.get_enabled()
+            if not enabled_switches: 
+                continue
+            
+            def switch_text(switch):
+                name = switch.name.get(ctx.lang)
+                return f"{name} {gen_price_info(switch.price)}"
+            
+            switches_text = "\n"
+            switches_text += build_list([switch_text(switch) for switch in enabled_switches], padding=3)
+            selected_options += switches_text
         return selected_options
     
     selected_options = build_list([generate_option_description(option) for option in options.values()], '▫️', 0)
@@ -52,14 +58,14 @@ def gen_product_configurable_info_text(configuration: ProductConfiguration, ctx)
     if additionals := configuration.additionals:
         price = configuration.calculate_additionals_price()
         add_price = f" ({price.to_text(currency)})" if price.get_amount(currency) > 0 and len(additionals) > 1 else ""
-        selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', ctx.lang)}{add_price}:"
+        selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', ctx.lang)}{add_price}:\n"
         
         def gen_additional_text(additional):
             name = additional.name.get(ctx.lang)
             price = additional.price
             price_text = price.to_text(currency)
-            price_info = f" +{price_text}" if price.get_amount(currency) > 0 else price.to_text(currency)
-            return f"{name}{price_info}"
+            price_info = f"+{price_text}" if price.get_amount(currency) > 0 else price.to_text(currency)
+            return f"{name} {price_info}"
         
         selected_options += build_list([gen_additional_text(additional) for additional in additionals], '•', 2)
 
@@ -122,12 +128,10 @@ class AssortmentTextGen:
     def generate_product_configurating_main(product: Product, ctx: Context):
         currency = ctx.customer.currency
         total_price = product.price + product.configuration.price
-        cannot_determine_price = False
-
 
         section = gen_product_configurable_info_text(product.configuration, ctx)
 
-        if cannot_determine_price:
+        if product.configuration.can_determine_price:
             price_text = f"\n\n{AssortmentTranslates.translate('cannot_price', ctx.lang)}\n{AssortmentTranslates.translate('approximate_price', ctx.lang)} {total_price.to_text(currency)}"
         else:
             price_text = f"\n\n{AssortmentTranslates.translate('total', ctx.lang)} {total_price.to_text(currency)}"
@@ -151,7 +155,7 @@ class ProfileTextGen:
         
         requirements = service.selected_option.requirements
         
-        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in requirements])
+        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{html.escape(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
         return ProfileTranslates.Delivery.translate("menu", ctx.lang).format(delivery_service=service.name.get(ctx.lang), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx.lang), requirements=requirements_info_text)
 
 class CartTextGen:

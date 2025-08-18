@@ -85,11 +85,7 @@ class CartEntry(BaseModel):
     
     @property
     def need_to_confirm_price(self) -> bool:
-        return any(
-            hasattr(option.choices[option.chosen - 1], "blocks_price_determination") and
-            option.choices[option.chosen - 1].blocks_price_determination
-            for option in self.configuration.options
-        )
+        return self.configuration.can_determine_price
 
 class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     class Meta:
@@ -238,11 +234,11 @@ class ConfigurationOption(BaseModel):
     text: LocalizedString
     photo_id: Optional[str] = None
     video_id: Optional[str] = None
-    chosen: str
+    chosen: str # ConfigurationSwitches нельзя выбрать, это лишь группа выключателей относящейся к целевой опции
 
     choices: Dict[str, ConfigurationChoice | ConfigurationSwitches]
     
-    def get_chosen(self):
+    def get_chosen(self) -> ConfigurationChoice:
         return self.choices.get(self.chosen)
     
     def set_chosen(self, choice: ConfigurationChoice):
@@ -294,6 +290,13 @@ class ProductConfiguration(BaseModel):
     options: Dict[str, ConfigurationOption]
     additionals: list["ProductAdditional"] = []
     price: LocalizedMoney = None
+    @property
+    def can_determine_price(self) -> bool:
+        return any(
+            hasattr(option.choices[option.chosen - 1], "blocks_price_determination") and
+            option.choices[option.chosen - 1].blocks_price_determination
+            for option in self.options
+        )
 
     def __init__(self, **data):
         super().__init__(**data)

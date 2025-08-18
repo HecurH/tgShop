@@ -247,6 +247,7 @@ class AssortmentTranslates(Translatable):
         "ru": "Товар успешно добавлен в корзину!",
         "en": "The product has been successfully added to the cart!"
     }
+
     
 class CartTranslates(Translatable):
     no_products_in_cart = {

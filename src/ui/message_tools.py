@@ -63,6 +63,6 @@ def build_list(entries: List[str], before: str = "—", padding: int = 1, defaul
         # Разбиваем строку по переводам строки и добавляем отступы к каждой части
         lines = entry.split('\n')
         first_line = f"{indent}{before} {lines[0]}"
-        other_lines = [f"{indent}  {line}" for line in lines[1:]]
+        other_lines = [f"{indent}{line}" for line in lines[1:]]
         formatted_entries.append('\n'.join([first_line] + other_lines))
     return "\n".join(formatted_entries)
