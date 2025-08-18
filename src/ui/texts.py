@@ -160,7 +160,7 @@ class ProfileTextGen:
         
         requirements = service.selected_option.requirements
         
-        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{html.escape(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
+        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
         return ProfileTranslates.Delivery.translate("menu", ctx.lang).format(delivery_service=service.name.get(ctx.lang), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx.lang), requirements=requirements_info_text)
 
 class CartTextGen:
