@@ -295,7 +295,7 @@ class ProductConfiguration(BaseModel):
         return any(
             hasattr(option.choices[option.chosen - 1], "blocks_price_determination") and
             option.choices[option.chosen - 1].blocks_price_determination
-            for option in self.options
+            for option in self.options.values()
         )
 
     def __init__(self, **data):
