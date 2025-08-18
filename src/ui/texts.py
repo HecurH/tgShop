@@ -25,13 +25,13 @@ def gen_product_configurable_info_text(
         
         label = conf_choice.label.get(ctx.lang)
         
-        presets = f" ({conf_choice.existing_presets_chosen})" if all(conf_choice.existing_presets, conf_choice.existing_presets_chosen) else ""
+        presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets and conf_choice.existing_presets_chosen else ""
         
         price_info = f" {gen_price_info(conf_choice.price)}" if conf_choice.price.get_amount(currency) != 0 else ""
         # if len(option.get_switches()) > 1 or price.get_amount(currency) != 0:
         #     price_info = f" {gen_price_info(price)}"
             
-        custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if all(conf_choice.is_custom_input, conf_choice.custom_input_text) else ""
+        custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input and conf_choice.custom_input_text else ""
         
         value = f"{label}{presets}{price_info}{custom}"
         selected_options = f"{option.name.get(ctx.lang)}: {value}"
