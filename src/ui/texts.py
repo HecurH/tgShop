@@ -49,7 +49,7 @@ def gen_product_configurable_info_text(
                 return f"{name} {gen_price_info(switch.price)}"
             
             switches_text = "\n"
-            switches_text += build_list([switch_text(switch) for switch in enabled_switches], padding=3)
+            switches_text += build_list([switch_text(switch) for switch in enabled_switches], padding=2)
             selected_options += switches_text
         return selected_options
     
