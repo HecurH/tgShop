@@ -21,17 +21,17 @@ def gen_product_configurable_info_text(
     
     def generate_option_description(option: ConfigurationOption) -> str:
         conf_choice = option.get_chosen()
-        price = option.calculate_price()
+        # price = option.calculate_price()
         
         label = conf_choice.label.get(ctx.lang)
         
-        presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets else ""
+        presets = f" ({conf_choice.existing_presets_chosen})" if all(conf_choice.existing_presets, conf_choice.existing_presets_chosen) else ""
         
-        price_info = ""
-        if len(option.get_switches()) > 1 or price.get_amount(currency) != 0:
-            price_info = f" {gen_price_info(price)}"
+        price_info = f" {gen_price_info(conf_choice.price)}" if conf_choice.price.get_amount(currency) != 0 else ""
+        # if len(option.get_switches()) > 1 or price.get_amount(currency) != 0:
+        #     price_info = f" {gen_price_info(price)}"
             
-        custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input else ""
+        custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if all(conf_choice.is_custom_input, conf_choice.custom_input_text) else ""
         
         value = f"{label}{presets}{price_info}{custom}"
         selected_options = f"{option.name.get(ctx.lang)}: {value}"
@@ -95,6 +95,11 @@ class AssortmentTextGen:
     @staticmethod
     def generate_switches_text(conf_switches: ConfigurationSwitches, ctx: Context):
         switches = conf_switches.switches
+        if not switches:
+            return (
+                f"{conf_switches.description.get(ctx.lang)}\n\n"
+                + AssortmentTranslates.translate("switches_enter", ctx.lang)
+            )
         switches_info = "\n".join([f"{switch.name.get(ctx.lang)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
         return (
             f"{conf_switches.description.get(ctx.lang)}\n\n{switches_info}\n\n"
@@ -148,8 +153,8 @@ class ProfileTextGen:
         return ProfileTranslates.Settings.translate("menu", lang)
     
     @staticmethod
-    def delivery_menu_text(delivery_info: DeliveryInfo, ctx: Context):
-        if not delivery_info.service:
+    def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):
+        if not delivery_info:
             return ProfileTranslates.Delivery.translate("menu_not_configured", ctx.lang)
         service = delivery_info.service
         

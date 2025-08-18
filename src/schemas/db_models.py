@@ -545,7 +545,7 @@ class Customer(BaseModel):
     
     currency: str
     bonus_wallet: Money
-    delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
+    delivery_info: Optional[DeliveryInfo] = None
     
     async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
         """Изменить основную валюту"""

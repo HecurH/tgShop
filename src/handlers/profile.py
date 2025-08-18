@@ -51,7 +51,7 @@ async def delivery_command_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Menu, ctx)
         return
     
-    if text == ReplyButtonsTranslates.Profile.Delivery.translate("menu_not_set", ctx.lang) and not delivery_info.service:
+    if text == ReplyButtonsTranslates.Profile.Delivery.translate("menu_not_set", ctx.lang) and not delivery_info:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     
@@ -125,7 +125,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
 
 @router.message(Profile.Delivery.Editables.IsForeign)
 async def editable_is_foreign_handler(_, ctx: Context) -> None:
-    first_setup = ctx.customer.delivery_info.service is None
+    first_setup = ctx.customer.delivery_info is None
     
     if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
@@ -148,7 +148,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     
     
     # при изменении этого параметра все равно надо менять сервис доставки
-    info = ctx.customer.delivery_info
+    info = ctx.customer.delivery_info or DeliveryInfo()
     info.is_foreign = is_foreign
     
     await ctx.fsm.update_data(delivery_info=info.model_dump())
@@ -156,7 +156,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     
 @router.message(Profile.Delivery.Editables.Service)
 async def editable_service_handler(_, ctx: Context) -> None:
-    first_setup = ctx.customer.delivery_info.service is None
+    first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
     if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
@@ -189,7 +189,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     
 @router.message(Profile.Delivery.Editables.RequirementsLists)
 async def editable_requirements_lists_handler(_, ctx: Context) -> None:
-    first_setup = ctx.customer.delivery_info.service is None
+    first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
     if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
@@ -221,7 +221,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
 
 @router.message(Profile.Delivery.Editables.Requirement)
 async def editable_requirement_handler(_, ctx: Context) -> None:
-    first_setup = ctx.customer.delivery_info.service is None
+    first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
     if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
@@ -267,7 +267,7 @@ async def delete_confimation_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return
     
-    ctx.customer.delivery_info.service = None
+    ctx.customer.delivery_info = None
     
     await ctx.db.customers.save(ctx.customer)
     

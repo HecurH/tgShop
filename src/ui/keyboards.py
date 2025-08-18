@@ -351,15 +351,15 @@ class ProfileKBs:
     class Delivery:
         
         @staticmethod
-        def menu(delivery_info: DeliveryInfo, lang) -> types.ReplyKeyboardMarkup:
-            # Текст для иностранной доставки
-            foreign_text = (
-                ReplyButtonsTranslates.Profile.Delivery.Edit.translate("foreign", lang) + (" ✅"
-                if delivery_info.is_foreign else " ❌")
-            )
+        def menu(delivery_info: Optional[DeliveryInfo], lang) -> types.ReplyKeyboardMarkup:
 
             # Клавиатура, если сервис доставки выбран
-            if delivery_info.service:
+            if delivery_info:
+                # Текст для иностранной доставки
+                foreign_text = (
+                    ReplyButtonsTranslates.Profile.Delivery.Edit.translate("foreign", lang) + (" ✅"
+                    if delivery_info.is_foreign else " ❌")
+                )
                 keyboard = [
                     [
                         types.KeyboardButton(text=foreign_text),
