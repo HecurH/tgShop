@@ -293,8 +293,8 @@ class ProductConfiguration(BaseModel):
     @property
     def can_determine_price(self) -> bool:
         return any(
-            hasattr(option.choices[option.chosen - 1], "blocks_price_determination") and
-            option.choices[option.chosen - 1].blocks_price_determination
+            hasattr(option.choices.get_chosen(), "blocks_price_determination") and
+            option.choices.get_chosen().blocks_price_determination
             for option in self.options.values()
         )
 
