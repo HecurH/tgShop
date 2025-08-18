@@ -3,9 +3,10 @@ from enum import Enum
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Cryptography
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import base64
+from binascii import Error as BinasciiError
 
 from schemas.enums import *
 from ui.translates import EnumTranslates
@@ -17,13 +18,25 @@ class SecureValue(BaseModel):
     tag: str = ""
 
     def get(self) -> Optional[str]:
-        """Дешифрует и возвращает строковое значение."""
+        """Дешифрует и возвращает строковое значение, обрабатывая ошибки base64 декодирования."""
         if not self.iv or not self.ciphertext or not self.tag:
             return None
+
+        try:
+            iv_bytes = base64.b64decode(self.iv, validate=True)
+            ciphertext_bytes = base64.b64decode(self.ciphertext, validate=True)
+            tag_bytes = base64.b64decode(self.tag, validate=True)
+        except BinasciiError:
+            print("Error: Invalid base64 characters found during decoding.")
+            return None
+        except ValueError as e:
+            print(f"Error: A ValueError occurred during base64 decoding. Details: {e}")
+            return None
+        
         return Cryptography.decrypt_data(
-            base64.b64decode(self.iv),
-            base64.b64decode(self.ciphertext),
-            base64.b64decode(self.tag)
+            iv_bytes,
+            ciphertext_bytes,
+            tag_bytes
         )
 
     def update(self, text: str):
@@ -60,7 +73,7 @@ class Money(BaseModel):
 
 
 class LocalizedMoney(BaseModel):
-    data: Dict[str, Money] = {}
+    data: Dict[str, Money] = Field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, raw: dict[str, float]) -> "LocalizedMoney":
@@ -79,7 +92,7 @@ class LocalizedMoney(BaseModel):
         if money := self.data.get(currency):
             return str(money)
         
-        template = SUPPORTED_CURRENCIES.get(self.currency, f"{{amount}}{self.currency}")
+        template = SUPPORTED_CURRENCIES.get(currency, f"{{amount}}{currency}")
         return template.format(amount=0)
 
     def __add__(self, other):
@@ -134,11 +147,12 @@ class Discount(BaseModel):
     def get_discount(self, amount: Money) -> Money:
         # округляем результат до двух знаков после запятой
         if self.action_type == DiscountType.percent:
-            discount_amount = round(amount.amount * (self.value.get_amount(amount.currency) / 100), 2)
-            return Money(currency=amount.currency, amount=discount_amount)
+            discount = amount.amount * (self.value.get_amount(amount.currency) / 100)
+            discount = round(min(discount, amount.amount), 2)
+            return Money(currency=amount.currency, amount=max(discount, 0.0))
         elif self.action_type == DiscountType.fixed:
             discount = min(self.value.get_amount(amount.currency), amount.amount)
             discount = round(discount, 2)
-            return Money(currency=amount.currency, amount=discount)
+            return Money(currency=amount.currency, amount=max(discount, 0.0))
         # если тип не распознан — скидка 0
         return Money(currency=amount.currency, amount=0.0)

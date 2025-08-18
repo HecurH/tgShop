@@ -15,8 +15,8 @@ class CommonKBs:
     def lang_choose() -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         
-        for key, value in SUPPORTED_LANGUAGES_TEXT.items():
-            builder.add(types.InlineKeyboardButton(text=key, callback_data=value))
+        for display_text, code in SUPPORTED_LANGUAGES_TEXT.items():
+            builder.add(types.InlineKeyboardButton(text=display_text, callback_data=code))
 
         builder.adjust(2)
         return builder.as_markup()

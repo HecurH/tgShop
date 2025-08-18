@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 from typing import Any, Dict, TypeVar, Optional, List, Iterable, TYPE_CHECKING
@@ -54,7 +55,11 @@ class Order(BaseModel):
         self.price_details.recalculate_price()
     
     async def update_applied_bonuses(self, customer_bonus_balance: Money):
-        self.price_details.bonuses_applied = min(self.price_details.bonuses_applied, customer_bonus_balance)
+        price_details = self.price_details
+        products_price_after_promocode = (price_details.products_price - price_details.promocode_discount) if price_details.promocode_discount else price_details.products_price
+        total = products_price_after_promocode + price_details.delivery_price
+        
+        self.price_details.bonuses_applied = min(total, customer_bonus_balance)
 
 class OrdersRepository(AppAbstractRepository[Order]):
     class Meta:
@@ -111,20 +116,25 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def get_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
         return await self.find_by({"customer_id": customer.id}, sort=[("_id", 1)])
 
-    async def get_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> CartEntry:
+    async def get_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> Optional[CartEntry]:
         ids = await self.get_customer_cart_ids_sorted_by_date(customer)
-        return await self.find_one_by_id(ids[idx])
+        if not ids: return None
+        
+        return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
     
     async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
-        # sourcery skip: comprehension-to-generator
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
-        return sum(
-            [
-                (((await self.dbs.products.find_one_by_id(entry.product_id)).price + entry.configuration.price) * entry.quantity)
-                for entry in entries
-            ],
-            LocalizedMoney()
-        )
+        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        product_map: Dict[str, Product] = {
+            product.id: product for product in products
+        }
+
+        total_price = LocalizedMoney()
+        for entry in entries:
+            if product := product_map.get(entry.product_id):
+                entry_total = (product.price + entry.configuration.price) * entry.quantity
+                total_price += entry_total
+        return total_price
 
 class ConfigurationSwitch(BaseModel):
     name: LocalizedString
@@ -153,14 +163,14 @@ class ConfigurationSwitches(BaseModel):
         """Возвращает сумму цен всех переданных переключателей."""
         return sum((switch.price for switch in switches), LocalizedMoney())
 
-    def update(self, base_choice: "ConfigurationSwitches"):
-        self.label=base_choice.label
-        self.description=base_choice.description
-        self.photo_id=base_choice.photo_id
-        self.video_id=base_choice.video_id
+    def update(self, update_from_switches: "ConfigurationSwitches"):
+        self.label = update_from_switches.label
+        self.description = update_from_switches.description
+        self.photo_id = update_from_switches.photo_id
+        self.video_id = update_from_switches.video_id
         
-        for i, switch in enumerate(base_choice.switches):
-            if len(self.switches)-1 < i:
+        for i, switch in enumerate(update_from_switches.switches):
+            if len(self.switches) <= i:
                 self.switches.append(switch)
                 continue
             self.switches[i].update(switch)
@@ -184,7 +194,7 @@ class ConfigurationChoice(BaseModel):
     is_custom_input: bool = Field(default=False)
     custom_input_text: Optional[str] = None
     
-    can_be_blocked_by: List[str] = [] # формат типо 'option/choice'
+    can_be_blocked_by: List[str] = Field(default_factory=list) # формат типо 'option/choice'
     blocks_price_determination: bool = Field(default=False)
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"RUB": 0, "USD": 0}))
 
@@ -238,11 +248,11 @@ class ConfigurationOption(BaseModel):
 
     choices: Dict[str, ConfigurationChoice | ConfigurationSwitches]
     
-    def get_chosen(self) -> ConfigurationChoice:
+    def get_chosen(self) -> Optional[ConfigurationChoice]:
         return self.choices.get(self.chosen)
     
     def set_chosen(self, choice: ConfigurationChoice):
-        self.chosen = next((key for key, value in self.choices.items() if value == choice), None)
+        self.chosen = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen)
     
     def get_key_by_label(self, label: str, lang: str) -> Optional[str]:
         for key, choice in self.choices.items():
@@ -268,28 +278,28 @@ class ConfigurationOption(BaseModel):
         return switch_list
                 
 
-    def update(self, option: "ConfigurationOption"):
-        self.name = option.name
-        self.text = option.text
-        self.photo_id = option.photo_id
-        self.video_id = option.video_id
+    def update(self, update_from_option: "ConfigurationOption"):
+        self.name = update_from_option.name
+        self.text = update_from_option.text
+        self.photo_id = update_from_option.photo_id
+        self.video_id = update_from_option.video_id
         
         # Обновляем choices
-        for choice_key, base_choice in option.choices.items():
-            if choice_key not in option.choices:
+        for choice_key, base_choice in update_from_option.choices.items():
+            if choice_key not in self.choices.keys():
                 self.choices[choice_key] = base_choice
                 continue
             
             self.choices[choice_key].update(base_choice)
         # Удаляем choices, которых больше нет в base
-        for choice_key in list(option.choices.keys()):
-            if choice_key not in option.choices:
-                del option.choices[choice_key]
+        for choice_key in list(self.choices.keys()):
+            if choice_key not in update_from_option.choices:
+                del self.choices[choice_key]
 
 class ProductConfiguration(BaseModel):
     options: Dict[str, ConfigurationOption]
-    additionals: list["ProductAdditional"] = []
-    price: LocalizedMoney = None
+    additionals: list["ProductAdditional"] = Field(default_factory=list)
+    price: LocalizedMoney = Field(default_factory=LocalizedMoney)
     @property
     def can_determine_price(self) -> bool:
         return any(
@@ -300,7 +310,7 @@ class ProductConfiguration(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        if not self.price: self.update_price()
+        if self.price is None: self.update_price()
     
     
     def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
@@ -328,9 +338,9 @@ class ProductConfiguration(BaseModel):
     def get_all_options_localized_names(self, lang):
         return [option.name.get(lang) for option in self.options.values()]
     
-    def get_option_by_name(self, name, lang):
-        return next((key, option) for key, option in self.options.items()
-                    if option.name.get(lang) == name)
+    def get_option_by_name(self, name, lang) -> Optional[tuple[str, ConfigurationOption]]:
+        return next(((key, option) for key, option in self.options.items() 
+                     if option.name.get(lang) == name), None)
         
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
@@ -425,9 +435,11 @@ class ProductsRepository(AppAbstractRepository[Product]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
-    async def get_by_category_and_index(self, category: str, idx: int) -> Product:
+    async def get_by_category_and_index(self, category: str, idx: int) -> Optional[Product]:
         ids = await self.get_ids_by_category_sorted_by_date(category)
-        return await self.find_one_by_id(ids[idx])
+        if not ids: return None
+        
+        return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
     
     async def get_name_by_id(self, product_id: PydanticObjectId) -> Optional[LocalizedString]:
         cursor = await self.get_collection().find_one(
@@ -447,7 +459,7 @@ class ProductAdditional(BaseModel):
     short_description: LocalizedString
 
     price: LocalizedMoney
-    disallowed_products: list[PydanticObjectId] = []
+    disallowed_products: list[PydanticObjectId] = Field(default_factory=list)
 
 class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
     class Meta:
@@ -455,7 +467,7 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
 
     async def get(self, product: Product):
         """Возвращает все additionals в категории, которые разрешены для данного продукта."""
-        return await self.find_by({"category": product.category, "disallowed_products": {"$nin": [str(product.id)]}})
+        return await self.find_by({"category": product.category, "disallowed_products": {"$nin": [product.id]}})
     
     def get_by_name(self, name, allowed_additionals, lang):
         return next((a for a in allowed_additionals if a.name.get(lang) == name), None)
@@ -472,10 +484,14 @@ class Promocode(BaseModel):
     max_usages: int = -1
 
     expire_date: Optional[datetime.datetime] = None
-    
-    
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.expire_date and self.expire_date.tzinfo is None:
+            self.expire_date = self.expire_date.replace(tzinfo=datetime.timezone.utc)
+
     async def check_promocode(self, customer_orders_amount: int) -> PromocodeCheckResult:
-        if self.expire_date and self.expire_date < datetime.datetime():
+        if self.expire_date and self.expire_date < datetime.datetime.now(datetime.timezone.utc):
             return PromocodeCheckResult.expired
         elif self.only_newbies and customer_orders_amount > 0:
             return PromocodeCheckResult.only_newbies
@@ -549,7 +565,7 @@ class Customer(BaseModel):
     
     async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
         """Изменить основную валюту"""
-        if iso not in SUPPORTED_CURRENCIES.keys():
+        if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
 
         bon_wal = self.bonus_wallet

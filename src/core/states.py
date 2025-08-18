@@ -65,7 +65,6 @@ async def call_state_handler(state: State,
 
     except Exception as e:
         await ctx.message.answer(f"Error: {e}")
-        await ctx.message.delete()
         if state != CommonStates.MainMenu:
             await call_state_handler(CommonStates.MainMenu, ctx)
         raise e
@@ -352,7 +351,8 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Editables.Service)
 async def delivery_edit_service_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info_serialized = await ctx.fsm.get_value("delivery_info")
+    delivery_info = DeliveryInfo(**delivery_info_serialized) if delivery_info_serialized else DeliveryInfo()
     
     
     services = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
@@ -383,7 +383,7 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
 async def delivery_edit_requirement_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     delivery_info: DeliveryInfo = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
-    requirement_index: int = await ctx.fsm.get_value("requirement_index")
+    requirement_index: int = await ctx.fsm.get_value("requirement_index") or 0
 
     
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
