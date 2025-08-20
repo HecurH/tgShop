@@ -114,7 +114,7 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
     product = Product(**await ctx.fsm.get_value("product"))
     text = ctx.message.text
     
-    if text == ctx.t.UncategorizedTranslates.back:
+    if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(Assortment.ViewingProductDetails,
                                 ctx,
                                 product=product)

@@ -228,20 +228,20 @@ class CartKBs:
             [
                 types.KeyboardButton(text='❌'),
                 types.KeyboardButton(text="➖"),
-                types.KeyboardButton(text=f"{entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}"),
+                types.KeyboardButton(text=f"{entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}"),
                 types.KeyboardButton(text="➕")
             ],
             controls,
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.OrderConfiguration.translate("proceed_to_payment", ctx.lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment)
             ]
         ]
 
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
     
     @staticmethod
