@@ -265,7 +265,7 @@ class UncategorizedTranslates(Translatable):
     }
     
     unit = {
-        "ru": "Шт.",
+        "ru": {"one": "Шт.", "few": "Шт.", "other": "Шт."} ,
         "en": {"one": "Pc.", "other": "Pcs."}  
     }
     
