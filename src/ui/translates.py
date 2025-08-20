@@ -28,7 +28,7 @@ class TranslationField:
             # если обращаемся к атрибуту через класс, возвращаем сам дескриптор
             return self
 
-        lang = instance.lang
+        lang = instance._lang
         
         value = (
             self.translations.get(lang)
@@ -85,9 +85,8 @@ class TranslationMeta(type):
 class Translatable(metaclass=TranslationMeta):
     """Базовый класс для переводимых объектов"""
     
-    # НОВЫЙ МЕТОД __init__
     def __init__(self, lang: str):
-        self.lang = lang
+        self._lang = lang
 
     @staticmethod
     def _get_plural_form(lang: str, count: int) -> str:
@@ -156,7 +155,7 @@ class TranslatorHub:
     _registered_classes: ClassVar[list[Type[Translatable]]] = []
 
     def __init__(self, lang: str):
-        self.lang = lang
+        self._lang = lang
 
         # обрабатываем классы по глубине __qualname__ — родители первыми
         classes_sorted = sorted(

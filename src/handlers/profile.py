@@ -36,7 +36,6 @@ async def profile_command_handler(_, ctx: Context) -> None:
         ctx.t.ReplyButtonsTranslates.Profile.Settings.lang: Profile.Settings.ChangeLanguage,
         ctx.t.ReplyButtonsTranslates.Profile.Settings.currency: Profile.Settings.ChangeCurrency,
     }
-    print(actions.keys())
     next_state = actions.get(ctx.message.text)
     if next_state is not None:
         await call_state_handler(next_state, ctx)
