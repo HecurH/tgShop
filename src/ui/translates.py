@@ -1,40 +1,46 @@
+import logging
 from types import SimpleNamespace
 from typing import ClassVar, Type
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
 
 class TranslationField:
-    """Дескриптор, который возвращает перевод в зависимости от языка экземпляра."""
+    """
+    Дескриптор, который возвращает перевод в зависимости от языка экземпляра.
+    """
+
     def __init__(self, translations: dict):
         self.translations = translations
-        self._attribute_name = None  # Имя будет установлено метаклассом
+        self._attribute_name = None  # имя будет установлено метаклассом
 
     def __set_name__(self, owner, name):
-        # Этот метод автоматически вызывается в Python 3.6+
-        # и сохраняет имя атрибута, к которому привязан дескриптор (например, 'back')
+        # сохраняет имя атрибута, к которому привязан дескриптор
+        if self._attribute_name is not None:
+            raise RuntimeError(
+                f"TranslationField instance already assigned to attribute '{self._attribute_name}'. "
+                f"Do not reuse the same TranslationField instance for multiple attributes/classes."
+            )
         self._attribute_name = name
 
     def __get__(self, instance, owner):
-        # instance - это экземпляр класса, например, UncategorizedTranslates(lang='ru')
-        # owner - это сам класс, например, UncategorizedTranslates
+        # instance - это экземпляр класса, owner - это сам класс
         if instance is None:
-            # Если обращаемся к атрибуту через класс (UncategorizedTranslates.back),
-            # возвращаем сам дескриптор, чтобы можно было посмотреть его содержимое.
+            # если обращаемся к атрибуту через класс, возвращаем сам дескриптор
             return self
 
-        # Берем язык из созданного экземпляра
         lang = instance.lang
         
-        # Проверяем, нужна ли плюрализация (если перевод для языка - словарь)
-        value = self.translations.get(lang) or next(iter(self.translations.values()))
+        value = (
+            self.translations.get(lang)
+            or self.translations.get('en')
+            or next(iter(self.translations.values()))
+        )
 
         if isinstance(value, dict):
-            # Если да, возвращаем "частично примененную" функцию-переводчик
             def pluralizer(count: int):
                 return owner.translate(self._attribute_name, lang, count=count)
             return pluralizer
         else:
-            # Если нет, просто возвращаем переведенную строку
             return owner.translate(self._attribute_name, lang)
     
     def values(self):
@@ -56,15 +62,13 @@ class TranslationMeta(type):
                     reverse_translations.setdefault(lang, {}).update(texts)
 
         for attr_name, value in attrs.items():
-            # Находим атрибуты, которые являются словарями-переводами
             if isinstance(value, dict) and all(isinstance(k, str) for k in value.keys()):
                 translations[attr_name] = value
                 for lang, text in value.items():
-                    # Важно: для плюрализации не создаем обратный словарь
+                    # для плюрализации не создаем обратный словарь
                     if isinstance(text, str):
                         reverse_translations.setdefault(lang, {})[text] = attr_name
 
-                # 🔥 ГЛАВНОЕ ИЗМЕНЕНИЕ: Заменяем словарь на экземпляр дескриптора
                 attrs[attr_name] = TranslationField(value)
 
         attrs['_translations'] = translations
@@ -72,7 +76,7 @@ class TranslationMeta(type):
 
         new_class = super().__new__(cls, name, bases, attrs)
 
-        if name != 'Translatable' and Translatable in bases:
+        if name != 'Translatable' and issubclass(new_class, Translatable):
             TranslatorHub.register(new_class)
             
         return new_class
@@ -87,7 +91,6 @@ class Translatable(metaclass=TranslationMeta):
     @staticmethod
     def _get_plural_form(lang: str, count: int) -> str:
         # sourcery skip: remove-unnecessary-else, swap-if-else-branches
-        # ... (без изменений)
         if lang == "ru":
             if count % 10 == 1 and count % 100 != 11: return "one"
             elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20): return "few"
@@ -96,12 +99,33 @@ class Translatable(metaclass=TranslationMeta):
 
     @classmethod
     def translate(cls, attribute: str, lang: str, default_lang: str = 'en', count: int = None) -> str:
-        # ... (без изменений)
+        logger = logging.getLogger(__name__)
         translations = cls._translations.get(attribute, {})
-        value = translations.get(lang, translations.get(default_lang, attribute))
-        if isinstance(value, str) or count is None: return value
+
+        value = translations.get(lang) or translations.get(default_lang)
+        if value is None:
+            if translations:
+                fallback_lang, value = next(iter(translations.items()))
+                logger.warning(f"No '{lang}' or '{default_lang}' translation for '{attribute}', falling back to '{fallback_lang}'.")
+            else:
+                logger.warning(f"No translations found for '{attribute}'.")
+                return "<untranslated>"
+
+        if isinstance(value, str) or count is None:
+            return value
         form = cls._get_plural_form(lang, count)
-        return value.get(form) or next(iter(value.values()))
+        if form not in value:
+            available_forms = ", ".join(value.keys())
+            logger.warning(
+                f"Plural form '{form}' not found for '{attribute}' in '{lang}'. "
+                f"Available forms: {available_forms}. "
+                f"Please update translations to include this plural form."
+            )
+            # возвращаем плейсхолдер, чтобы было видно в ui
+            return f"<missing plural '{form}' for '{attribute}' in '{lang}'>"
+
+        return value[form]
+
     
     @classmethod
     def get_attribute(cls, text, lang: str) -> str:
@@ -111,7 +135,7 @@ class Translatable(metaclass=TranslationMeta):
     @classmethod
     def get_all_attributes(cls, lang: str) -> list:
         """Получить имена всех атрибутов класса по переводу"""
-        return cls._reverse_translations.get(lang, {}).keys()
+        return list(cls._reverse_translations.get(lang, {}).keys())
 
     @classmethod
     def supported_languages(cls) -> set:
@@ -133,14 +157,14 @@ class TranslatorHub:
     def __init__(self, lang: str):
         self.lang = lang
 
-        # Обрабатываем классы по глубине __qualname__ — родители первыми
+        # обрабатываем классы по глубине __qualname__ — родители первыми
         classes_sorted = sorted(
             self._registered_classes,
             key=lambda c: len(c.__qualname__.split('.'))
         )
 
         for cls in classes_sorted:
-            parts = cls.__qualname__.split('.')   # e.g. ['UncategorizedTranslates','Currencies']
+            parts = cls.__qualname__.split('.')   # например, ['UncategorizedTranslates','Currencies']
             parent = self
 
             # пробегаем по промежуточным частям пути и находим или создаём контейнер
@@ -166,6 +190,7 @@ class TranslatorHub:
     def get_for_lang(cls, lang: str) -> "TranslatorHub":
         if lang not in cls._cache:
             if lang not in SUPPORTED_LANGUAGES_TEXT.values():
+                logging.getLogger(__name__).warning(f"Can't get TranslatorHub for {lang} language.")
                 return cls.get_for_lang('en')
             cls._cache[lang] = TranslatorHub(lang=lang)
         return cls._cache[lang]
@@ -331,7 +356,7 @@ class AssortmentTranslates(Translatable):
         "ru": "Товар успешно добавлен в корзину!",
         "en": "The product has been successfully added to the cart!"
     }
-
+    
 class CartTranslates(Translatable):
     no_products_in_cart = {
         "ru": "В вашей корзине нет товаров!",
