@@ -35,6 +35,7 @@ class TranslationField:
             or self.translations.get('en')
             or next(iter(self.translations.values()))
         )
+        print(type(value))
 
         if isinstance(value, dict):
             def pluralizer(count: int):
