@@ -96,7 +96,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         await ctx.db.update(ctx.customer)
         
-        text = ctx.t.ProfileTranslates.Settings.lang_changed
+        text = ctx.t.ProfileTranslates.Settings.translate("lang_changed", ctx.lang) # тк тут ctx.t не меняется
         await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
         return
     
