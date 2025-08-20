@@ -1,12 +1,49 @@
+from types import SimpleNamespace
+from typing import ClassVar, Type
+
+from configs.supported import SUPPORTED_LANGUAGES_TEXT
+
+class TranslationField:
+    """Дескриптор, который возвращает перевод в зависимости от языка экземпляра."""
+    def __init__(self, translations: dict):
+        self.translations = translations
+        self._attribute_name = None  # Имя будет установлено метаклассом
+
+    def __set_name__(self, owner, name):
+        # Этот метод автоматически вызывается в Python 3.6+
+        # и сохраняет имя атрибута, к которому привязан дескриптор (например, 'back')
+        self._attribute_name = name
+
+    def __get__(self, instance, owner):
+        # instance - это экземпляр класса, например, UncategorizedTranslates(lang='ru')
+        # owner - это сам класс, например, UncategorizedTranslates
+        if instance is None:
+            # Если обращаемся к атрибуту через класс (UncategorizedTranslates.back),
+            # возвращаем сам дескриптор, чтобы можно было посмотреть его содержимое.
+            return self
+
+        # Берем язык из созданного экземпляра
+        lang = instance.lang
+        
+        # Проверяем, нужна ли плюрализация (если перевод для языка - словарь)
+        value = self.translations.get(lang) or next(iter(self.translations.values()))
+
+        if isinstance(value, dict):
+            # Если да, возвращаем "частично примененную" функцию-переводчик
+            def pluralizer(count: int):
+                return owner.translate(self._attribute_name, lang, count=count)
+            return pluralizer
+        else:
+            # Если нет, просто возвращаем переведенную строку
+            return owner.translate(self._attribute_name, lang)
+        
 class TranslationMeta(type):
     """Метакласс для автоматической организации переводов"""
 
     def __new__(cls, name, bases, attrs):
-        # Собираем атрибуты-переводы со всех родительских классов
         translations = {}
         reverse_translations = {}
 
-        # Обрабатываем родительские классы
         for base in bases:
             if hasattr(base, '_translations'):
                 translations |= base._translations
@@ -14,51 +51,52 @@ class TranslationMeta(type):
                 for lang, texts in base._reverse_translations.items():
                     reverse_translations.setdefault(lang, {}).update(texts)
 
-        # Обрабатываем текущий класс
         for attr_name, value in attrs.items():
+            # Находим атрибуты, которые являются словарями-переводами
             if isinstance(value, dict) and all(isinstance(k, str) for k in value.keys()):
                 translations[attr_name] = value
-                # Строим обратный словарь
                 for lang, text in value.items():
-                    reverse_translations.setdefault(lang, {})[str(text)] = attr_name
+                    # Важно: для плюрализации не создаем обратный словарь
+                    if isinstance(text, str):
+                        reverse_translations.setdefault(lang, {})[text] = attr_name
 
-        # Сохраняем в классе
+                # 🔥 ГЛАВНОЕ ИЗМЕНЕНИЕ: Заменяем словарь на экземпляр дескриптора
+                attrs[attr_name] = TranslationField(value)
+
         attrs['_translations'] = translations
         attrs['_reverse_translations'] = reverse_translations
 
-        return super().__new__(cls, name, bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
 
+        if name != 'Translatable' and Translatable in bases:
+            TranslatorHub.register(new_class)
+            
+        return new_class
 
 class Translatable(metaclass=TranslationMeta):
     """Базовый класс для переводимых объектов"""
+    
+    # НОВЫЙ МЕТОД __init__
+    def __init__(self, lang: str):
+        self.lang = lang
 
     @staticmethod
     def _get_plural_form(lang: str, count: int) -> str:
-        """Определяет форму для множественного числа по языку и количеству"""
+        # sourcery skip: remove-unnecessary-else, swap-if-else-branches
+        # ... (без изменений)
         if lang == "ru":
-            if count % 10 == 1 and count % 100 != 11:
-                return "one"
-            elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
-                return "few"
-            else:
-                return "many"
-        else:
-            return "one" if count == 1 else "other"
+            if count % 10 == 1 and count % 100 != 11: return "one"
+            elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20): return "few"
+            else: return "many"
+        else: return "one" if count == 1 else "other"
 
     @classmethod
     def translate(cls, attribute: str, lang: str, default_lang: str = 'en', count: int = None) -> str:
-        """
-        Получить перевод для указанного атрибута.
-        Если передан count, выбирает форму перевода в зависимости от количества.
-        """
+        # ... (без изменений)
         translations = cls._translations.get(attribute, {})
         value = translations.get(lang, translations.get(default_lang, attribute))
-        # Если value — строка, возвращаем её для любых форм
-        if isinstance(value, str) or count is None:
-            return value
-        # Если value — dict, выбираем нужную форму
+        if isinstance(value, str) or count is None: return value
         form = cls._get_plural_form(lang, count)
-        # Если нужная форма есть — возвращаем её, иначе первую попавшуюся
         return value.get(form) or next(iter(value.values()))
     
     @classmethod
@@ -80,6 +118,54 @@ class Translatable(metaclass=TranslationMeta):
             for lang in trans.keys()
         }
 
+class TranslatorNamespace(SimpleNamespace):
+    def __repr__(self):
+        return f"<TranslatorNamespace {list(self.__dict__.keys())}>"
+
+class TranslatorHub:
+    _cache: ClassVar[dict[str, "TranslatorHub"]] = {}
+    _registered_classes: ClassVar[list[Type[Translatable]]] = []
+
+    def __init__(self, lang: str):
+        self.lang = lang
+
+        # Обрабатываем классы по глубине __qualname__ — родители первыми
+        classes_sorted = sorted(
+            self._registered_classes,
+            key=lambda c: len(c.__qualname__.split('.'))
+        )
+
+        for cls in classes_sorted:
+            parts = cls.__qualname__.split('.')   # e.g. ['UncategorizedTranslates','Currencies']
+            parent = self
+
+            # пробегаем по промежуточным частям пути и находим или создаём контейнер
+            for part in parts[:-1]:
+                if hasattr(parent, part):
+                    parent = getattr(parent, part)
+                else:
+                    ns = TranslatorNamespace()
+                    setattr(parent, part, ns)
+                    parent = ns
+
+            final_name = cls.__name__  # реальное имя класса, PascalCase
+            # создаём экземпляр переводчика (с lang) и присваиваем к найденному parent
+            instance = cls(lang=lang)
+            setattr(parent, final_name, instance)
+
+    @classmethod
+    def register(cls, translatable_class: Type[Translatable]):
+        if translatable_class not in cls._registered_classes:
+            cls._registered_classes.append(translatable_class)
+
+    @classmethod
+    def get_for_lang(cls, lang: str) -> "TranslatorHub":
+        if lang not in cls._cache:
+            if lang not in SUPPORTED_LANGUAGES_TEXT.values():
+                return cls.get_for_lang('en')
+            cls._cache[lang] = TranslatorHub(lang=lang)
+        return cls._cache[lang]
+    
 class EnumTranslates(Translatable):
     class OrderState(Translatable):
         forming = {
@@ -164,13 +250,7 @@ class UncategorizedTranslates(Translatable):
             "en": "Dollar"
         }
 
-
 class CommonTranslates(Translatable):
-    # name = {
-    #     "ru": "",
-    #     "en": ""
-    # }
-
     hi = {
         "ru": "Привет!",
         "en": "Hi!"
@@ -248,7 +328,6 @@ class AssortmentTranslates(Translatable):
         "en": "The product has been successfully added to the cart!"
     }
 
-    
 class CartTranslates(Translatable):
     no_products_in_cart = {
         "ru": "В вашей корзине нет товаров!",
@@ -312,9 +391,7 @@ class CartTranslates(Translatable):
             "ru": "Не выбран. ❗️",
             "en": "Not selected. ❗️"
         }
-    
-    
-    
+
 class ProfileTranslates(Translatable):
     menu = {
         "ru": "Выберите пункт вашего профиля:",
@@ -482,6 +559,11 @@ class ReplyButtonsTranslates(Translatable):
         }
         
         class OrderConfiguration(Translatable):
+            proceed_to_payment = {
+                "ru": "Перейти к оплате",
+                "en": "Proceed to payment"
+            }
+        
             use_promocode = {
                 "ru": "Использовать промокод",
                 "en": "Use a promo code"
@@ -549,3 +631,12 @@ class ReplyButtonsTranslates(Translatable):
                     "ru": "Удалить информацию о доставке",
                     "en": "Delete delivery information"
                 }
+                
+class TypedTranslatorHub(TranslatorHub):
+    EnumTranslates: EnumTranslates
+    UncategorizedTranslates: UncategorizedTranslates
+    CommonTranslates: CommonTranslates
+    AssortmentTranslates: AssortmentTranslates
+    CartTranslates: CartTranslates
+    ProfileTranslates: ProfileTranslates
+    ReplyButtonsTranslates: ReplyButtonsTranslates

@@ -7,6 +7,7 @@ from cachetools import TTLCache
 from core.db import DatabaseService
 from core.helper_classes import Context
 from core.states import NewUserStates
+from ui.translates import TranslatorHub
 
 
 class ContextMiddleware(BaseMiddleware):
@@ -35,7 +36,8 @@ class ContextMiddleware(BaseMiddleware):
                               data.get("state"),
                               self.db,
                               customer,
-                              data["lang"])
+                              data["lang"],
+                              TranslatorHub.get_for_lang(data["lang"]))
 
         if not customer and not await data.get("state").get_state() == NewUserStates.LangChoosing:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)

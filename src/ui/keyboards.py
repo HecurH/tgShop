@@ -215,7 +215,7 @@ class AssortmentKBs:
 
 class CartKBs:
     @staticmethod
-    def cart_view(entry: CartEntry, current: int, amount: int, cart_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def cart_view(entry: CartEntry, current: int, amount: int, ctx: Context) -> types.ReplyKeyboardMarkup:
         controls = [
             types.KeyboardButton(text="⬅️"),
             types.KeyboardButton(text=f"{current}/{amount}"),
@@ -234,7 +234,7 @@ class CartKBs:
             controls,
             [
                 types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.translate("place", ctx.lang).format(price=cart_price.to_text(ctx.customer.currency)))
+                types.KeyboardButton(text=ReplyButtonsTranslates.Cart.OrderConfiguration.translate("proceed_to_payment", ctx.lang))
             ]
         ]
 

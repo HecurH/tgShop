@@ -10,7 +10,7 @@ from core.db import *
 from core.helper_classes import Context
 from ui.keyboards import CommonKBs
 from core.states import CommonStates, NewUserStates, call_state_handler
-from ui.translates import CommonTranslates, ReplyButtonsTranslates
+from ui.translates import ReplyButtonsTranslates
 
 router = Router(name="common")
 
@@ -47,7 +47,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         await call_state_handler(NewUserStates.LangChoosing, 
                            ctx)
         return
-    await ctx.message.reply(CommonTranslates.translate("hi", ctx.lang))
+    await ctx.message.reply(ctx.t.CommonTranslates.hi)
 
     await call_state_handler(CommonStates.MainMenu, 
                        ctx)

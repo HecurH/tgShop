@@ -8,7 +8,7 @@ from core.helper_classes import Context
 from schemas.db_models import *
 
 from core.states import Assortment, CommonStates, call_state_handler
-from ui.translates import *
+from ui.translates import ReplyButtonsTranslates, UncategorizedTranslates
 
 router = Router(name="assortment")
 
@@ -123,7 +123,7 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
         await ctx.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
                                 ctx,
-                                send_before=(AssortmentTranslates.translate("add_to_cart_finished", ctx.lang), 1))
+                                send_before=(ctx.t.AssortmentTranslates.add_to_cart_finished, 1))
         
     elif text == "+":
         allowed_additionals = await ctx.db.additionals.get(product)
@@ -171,7 +171,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         if choice.check_blocked_all(product.configuration.options):
             await call_state_handler(Assortment.EntryOptionSelect,
                                     ctx,
-                                    send_before=(AssortmentTranslates.translate("cannot_choose", ctx.lang).format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)), 1),
+                                    send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)), 1),
                                     product=product,
                                     option=changing_option)
             return

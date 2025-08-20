@@ -15,6 +15,7 @@ from aiogram.types import Message, CallbackQuery
 import aiohttp
 
 from schemas.db_models import *
+from ui.translates import TypedTranslatorHub
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
@@ -28,6 +29,7 @@ class Context:
     db: "DatabaseService"
     customer: "Customer"
     lang: str
+    t: TypedTranslatorHub
 
     @property
     def message(self) -> Message:

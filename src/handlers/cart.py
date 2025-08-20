@@ -90,3 +90,11 @@ async def entry_remove_confirm_handler(_, ctx: Context):
     await call_state_handler(Cart.Menu,
                                 ctx,
                                 current=current)
+
+@router.message(Cart.OrderConfigurationMenu)
+async def order_configuration_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == UncategorizedTranslates.translate("back", ctx.lang):
+        await call_state_handler(CommonStates.MainMenu,
+                                ctx)
+        return

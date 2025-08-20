@@ -266,11 +266,10 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
                                             entry.configuration,
                                             ctx)
     
-    price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     await send_media_response(ctx.message,
                             product.short_description_photo_id,
                             caption,
-                            CartKBs.cart_view(entry, current, amount, price, ctx))
+                            CartKBs.cart_view(entry, current, amount, ctx))
 
 @state_handlers.register(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
