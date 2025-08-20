@@ -19,11 +19,19 @@ sys.path.append(str(project_root))
 from handlers import profile, admin, bottom, cart, common, assortment
 from core import middlewares
 
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = getenv("BOT_TOKEN")
+def load_env(name: str) -> str:
+    if value := getenv(name): return value
+    else: raise KeyError(f"Missing {name} environment variable.")
 
-# All handlers should be attached to the Router (or Dispatcher)
-dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))))
+# Bot token can be obtained via https://t.me/BotFather
+BOT_TOKEN = load_env("BOT_TOKEN")
+MONGO_URI = load_env("MONGO_URI")
+MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")
+
+dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(MONGO_URI, 
+                                                        tls=True, 
+                                                        tlsAllowInvalidCertificates=True, 
+                                                        tlsCAFile=MONGO_TLS_CA_PATH)))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
@@ -103,7 +111,7 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=TOKEN,
+    bot = Bot(token=BOT_TOKEN,
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 

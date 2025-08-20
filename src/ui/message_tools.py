@@ -12,7 +12,7 @@ async def clear_keyboard_effect(message: Message) -> None:
 
 async def send_media_response(
     message: Message,
-    media_id: Optional[str],
+    media_id: str,
     caption: str,
     keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None,
     media_type: str = "photo"
@@ -35,7 +35,7 @@ async def edit_media_message(
     # Получаем текущее содержимое сообщения
     current_caption = message.caption if hasattr(message, "caption") else None
     current_media_id = None
-    if media_type == "photo" and message.photo:
+    if media_type == "photo" and getattr(message, "photo", None):
         current_media_id = message.photo[-1].file_id
     elif media_type == "video" and getattr(message, "video", None):
         current_media_id = message.video.file_id
@@ -65,4 +65,4 @@ def build_list(entries: List[str], before: str = "—", padding: int = 1, defaul
         first_line = f"{indent}{before} {lines[0]}"
         other_lines = [f"{indent}{line}" for line in lines[1:]]
         formatted_entries.append('\n'.join([first_line] + other_lines))
-    return "\n".join(formatted_entries)
+    return "\n".join(formatted_entries) if formatted_entries else ""

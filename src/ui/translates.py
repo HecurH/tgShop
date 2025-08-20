@@ -9,7 +9,7 @@ class TranslationMeta(type):
         # Обрабатываем родительские классы
         for base in bases:
             if hasattr(base, '_translations'):
-                translations.update(base._translations)
+                translations |= base._translations
             if hasattr(base, '_reverse_translations'):
                 for lang, texts in base._reverse_translations.items():
                     reverse_translations.setdefault(lang, {}).update(texts)
