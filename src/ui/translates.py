@@ -36,6 +36,10 @@ class TranslationField:
         else:
             # Если нет, просто возвращаем переведенную строку
             return owner.translate(self._attribute_name, lang)
+    
+    def values(self):
+        return self.translations.values()
+        
         
 class TranslationMeta(type):
     """Метакласс для автоматической организации переводов"""
