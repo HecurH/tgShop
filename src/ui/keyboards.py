@@ -163,7 +163,7 @@ class AssortmentKBs:
         builder.adjust(3)
 
         builder.attach(ReplyKeyboardBuilder([
-            [types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang))]
+            [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]
         ]
         ))
 
@@ -233,7 +233,7 @@ class CartKBs:
             ],
             controls,
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
                 types.KeyboardButton(text=ReplyButtonsTranslates.Cart.OrderConfiguration.translate("proceed_to_payment", ctx.lang))
             ]
         ]
@@ -267,7 +267,7 @@ class CartKBs:
                 types.KeyboardButton(text=change_payment_method)
             ],
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", ctx.lang)),
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
                 types.KeyboardButton(text=place.format(price=total_price.to_text(ctx.customer.currency)))
             ]
         ]

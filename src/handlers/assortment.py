@@ -44,7 +44,7 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
 async def assortment_viewing_handler(_, ctx: Context) -> None:
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Assortment.Menu,
                                 ctx)
         return
@@ -64,7 +64,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 category=category,
                                 current=new_order)
-    elif text == ReplyButtonsTranslates.Assortment.translate("details", ctx.lang):
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.details:
         if amount == 0: 
             await ctx.message.delete()
             return
@@ -87,7 +87,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     category: int = await ctx.fsm.get_value("category")
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         if current > await ctx.db.products.count_in_category(category): 
             await ctx.fsm.update_data(current=1)
             current = 1
@@ -99,7 +99,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
         return
         
     product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
-    if text == ReplyButtonsTranslates.Assortment.translate("add_to_cart", ctx.lang):
+    if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
         await ctx.fsm.update_data(product=product.model_dump())
         await call_state_handler(Assortment.FormingOrderEntry,
                                 ctx,
@@ -114,11 +114,11 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
     product = Product(**await ctx.fsm.get_value("product"))
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("cancel", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Assortment.ViewingProductDetails,
                                 ctx,
                                 product=product)
-    elif text == UncategorizedTranslates.translate("finish", ctx.lang):
+    elif text == ctx.t.UncategorizedTranslates.finish:
         
         await ctx.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
@@ -152,7 +152,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
     product = Product(**await ctx.fsm.get_value("product"))
     changing_option = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
 
-    if message.text == UncategorizedTranslates.translate("back", ctx.lang):
+    if message.text == ctx.t.UncategorizedTranslates.back:
         base_product = await ctx.db.products.find_one_by_id(product.id)
         product.configuration.update(base_product.configuration, await ctx.db.additionals.get(product))
 
@@ -212,7 +212,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
 
 @router.message(Assortment.SwitchesEditing)
 async def switches_handler(message: Message, ctx: Context) -> None:
-    if message.text == UncategorizedTranslates.translate("back", ctx.lang):
+    if message.text == ctx.t.UncategorizedTranslates.back:
         option: ConfigurationOption = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
         await call_state_handler(Assortment.EntryOptionSelect,
                                  ctx,
@@ -249,7 +249,7 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
     product = Product(**await ctx.fsm.get_value("product"))
     text = message.text
 
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Assortment.FormingOrderEntry,
                                  ctx,
                                  product=product)

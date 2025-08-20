@@ -15,7 +15,7 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
 async def cart_viewer_handler(_, ctx: Context):
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(CommonStates.MainMenu,
                                 ctx)
         return
@@ -94,7 +94,7 @@ async def entry_remove_confirm_handler(_, ctx: Context):
 @router.message(Cart.OrderConfigurationMenu)
 async def order_configuration_handler(_, ctx: Context):
     text = ctx.message.text
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(CommonStates.MainMenu,
                                 ctx)
         return

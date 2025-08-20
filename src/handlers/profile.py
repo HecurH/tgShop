@@ -5,7 +5,7 @@ from schemas.db_models import *
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
-from ui.translates import *
+from ui.translates import ReplyButtonsTranslates, UncategorizedTranslates
 
 router = Router(name="profile")
 
@@ -19,9 +19,9 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
 @router.message(Profile.Menu)
 async def profile_command_handler(_, ctx: Context) -> None:
     actions = {
-        UncategorizedTranslates.translate("back", ctx.lang): CommonStates.MainMenu,
-        ReplyButtonsTranslates.Profile.translate("settings", ctx.lang): Profile.Settings.Menu,
-        ReplyButtonsTranslates.Profile.translate("delivery", ctx.lang): Profile.Delivery.Menu
+        ctx.t.UncategorizedTranslates.back: CommonStates.MainMenu,
+        ctx.t.ReplyButtonsTranslates.Profile.settings: Profile.Settings.Menu,
+        ctx.t.ReplyButtonsTranslates.Profile.delivery: Profile.Delivery.Menu
     }
     next_state = actions.get(ctx.message.text)
     if next_state is not None:
@@ -32,9 +32,9 @@ async def profile_command_handler(_, ctx: Context) -> None:
 @router.message(Profile.Settings.Menu)
 async def profile_command_handler(_, ctx: Context) -> None:
     actions = {
-        UncategorizedTranslates.translate("back", ctx.lang): Profile.Menu,
-        ReplyButtonsTranslates.Profile.Settings.translate("lang", ctx.lang): Profile.Settings.ChangeLanguage,
-        ReplyButtonsTranslates.Profile.Settings.translate("currency", ctx.lang): Profile.Settings.ChangeCurrency,
+        ctx.t.UncategorizedTranslates.back: Profile.Menu,
+        ctx.t.ReplyButtonsTranslates.Profile.Settings.lang: Profile.Settings.ChangeLanguage,
+        ctx.t.ReplyButtonsTranslates.Profile.Settings.currency: Profile.Settings.ChangeCurrency,
     }
     next_state = actions.get(ctx.message.text)
     if next_state is not None:
@@ -47,16 +47,16 @@ async def delivery_command_handler(_, ctx: Context) -> None:
     text = ctx.message.text
     delivery_info = ctx.customer.delivery_info
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
+    if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Profile.Menu, ctx)
         return
     
-    if text == ReplyButtonsTranslates.Profile.Delivery.translate("menu_not_set", ctx.lang) and not delivery_info:
+    if text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.menu_not_set and not delivery_info:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     
     
-    if text.split()[0] == ReplyButtonsTranslates.Profile.Delivery.Edit.translate("foreign", ctx.lang):
+    if text.split()[0] == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.foreign:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     elif text == delivery_info.service.name.get(ctx.lang):
@@ -67,12 +67,12 @@ async def delivery_command_handler(_, ctx: Context) -> None:
         await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
         await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
         return
-    elif text == ReplyButtonsTranslates.Profile.Delivery.Edit.translate("change_data", ctx.lang):
+    elif text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.change_data:
         await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
         await ctx.fsm.update_data(requirement_index=0)
         await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
         return
-    elif text == ReplyButtonsTranslates.Profile.Delivery.Edit.translate("delete", ctx.lang):
+    elif text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.delete:
         await call_state_handler(Profile.Delivery.DeleteConfimation, ctx)
         return 
     
@@ -82,21 +82,21 @@ async def delivery_command_handler(_, ctx: Context) -> None:
     
 @router.message(Profile.Settings.ChangeLanguage)
 async def profile_change_lang_handler(_, ctx: Context) -> None:
-    if ctx.message.text == UncategorizedTranslates.translate("back", ctx.lang):
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Profile.Settings.Menu, ctx)
         return
     
     if ctx.message.text in SUPPORTED_LANGUAGES_TEXT.keys():
         iso_code = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         if ctx.lang == iso_code:
-            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ProfileTranslates.Settings.translate("nothing_changed", ctx.lang), 1))
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
             return
         
         ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         await ctx.db.update(ctx.customer)
         
-        text = ProfileTranslates.Settings.translate("lang_changed", ctx.lang)
+        text = ctx.t.ProfileTranslates.Settings.lang_changed
         await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
         return
     
@@ -104,20 +104,20 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
     
 @router.message(Profile.Settings.ChangeCurrency)
 async def profile_change_lang_handler(_, ctx: Context) -> None:
-    if ctx.message.text == UncategorizedTranslates.translate("back", ctx.lang):
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Profile.Settings.Menu, ctx)
         return
     
     if ctx.message.text in UncategorizedTranslates.Currencies.get_all_attributes(ctx.lang):
         currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
         if ctx.customer.currency == currency:
-            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ProfileTranslates.Settings.translate("nothing_changed", ctx.lang), 1))
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
             return
         
         ctx.customer.currency = currency
         await ctx.db.update(ctx.customer)
         
-        text = ProfileTranslates.Settings.translate("currency_changed", ctx.lang).format(currency=ctx.message.text)
+        text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
         await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
         return
     
@@ -127,14 +127,14 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
 async def editable_is_foreign_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     
-    if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
+    if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return
     
-    if ctx.message.text == ProfileTranslates.Delivery.translate("foreign_choice_foreign", ctx.lang):
+    if ctx.message.text == ctx.t.ProfileTranslates.Delivery.foreign_choice_foreign:
         is_foreign = True
-    elif ctx.message.text == ProfileTranslates.Delivery.translate("foreign_choice_rus", ctx.lang):
+    elif ctx.message.text == ctx.t.ProfileTranslates.Delivery.foreign_choice_rus:
         is_foreign = False
     else:
         
@@ -143,7 +143,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     
     if not first_setup and ctx.customer.delivery_info.is_foreign == is_foreign:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
-        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(UncategorizedTranslates.translate("ok_dont_changing", ctx.lang), 1))
+        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(ctx.t.UncategorizedTranslates.ok_dont_changing, 1))
         return
     
     
@@ -159,7 +159,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
-    if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
+    if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
         
         if first_setup:
@@ -179,7 +179,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
 
     if not first_setup and delivery_info.service.name == service.name:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
-        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(UncategorizedTranslates.translate("ok_dont_changing", ctx.lang), 1))
+        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(ctx.t.UncategorizedTranslates.ok_dont_changing, 1))
         return
     
     delivery_info.service = service
@@ -192,7 +192,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
-    if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
+    if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
 
         if first_setup:      
             await call_state_handler(Profile.Delivery.Editables.Service, ctx)
@@ -210,7 +210,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     
     if not first_setup and delivery_info.service.selected_option and delivery_info.service.selected_option.name == req_list.name:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
-        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(UncategorizedTranslates.translate("ok_dont_changing", ctx.lang), 1))
+        await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(ctx.t.UncategorizedTranslates.ok_dont_changing, 1))
         return
     
     delivery_info.service.selected_option = req_list
@@ -224,7 +224,7 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
 
-    if ctx.message.text in [UncategorizedTranslates.translate("back", ctx.lang), UncategorizedTranslates.translate("cancel", ctx.lang)]:
+    if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         if first_setup:
             await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
         else:        
@@ -263,7 +263,7 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
 @router.message(Profile.Delivery.DeleteConfimation)
 async def delete_confimation_handler(_, ctx: Context) -> None:
 
-    if ctx.message.text != UncategorizedTranslates.translate("yes", ctx.lang): 
+    if ctx.message.text != ctx.t.UncategorizedTranslates.yes: 
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return
     
