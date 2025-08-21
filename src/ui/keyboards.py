@@ -5,7 +5,6 @@ from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.types import LocalizedMoney
 from ui.message_tools import strike
-from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
 
@@ -22,54 +21,54 @@ class CommonKBs:
         return builder.as_markup()
     
     @staticmethod
-    def currency_choose(lang) -> types.InlineKeyboardMarkup:
+    def currency_choose(ctx: Context) -> types.InlineKeyboardMarkup:
         builder = InlineKeyboardBuilder()
         
         for currency in SUPPORTED_CURRENCIES.keys():
-            builder.add(types.InlineKeyboardButton(text=f"{UncategorizedTranslates.Currencies.translate(currency, lang)}", callback_data=currency))
+            builder.add(types.InlineKeyboardButton(text=getattr(ctx.t.UncategorizedTranslates.Currencies, currency), callback_data=currency))
 
         builder.adjust(2)
         return builder.as_markup()
 
     @staticmethod
-    def main_menu(lang: str) -> types.ReplyKeyboardMarkup:
+    def main_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
         kb = [
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.translate("assortment", lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.translate("cart", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.assortment),
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.cart)
             ],
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.translate("orders", lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.translate("about", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.orders),
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.about)
             ],
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.translate("profile", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.profile)
             ]
         ]
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 
 class AssortmentKBs:
 
     @staticmethod
-    def assortment_menu(categories: Iterable[Category], lang: str) -> types.ReplyKeyboardMarkup:
+    def assortment_menu(categories: Iterable[Category], ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
         for category in categories:
 
-            builder.add(types.KeyboardButton(text=category.localized_name.get(lang)))
+            builder.add(types.KeyboardButton(text=category.localized_name.get(ctx.lang)))
 
         builder.adjust(2)
-        builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]]))
+        builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]]))
         return builder.as_markup(
             resize_keyboard=True,
             #one_time_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def gen_assortment_view_kb(current: int, amount: int, lang) -> types.ReplyKeyboardMarkup:
+    def gen_assortment_view_kb(current: int, amount: int, ctx: Context) -> types.ReplyKeyboardMarkup:
         controls = [
             types.KeyboardButton(text="⬅️"),
             types.KeyboardButton(text=f"{current}/{amount}"),
@@ -80,49 +79,48 @@ class AssortmentKBs:
         
         kb = [
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.Assortment.translate("details", lang)
-                                    )
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.details)
             ],
             controls,
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
             ]
         ]
         
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 
     @staticmethod
-    def detailed_view(lang) -> types.ReplyKeyboardMarkup:
+    def detailed_view(ctx: Context) -> types.ReplyKeyboardMarkup:
         kb = [
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang)),
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
 
-                types.KeyboardButton(text=ReplyButtonsTranslates.Assortment.translate("add_to_cart", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart)
             ]
         ]
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def adding_to_cart_main(options: dict[str, ConfigurationOption], has_additionals: bool,  lang) -> types.ReplyKeyboardMarkup:
+    def adding_to_cart_main(options: dict[str, ConfigurationOption], has_additionals: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
         for option in options.values():
             builder.add(
                 types.KeyboardButton(
-                    text=option.name.get(lang)
+                    text=option.name.get(ctx.lang)
                 )
             )
         builder.adjust(2)
 
         btns = [
             types.KeyboardButton(
-                text=UncategorizedTranslates.translate("cancel", lang)
+                text=ctx.t.UncategorizedTranslates.cancel
             )
         ]
         if has_additionals:
@@ -132,7 +130,7 @@ class AssortmentKBs:
                 )
             )
         btns.append(
-            types.KeyboardButton(text=UncategorizedTranslates.translate("finish", lang))
+            types.KeyboardButton(text=ctx.t.UncategorizedTranslates.finish)
         )
 
         markup = types.ReplyKeyboardMarkup(keyboard=
@@ -144,7 +142,7 @@ class AssortmentKBs:
 
         return builder.as_markup(
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
     def generate_choice_kb(product: Product, option: ConfigurationOption, ctx: Context) -> types.ReplyKeyboardMarkup:
@@ -170,48 +168,48 @@ class AssortmentKBs:
         return builder.as_markup(
             resize_keyboard=True,
             # one_time_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def generate_switches_kb(switches: ConfigurationSwitches, lang: str) -> types.ReplyKeyboardMarkup:
+    def generate_switches_kb(switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
 
         for switch in switches.switches:
-            label = switch.name.get(lang)
+            label = switch.name.get(ctx.lang)
             builder.add(types.KeyboardButton(text=f"{label} ✅"
                                             if switch.enabled
                                             else label))
         builder.adjust(3)
 
         builder.attach(ReplyKeyboardBuilder([
-            [types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]
+            [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]
         ]
         ))
 
         return builder.as_markup(
             resize_keyboard=True,
             # one_time_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def generate_additionals_kb(available_additionals: list[ProductAdditional], additionals: list[ProductAdditional], lang: str):
+    def generate_additionals_kb(available_additionals: list[ProductAdditional], additionals: list[ProductAdditional], ctx: Context):
         builder = ReplyKeyboardBuilder()
 
         for additional in available_additionals:
-            label = additional.name.get(lang)
+            label = additional.name.get(ctx.lang)
             builder.add(types.KeyboardButton(text=f"{label} ✅"
                                             if additional in additionals
                                             else label))
 
         builder.attach(ReplyKeyboardBuilder([
-            [types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]
+            [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]
         ]
         ))
 
         return builder.as_markup(
             resize_keyboard=True,
             # one_time_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
 class CartKBs:
     @staticmethod
@@ -282,162 +280,162 @@ class CartKBs:
 class ProfileKBs:
     
     @staticmethod
-    def menu(lang) -> types.ReplyKeyboardMarkup:
+    def menu(ctx: Context) -> types.ReplyKeyboardMarkup:
         kb = [
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.Profile.translate("settings", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.settings)
             ],
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.Profile.translate("referrals", lang)),
-                types.KeyboardButton(text=ReplyButtonsTranslates.Profile.translate("delivery", lang))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.referrals),
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.delivery)
             ],
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
             ]
             
         ]
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
     
     class Settings:
     
         @staticmethod
-        def menu(lang) -> types.ReplyKeyboardMarkup:
+        def menu(ctx: Context) -> types.ReplyKeyboardMarkup:
             kb = [
                 [
-                    types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Settings.translate("lang", lang)),
-                    types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Settings.translate("currency", lang))
+                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Settings.lang),
+                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Settings.currency)
                 ],
                 [
-                    types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                 ]
                 
             ]
             return types.ReplyKeyboardMarkup(
                 keyboard=kb,
                 resize_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
             )
         
         @staticmethod
-        def lang_choose(lang) -> types.ReplyKeyboardMarkup:
+        def lang_choose(ctx: Context) -> types.ReplyKeyboardMarkup:
             builder = ReplyKeyboardBuilder()
             for key in SUPPORTED_LANGUAGES_TEXT.keys():
 
                 builder.add(types.KeyboardButton(text=key))
 
             builder.adjust(2)
-            builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]]))
+            builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]]))
             return builder.as_markup(
                 resize_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
         
         @staticmethod
-        def currency_choose(lang) -> types.ReplyKeyboardMarkup:
+        def currency_choose(ctx: Context) -> types.ReplyKeyboardMarkup:
             builder = ReplyKeyboardBuilder()
             for key in SUPPORTED_CURRENCIES.keys():
 
-                builder.add(types.KeyboardButton(text=UncategorizedTranslates.Currencies.translate(key, lang)))
+                builder.add(types.KeyboardButton(text=getattr(ctx.t.UncategorizedTranslates.Currencies, key)))
 
             builder.adjust(2)
-            builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))]]))
+            builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]]))
             return builder.as_markup(
                 resize_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
     
     class Delivery:
         
         @staticmethod
-        def menu(delivery_info: Optional[DeliveryInfo], lang) -> types.ReplyKeyboardMarkup:
+        def menu(delivery_info: Optional[DeliveryInfo], ctx: Context) -> types.ReplyKeyboardMarkup:
 
             # Клавиатура, если сервис доставки выбран
             if delivery_info:
                 # Текст для иностранной доставки
                 foreign_text = (
-                    ReplyButtonsTranslates.Profile.Delivery.Edit.translate("foreign", lang) + (" ✅"
+                    ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.foreign + (" ✅"
                     if delivery_info.is_foreign else " ❌")
                 )
                 keyboard = [
                     [
                         types.KeyboardButton(text=foreign_text),
-                        types.KeyboardButton(text=delivery_info.service.name.get(lang))
+                        types.KeyboardButton(text=delivery_info.service.name.get(ctx.lang))
                     ],
                     [
-                        types.KeyboardButton(text=delivery_info.service.selected_option.name.get(lang)),
-                        types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Delivery.Edit.translate("change_data", lang))
+                        types.KeyboardButton(text=delivery_info.service.selected_option.name.get(ctx.lang)),
+                        types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.change_data)
                     ],
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang)),
-                        types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Delivery.Edit.translate("delete", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
+                        types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.delete)
                     ]
                 ]
             else:
                 keyboard = [
                     [
-                        types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Delivery.translate("menu_not_set", lang))
+                        types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Delivery.menu_not_set)
                     ],
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                     ]
                 ]
 
             return types.ReplyKeyboardMarkup(
                 keyboard=keyboard,
                 resize_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
             )
         
         @staticmethod
-        def delete_confimation(lang) -> types.ReplyKeyboardMarkup:
+        def delete_confimation(ctx: Context) -> types.ReplyKeyboardMarkup:
             keyboard = [
                 [
-                    types.KeyboardButton(text=UncategorizedTranslates.translate("no", lang)),
-                    types.KeyboardButton(text=UncategorizedTranslates.translate("yes", lang))
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.no),
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.yes)
                 ]
             ]
 
             return types.ReplyKeyboardMarkup(
                 keyboard=keyboard,
                 resize_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
             )
         
         class Editables:
             
             
             @staticmethod
-            def is_foreign(first_setup: bool, lang) -> types.ReplyKeyboardMarkup:
+            def is_foreign(first_setup: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
                 keyboard = [
                     [
-                        types.KeyboardButton(text=ProfileTranslates.Delivery.translate("foreign_choice_rus", lang)),
-                        types.KeyboardButton(text=ProfileTranslates.Delivery.translate("foreign_choice_foreign", lang))
+                        types.KeyboardButton(text=ctx.t.ProfileTranslates.Delivery.foreign_choice_rus),
+                        types.KeyboardButton(text=ctx.t.ProfileTranslates.Delivery.foreign_choice_foreign)
                     ],
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back" if first_setup else "cancel", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back if first_setup else ctx.t.UncategorizedTranslates.cancel)
                     ]
                 ]
                 return types.ReplyKeyboardMarkup(
                     keyboard=keyboard,
                     resize_keyboard=True,
-                    input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                    input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
                 )
                 
             @staticmethod
-            def services(first_setup: bool, services: Iterable[DeliveryService], customer: Customer, lang) -> types.ReplyKeyboardMarkup:
+            def services(first_setup: bool, services: Iterable[DeliveryService], ctx: Context) -> types.ReplyKeyboardMarkup:
                 builder = ReplyKeyboardBuilder()
             
                 for service in services:
-                    builder.add(types.KeyboardButton(text=f"{service.name.get(lang)} ({service.price.to_text(customer.currency)})"))
+                    builder.add(types.KeyboardButton(text=f"{service.name.get(ctx.lang)} ({service.price.to_text(ctx.customer.currency)})"))
 
                 builder.adjust(2)
                 
                 
                 keyboard = [
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back" if first_setup else "cancel", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back if first_setup else ctx.t.UncategorizedTranslates.cancel)
                     ]
                 ]
                 builder.attach(ReplyKeyboardBuilder(keyboard))
@@ -445,22 +443,22 @@ class ProfileKBs:
                 return types.ReplyKeyboardMarkup(
                     keyboard=builder.export(),
                     resize_keyboard=True,
-                    input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                    input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
                 )
             
             @staticmethod
-            def requirements_lists(first_setup: bool, lists: list[DeliveryRequirementsList], lang) -> types.ReplyKeyboardMarkup:
+            def requirements_lists(first_setup: bool, lists: list[DeliveryRequirementsList], ctx: Context) -> types.ReplyKeyboardMarkup:
                 builder = ReplyKeyboardBuilder()
             
                 for lst in lists:
-                    builder.add(types.KeyboardButton(text=lst.name.get(lang)))
+                    builder.add(types.KeyboardButton(text=lst.name.get(ctx.lang)))
 
                 builder.adjust(2)
                 
                 
                 keyboard = [
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back" if first_setup else "cancel", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back if first_setup else ctx.t.UncategorizedTranslates.cancel)
                     ]
                 ]
                 builder.attach(ReplyKeyboardBuilder(keyboard))
@@ -468,21 +466,21 @@ class ProfileKBs:
                 return types.ReplyKeyboardMarkup(
                     keyboard=builder.export(),
                     resize_keyboard=True,
-                    input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                    input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
                 )
             
             @staticmethod
-            def requirement(first_setup: bool, lang) -> types.ReplyKeyboardMarkup:
+            def requirement(first_setup: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
                 keyboard = [
                     [
-                        types.KeyboardButton(text=UncategorizedTranslates.translate("back" if first_setup else "cancel", lang))
+                        types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back if first_setup else ctx.t.UncategorizedTranslates.cancel)
                     ]
                 ]
                 
                 return types.ReplyKeyboardMarkup(
                     keyboard=keyboard,
                     resize_keyboard=True,
-                    input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+                    input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
                 )
         
         
@@ -490,7 +488,7 @@ class ProfileKBs:
     class Balance:
             
         @staticmethod
-        def change_currency(current_currency: str, lang) -> types.ReplyKeyboardMarkup:
+        def change_currency(current_currency: str, ctx: Context) -> types.ReplyKeyboardMarkup:
             builder = ReplyKeyboardBuilder()
             for currency in [cur for cur in SUPPORTED_CURRENCIES.keys() if cur != current_currency]:
                 builder.add(types.KeyboardButton(text=currency))
@@ -499,7 +497,7 @@ class ProfileKBs:
             
             markup = types.ReplyKeyboardMarkup(keyboard=
                                             [[
-                                                types.KeyboardButton(text=UncategorizedTranslates.translate("back", lang))
+                                                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                                             ]]
                                         )
             builder.attach(ReplyKeyboardBuilder.from_markup(markup))
@@ -507,14 +505,14 @@ class ProfileKBs:
             return builder.as_markup(
                 resize_keyboard=True,
                 #one_time_keyboard=True,
-                input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang))
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
     
 class UncategorizedKBs:
     @staticmethod
-    def inline_back(lang) -> types.InlineKeyboardMarkup:
+    def inline_back(ctx: Context) -> types.InlineKeyboardMarkup:
         kb = [
             [
-                types.InlineKeyboardButton(text=UncategorizedTranslates.translate("back", lang), callback_data="back")
+                types.InlineKeyboardButton(text=ctx.t.UncategorizedTranslates.back, callback_data="back")
             ]
         ]
         return types.InlineKeyboardMarkup(
@@ -522,10 +520,10 @@ class UncategorizedKBs:
         )
 
     @staticmethod
-    def inline_cancel(lang) -> types.InlineKeyboardMarkup:
+    def inline_cancel(ctx: Context) -> types.InlineKeyboardMarkup:
         kb = [
             [
-                types.InlineKeyboardButton(text=UncategorizedTranslates.translate("cancel", lang), callback_data="cancel")
+                types.InlineKeyboardButton(text=ctx.t.UncategorizedTranslates.cancel, callback_data="cancel")
             ]
         ]
         return types.InlineKeyboardMarkup(
@@ -533,17 +531,17 @@ class UncategorizedKBs:
         )
     
     @staticmethod
-    def yes_no(lang) -> types.ReplyKeyboardMarkup:
+    def yes_no(ctx: Context) -> types.ReplyKeyboardMarkup:
         kb = [
             [
-                types.KeyboardButton(text=UncategorizedTranslates.translate("no", lang)),
-                types.KeyboardButton(text=UncategorizedTranslates.translate("yes", lang))
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.no),
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.yes)
             ]
         ]
         
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 

@@ -5,7 +5,6 @@ from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
-from ui.translates import AssortmentTranslates, CartTranslates, ProfileTranslates, UncategorizedTranslates
 
 
 def gen_product_configurable_info_text(
@@ -58,7 +57,7 @@ def gen_product_configurable_info_text(
     if additionals := configuration.additionals:
         price = configuration.calculate_additionals_price()
         add_price = f" ({price.to_text(currency)})" if price.get_amount(currency) > 0 and len(additionals) > 1 else ""
-        selected_options += f"\n\n➕ {AssortmentTranslates.translate('additionals', ctx.lang)}{add_price}:\n"
+        selected_options += f"\n\n➕ {ctx.t.AssortmentTranslates.additionals}{add_price}:\n"
         
         def gen_additional_text(additional):
             name = additional.name.get(ctx.lang)
@@ -69,7 +68,7 @@ def gen_product_configurable_info_text(
         
         selected_options += build_list([gen_additional_text(additional) for additional in additionals], '•', 2)
 
-    return f"{AssortmentTranslates.translate('currently_selected', ctx.lang)}\n{selected_options}"
+    return f"{ctx.t.AssortmentTranslates.currently_selected}\n{selected_options}"
 
 class AssortmentTextGen:
     @staticmethod
@@ -98,34 +97,32 @@ class AssortmentTextGen:
         if not switches:
             return (
                 f"{conf_switches.description.get(ctx.lang)}\n\n"
-                + AssortmentTranslates.translate("switches_enter", ctx.lang)
+                + ctx.t.AssortmentTranslates.switches_enter
             )
         switches_info = "\n".join([f"{switch.name.get(ctx.lang)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
         return (
             f"{conf_switches.description.get(ctx.lang)}\n\n{switches_info}\n\n"
-            + AssortmentTranslates.translate("switches_enter", ctx.lang)
+            + ctx.t.AssortmentTranslates.switches_enter
         )
         
     @staticmethod
-    def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], customer: Customer, lang: str):
-        additionals_info = "\n".join([f"{additional.name.get(lang)} — {additional.price.to_text(customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(lang)}\n" for additional in available])
-        return f"\n{additionals_info}\n\n" + AssortmentTranslates.translate(
-            "switches_enter", lang
-        )
+    def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], ctx: Context):
+        additionals_info = "\n".join([f"{additional.name.get(ctx.lang)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(ctx.lang)}\n" for additional in available])
+        return f"\n{additionals_info}\n\n{ctx.t.AssortmentTranslates.switches_enter}"
 
     @staticmethod
-    def generate_presets_text(lang: str):
-        return f'{AssortmentTranslates.translate("choose_the_preset", lang)}'
+    def generate_presets_text(ctx: Context):
+        return f'{ctx.t.AssortmentTranslates.choose_the_preset}'
 
     @staticmethod
-    def generate_custom_input_text(chosen: ConfigurationChoice, lang: str):
-        content = chosen.description.get(lang)
+    def generate_custom_input_text(chosen: ConfigurationChoice, ctx: Context):
+        content = chosen.description.get(ctx.lang)
         content = (
             f"{content}\n\n<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>"
             if chosen.custom_input_text
             else content
         )
-        content = f"{content}\n\n{AssortmentTranslates.translate('enter_custom', lang)}"
+        content = f"{content}\n\n{ctx.t.AssortmentTranslates.enter_custom}"
 
         return content
     
@@ -137,9 +134,9 @@ class AssortmentTextGen:
         section = gen_product_configurable_info_text(product.configuration, ctx)
 
         if product.configuration.can_determine_price:
-            price_text = f"\n\n{AssortmentTranslates.translate('cannot_price', ctx.lang)}\n{AssortmentTranslates.translate('approximate_price', ctx.lang)} {total_price.to_text(currency)}"
+            price_text = f"\n\n{ctx.t.AssortmentTranslates.cannot_price}\n{ctx.t.AssortmentTranslates.approximate_price} {total_price.to_text(currency)}"
         else:
-            price_text = f"\n\n{AssortmentTranslates.translate('total', ctx.lang)} {total_price.to_text(currency)}"
+            price_text = f"\n\n{ctx.t.AssortmentTranslates.total} {total_price.to_text(currency)}"
 
         return f"{product.name.get(ctx.lang)}\n\n{section}\n{price_text}"
     
@@ -149,19 +146,19 @@ class AssortmentTextGen:
 
 class ProfileTextGen:
     @staticmethod
-    def settings_menu_text(lang: str):
-        return ProfileTranslates.Settings.translate("menu", lang)
+    def settings_menu_text(ctx: Context):
+        return ctx.t.ProfileTranslates.Settings.menu
     
     @staticmethod
     def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):
         if not delivery_info:
-            return ProfileTranslates.Delivery.translate("menu_not_configured", ctx.lang)
+            return ctx.t.ProfileTranslates.Delivery.menu_not_configured
         service = delivery_info.service
         
         requirements = service.selected_option.requirements
         
         requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
-        return ProfileTranslates.Delivery.translate("menu", ctx.lang).format(delivery_service=service.name.get(ctx.lang), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx.lang), requirements=requirements_info_text)
+        return ctx.t.ProfileTranslates.Delivery.menu.format(delivery_service=service.name.get(ctx.lang), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx.lang), requirements=requirements_info_text)
 
 class CartTextGen:
     @staticmethod
@@ -173,7 +170,7 @@ class CartTextGen:
         
         price_text = f"{configuration_price_text} * {entry.quantity} = {total_price}" if entry.quantity != 1 else configuration_price_text
         
-        return CartTranslates.translate("cart_view_menu", ctx.lang).format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
+        return ctx.t.CartTranslates.cart_view_menu.format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
 
     @staticmethod
     async def generate_order_forming_caption(order: Order, ctx: Context):
@@ -183,7 +180,7 @@ class CartTextGen:
         
         async def form_entry_desc(entry):
             product = await ctx.db.products.find_one_by_id(entry.product_id)
-            quantity_text = f" {entry.quantity} {UncategorizedTranslates.translate('unit', ctx.lang, count=entry.quantity)}" if entry.quantity > 1 else ""
+            quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
             price = product.price + entry.configuration.price
             price_text = price.to_text(ctx.customer.currency)
             price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
@@ -194,11 +191,11 @@ class CartTextGen:
         cart_entries_description = await asyncio.gather(*(form_entry_desc(entry) for entry in entries))
         cart_entries_description = build_list(cart_entries_description, before="▫️")
         
-        order_configuration_menu_text = CartTranslates.OrderConfiguration.translate("order_configuration_menu", ctx.lang)
-        promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else CartTranslates.OrderConfiguration.translate("no_promocode_applied", ctx.lang)
-        bonus_money_info = f"{price_details.bonuses_applied.to_text()}" if price_details.bonuses_applied else CartTranslates.OrderConfiguration.translate("not_using_bonus_money", ctx.lang)
+        order_configuration_menu_text = ctx.t.CartTranslates.OrderConfiguration.order_configuration_menu
+        promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else ctx.t.CartTranslates.OrderConfiguration.no_promocode_applied
+        bonus_money_info = f"{price_details.bonuses_applied.to_text()}" if price_details.bonuses_applied else ctx.t.CartTranslates.OrderConfiguration.not_using_bonus_money
         
-        payment_method_info = payment_method.name.get(ctx.lang) if payment_method else CartTranslates.OrderConfiguration.translate("no_payment_method_selected", ctx.lang)
+        payment_method_info = payment_method.name.get(ctx.lang) if payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected
         
         delivery_info = ctx.customer.delivery_info
         delivery_service = f"{delivery_info.service.name.get(ctx.lang)} — {price_details.delivery_price.to_text()}"

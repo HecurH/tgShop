@@ -7,7 +7,6 @@ from core.helper_classes import Context
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
 from ui.keyboards import *
-from ui.translates import AssortmentTranslates, CartTranslates, CommonTranslates, ProfileTranslates
 
 
 class StateHandlerRegistry:
@@ -81,16 +80,16 @@ async def handle_lang_choosing(ctx: Context, **_):
 
 @state_handlers.register(NewUserStates.CurrencyChoosing)
 async def handle_currency_choosing(ctx: Context, **_):
-    await ctx.message.answer(CommonTranslates.translate("currency_choosing", ctx.lang),
-                             reply_markup=CommonKBs.currency_choose(ctx.lang))
+    await ctx.message.answer(ctx.t.CommonTranslates.currency_choosing,
+                             reply_markup=CommonKBs.currency_choose(ctx))
 
 class CommonStates(StatesGroup):
     MainMenu = State()
 
 @state_handlers.register(CommonStates.MainMenu)
 async def main_menu_handler(ctx: Context, **_):
-    await ctx.message.answer(CommonTranslates.translate("heres_the_menu", ctx.lang),
-                             reply_markup=CommonKBs.main_menu(ctx.lang))
+    await ctx.message.answer(ctx.t.CommonTranslates.heres_the_menu,
+                             reply_markup=CommonKBs.main_menu(ctx))
 
 
 class Assortment(StatesGroup):
@@ -110,8 +109,8 @@ async def assortment_menu_handler(ctx: Context, **_):
     if not categories:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before="Err: There's no categories!")
         return
-    await ctx.message.answer(AssortmentTranslates.translate("choose_the_category", ctx.lang),
-                             reply_markup=AssortmentKBs.assortment_menu(categories, ctx.lang))
+    await ctx.message.answer(ctx.t.AssortmentTranslates.choose_the_category,
+                             reply_markup=AssortmentKBs.assortment_menu(categories, ctx))
 
 @state_handlers.register(Assortment.ViewingAssortment)
 async def viewing_assortment_handler(ctx: Context,
@@ -121,7 +120,7 @@ async def viewing_assortment_handler(ctx: Context,
     amount = await ctx.db.products.count_in_category(category)
 
     if amount == 0:
-        await ctx.message.answer(AssortmentTranslates.translate("no_products_in_category", ctx.lang))
+        await ctx.message.answer(ctx.t.AssortmentTranslates.no_products_in_category)
         await call_state_handler(Assortment.Menu,
                                  ctx)
         return
@@ -134,7 +133,7 @@ async def viewing_assortment_handler(ctx: Context,
     await send_media_response(ctx.message,
                                 product.short_description_photo_id,
                                 caption,
-                                AssortmentKBs.gen_assortment_view_kb(current, amount, ctx.lang))
+                                AssortmentKBs.gen_assortment_view_kb(current, amount, ctx))
 
 @state_handlers.register(Assortment.ViewingProductDetails)
 async def viewing_product_details_handler(ctx: Context,
@@ -146,7 +145,7 @@ async def viewing_product_details_handler(ctx: Context,
     #     await edit_media_message(ctx.message,
     #                             product.long_description_photo_id or product.long_description_video_id,
     #                             caption,
-    #                             AssortmentKBs.detailed_view(ctx.lang),
+    #                             AssortmentKBs.detailed_view(ctx),
     #                             "photo" if product.long_description_photo_id
     #                             else ("video" if product.long_description_video_id
     #                                 else None))
@@ -156,7 +155,7 @@ async def viewing_product_details_handler(ctx: Context,
     await send_media_response(ctx.message,
                                 product.long_description_photo_id or product.long_description_video_id,
                                 caption,
-                                AssortmentKBs.detailed_view(ctx.lang)
+                                AssortmentKBs.detailed_view(ctx)
                                 )
 
 @state_handlers.register(Assortment.FormingOrderEntry)
@@ -198,9 +197,8 @@ async def choice_edit_value_handler(ctx: Context,
                                     **_):
     await clear_keyboard_effect(ctx.message)
 
-    text = AssortmentTextGen.generate_presets_text(ctx.lang) if choice.existing_presets else AssortmentTextGen.generate_custom_input_text(choice,
-                                                                                                      ctx.lang)
-    kb = UncategorizedKBs.inline_cancel(ctx.lang)
+    text = AssortmentTextGen.generate_presets_text(ctx) if choice.existing_presets else AssortmentTextGen.generate_custom_input_text(choice, ctx)
+    kb = UncategorizedKBs.inline_cancel(ctx)
 
     await send_media_response(ctx.message,
                               choice.photo_id or choice.video_id,
@@ -215,7 +213,7 @@ async def switches_editing_handler(ctx: Context,
                                    **_):
 
     text = AssortmentTextGen.generate_switches_text(switches, ctx)
-    kb = AssortmentKBs.generate_switches_kb(switches, ctx.lang)
+    kb = AssortmentKBs.generate_switches_kb(switches, ctx)
 
     await send_media_response(ctx.message,
                               switches.photo_id or switches.video_id,
@@ -231,8 +229,8 @@ async def additionals_editing_handler(ctx: Context,
                                    **_):
     additionals = product.configuration.additionals
 
-    text = AssortmentTextGen.generate_additionals_text(allowed_additionals, additionals, ctx.customer, ctx.lang)
-    kb = AssortmentKBs.generate_additionals_kb(allowed_additionals, additionals, ctx.lang)
+    text = AssortmentTextGen.generate_additionals_text(allowed_additionals, additionals, ctx)
+    kb = AssortmentKBs.generate_additionals_kb(allowed_additionals, additionals, ctx)
 
     if ctx.is_query: await ctx.message.delete()
 
@@ -252,7 +250,7 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
     amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
     if amount == 0:
-        await ctx.message.answer(CartTranslates.translate("no_products_in_cart", ctx.lang))
+        await ctx.message.answer(ctx.t.CartTranslates.no_products_in_cart)
         await call_state_handler(CommonStates.MainMenu,
                                  ctx)
         return
@@ -274,8 +272,8 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
 
 @state_handlers.register(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
-    await ctx.message.answer(CartTranslates.translate("entry_remove_confirm", ctx.lang),
-                             reply_markup=UncategorizedKBs.yes_no(ctx.lang))
+    await ctx.message.answer(ctx.t.CartTranslates.entry_remove_confirm,
+                             reply_markup=UncategorizedKBs.yes_no(ctx))
 
 @state_handlers.register(Cart.OrderConfigurationMenu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
@@ -305,33 +303,33 @@ class Profile(StatesGroup):
 
 @state_handlers.register(Profile.Menu)
 async def profile_menu_handler(ctx: Context, **_):
-    await ctx.message.answer(ProfileTranslates.translate("menu", ctx.lang),
-                             reply_markup=ProfileKBs.menu(ctx.lang))
+    await ctx.message.answer(ctx.t.ProfileTranslates.menu,
+                             reply_markup=ProfileKBs.menu(ctx))
 
 @state_handlers.register(Profile.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTextGen.settings_menu_text(ctx.lang),
-        reply_markup=ProfileKBs.Settings.menu(ctx.lang)
+        ProfileTextGen.settings_menu_text(ctx),
+        reply_markup=ProfileKBs.Settings.menu(ctx)
     )
 
 @state_handlers.register(Profile.Delivery.Menu)
 async def delivery_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
         ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
-        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx.lang)
+        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx)
     )
     
 @state_handlers.register(Profile.Settings.ChangeLanguage)
 async def settings_change_lang_handler(ctx: Context, **_):
-    await ctx.message.answer(ProfileTranslates.Settings.translate("choose_lang", ctx.lang),
-                             reply_markup=ProfileKBs.Settings.lang_choose(ctx.lang))
+    await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_lang,
+                             reply_markup=ProfileKBs.Settings.lang_choose(ctx))
     
 @state_handlers.register(Profile.Settings.ChangeCurrency)
 async def settings_change_currency_handler(ctx: Context, **_):
-    currency_name = UncategorizedTranslates.Currencies.translate(ctx.customer.currency, ctx.lang)
-    await ctx.message.answer(ProfileTranslates.Settings.translate("choose_currency", ctx.lang).format(currency=currency_name),
-                             reply_markup=ProfileKBs.Settings.currency_choose(ctx.lang))
+    currency_name = getattr(ctx.t.UncategorizedTranslates.Currencies, ctx.customer.currency)
+    await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_currency.format(currency=currency_name),
+                             reply_markup=ProfileKBs.Settings.currency_choose(ctx))
 
 @state_handlers.register(Profile.Delivery.Editables.IsForeign)
 async def delivery_edit_is_foreign_handler(ctx: Context, **_):
@@ -341,9 +339,9 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     # service = DeliveryService(**serialized_service) if serialized_service else None
     
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("is_foreign_text", ctx.lang),
+        ctx.t.ProfileTranslates.Delivery.is_foreign_text,
         reply_markup=ProfileKBs.Delivery.Editables.is_foreign(
-            first_setup, ctx.lang
+            first_setup, ctx
         )
     )
     
@@ -357,7 +355,7 @@ async def delivery_edit_service_handler(ctx: Context, **_):
     services = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
     
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("service_text", ctx.lang),
+        ctx.t.ProfileTranslates.Delivery.service_text,
         reply_markup=ProfileKBs.Delivery.Editables.services(
             first_setup, services, ctx.customer, ctx.lang
         )
@@ -372,9 +370,9 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
     lists = delivery_info.service.requirements_options
     
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("requirements_list_text", ctx.lang),
+        ctx.t.ProfileTranslates.Delivery.requirements_list_text,
         reply_markup=ProfileKBs.Delivery.Editables.requirements_lists(
-            first_setup, lists, ctx.lang
+            first_setup, lists, ctx
         )
     )
 
@@ -388,17 +386,15 @@ async def delivery_edit_requirement_handler(ctx: Context, **_):
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("requirement_value_text", ctx.lang).format(name=requirement.name.get(ctx.lang), description=requirement.description.data.get(ctx.lang)),
+        ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx.lang), description=requirement.description.data.get(ctx.lang)),
         reply_markup=ProfileKBs.Delivery.Editables.requirement(
-            first_setup, ctx.lang
+            first_setup, ctx
         )
     )
 
 @state_handlers.register(Profile.Delivery.DeleteConfimation)
 async def delivery_delete_confirmation_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTranslates.Delivery.translate("delete_confimation", ctx.lang),
-        reply_markup=ProfileKBs.Delivery.delete_confimation(
-            ctx.lang
-        )
+        ctx.t.ProfileTranslates.Delivery.delete_confimation,
+        reply_markup=ProfileKBs.Delivery.delete_confimation(ctx)
     )

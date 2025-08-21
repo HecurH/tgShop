@@ -88,7 +88,7 @@ async def about_command_handler(_, ctx: Context) -> None:
     await ctx.message.reply(**as_list(
         BlockQuote(Bold("PLACEHOLDER")),
         Text("Lorem ipsum dolor sit amed.")
-    ).as_kwargs(), reply_markup=CommonKBs.main_menu(ctx.lang))
+    ).as_kwargs(), reply_markup=CommonKBs.main_menu(ctx))
 
     await ctx.fsm.set_state(CommonStates.MainMenu)
 

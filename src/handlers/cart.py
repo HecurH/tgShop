@@ -81,7 +81,7 @@ async def entry_remove_confirm_handler(_, ctx: Context):
                                  current=1,
                                  send_before="Can't find this item in cart.")
     
-    if ctx.message.text == UncategorizedTranslates.translate("yes", ctx.lang):
+    if ctx.message.text == ctx.t.UncategorizedTranslates.yes:
         entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
         await ctx.db.cart_entries.delete(entry)
     
