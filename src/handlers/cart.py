@@ -64,7 +64,7 @@ async def cart_viewer_handler(_, ctx: Context):
         products_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         
         order = ctx.db.orders.new_order(ctx.customer, products_price)
-        await ctx.fsm.update_data(order=order.model_dump())
+        await order.save_in_fsm(ctx, "order")
         
         await call_state_handler(Cart.OrderConfiguration.Menu,
                                  order=order,
@@ -113,12 +113,13 @@ async def order_configuration_promocode_handler(_, ctx: Context):
         return
     
     promocode: Promocode = await ctx.db.promocodes.get_by_code(text)
+    order = await Order.from_fsm_context(ctx, "order")
     if not promocode:
-        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
+        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, order=order, ctx=ctx, 
+                                 send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
     check_result: PromocodeCheckResult = await promocode.check_promocode(await ctx.db.orders.count_customer_orders(ctx.customer))
-    order = await Order.from_fsm_context(ctx, "order")
     
     if check_result != PromocodeCheckResult.ok:
         check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))

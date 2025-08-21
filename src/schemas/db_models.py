@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import Any, Dict, TypeVar, Optional, List, Iterable, TYPE_CHECKING
+from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from core.db import DatabaseService
 
 T = TypeVar("T")
+TModel = TypeVar("TModel", bound="AppBaseModel[Any]")
+
 
 class AppAbstractRepository(AsyncAbstractRepository[T]):
     def __init__(self, dbs: "DatabaseService"):
@@ -24,18 +26,22 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         self.dbs = dbs
         
 # класс BaseModel, но со своей функцией для загрузки сериализованных объектов
-class AppBaseModel(BaseModel):
+class AppBaseModel(BaseModel, Generic[TModel]):
     @classmethod
-    async def from_fsm_context(cls, ctx: Context, key: str, default=None) -> Optional["AppBaseModel"]:
+    async def from_fsm_context(cls: Type[TModel], ctx: Context, key: str, default: Optional[TModel] = None) -> Optional[TModel]:
         """Загрузка напрямую из контекста по ключу"""
         value: Optional[dict] = await ctx.fsm.get_value(key)
         return cls(**value) if value else default
     
     @classmethod
-    async def load_many_from_fsm(cls, ctx: Context, keys: List[str]) -> tuple[Optional["AppBaseModel"]]:
+    async def load_many_from_fsm(cls: Type[TModel], ctx: Context, keys: List[str]) -> tuple[Optional[TModel]]:
         """Загрузка нескольких моделей из FSM по списку ключей"""
         tasks = [cls.from_fsm_context(ctx, key) for key in keys]
         return tuple(await asyncio.gather(*tasks))
+    
+    async def save_in_fsm(self, ctx: Context, key: str):
+        """Сохранение в контекст по ключу"""
+        await ctx.fsm.update_data({key: self.model_dump()})
     
     
 class OrderPriceDetails(AppBaseModel):

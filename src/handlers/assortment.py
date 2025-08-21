@@ -111,7 +111,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
 
 @router.message(Assortment.FormingOrderEntry)
 async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
+    product = await Product.from_fsm_context(ctx, "product")
     text = ctx.message.text
     
     if text == ctx.t.UncategorizedTranslates.cancel:
@@ -149,8 +149,8 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
 
 @router.message(Assortment.EntryOptionSelect)
 async def entry_option_select(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
-    changing_option = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
+    product = await Product.from_fsm_context(ctx, "product")
+    changing_option = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
 
     if message.text == ctx.t.UncategorizedTranslates.back:
         base_product = await ctx.db.products.find_one_by_id(product.id)
@@ -213,21 +213,21 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
 @router.message(Assortment.SwitchesEditing)
 async def switches_handler(message: Message, ctx: Context) -> None:
     if message.text == ctx.t.UncategorizedTranslates.back:
-        option: ConfigurationOption = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
+        option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
         await call_state_handler(Assortment.EntryOptionSelect,
                                  ctx,
-                                 product=Product(**await ctx.fsm.get_value("product")),
+                                 product=await Product.from_fsm_context(ctx, "product"),
                                  option=option)
 
         return
 
-    switches = ConfigurationSwitches(**await ctx.fsm.get_value("switches"))
+    switches = await ConfigurationSwitches.from_fsm_context(ctx, "switches")
     
     if text := message.text:
         clean_text = text.replace(" ✅", "")
         switches.toggle_by_localized_name(clean_text, ctx.lang)
         
-        product = Product(**await ctx.fsm.get_value("product"))
+        product = await Product.from_fsm_context(ctx, "product")
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
@@ -246,7 +246,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
 
 @router.message(Assortment.AdditionalsEditing)
 async def additionals_handler(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
+    product = await Product.from_fsm_context(ctx, "product")
     text = message.text
 
     if text == ctx.t.UncategorizedTranslates.back:
@@ -292,7 +292,7 @@ async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
 
     await call_state_handler(Assortment.EntryOptionSelect,
                              ctx,
-                             product=Product(**await ctx.fsm.get_value("product")),
+                             product=await Product.from_fsm_context(ctx, "product"),
                              delete_prev=True,
                              option=changing_option)
 
@@ -300,8 +300,8 @@ async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.message(Assortment.ChoiceEditValue)
 async def advanced_edit_value(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
-    changing_option = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
+    product = await Product.from_fsm_context(ctx, "product")
+    changing_option = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
     chosen = changing_option.get_chosen() # ССЫЛКА на объект, не надо дополнительно переприсваивать дочерних тварей
 
     if chosen.existing_presets:
