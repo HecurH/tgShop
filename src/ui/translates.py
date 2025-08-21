@@ -12,6 +12,7 @@ class TranslationField:
     def __init__(self, translations: dict):
         self.translations = translations
         self._attribute_name = None  # имя будет установлено метаклассом
+        self._owner_class = None
 
     def __set_name__(self, owner, name):
         # сохраняет имя атрибута, к которому привязан дескриптор
@@ -21,6 +22,7 @@ class TranslationField:
                 f"Do not reuse the same TranslationField instance for multiple attributes/classes."
             )
         self._attribute_name = name
+        self._owner_class = owner
 
     def __get__(self, instance, owner):
         # instance - это экземпляр класса, owner - это сам класс
@@ -43,6 +45,12 @@ class TranslationField:
             return pluralizer
         else:
             return owner.translate(self._attribute_name, lang)
+    
+    def translate(self, lang: str, count: int = None) -> str:
+        if self._owner_class is None:
+            raise RuntimeError("TranslationField has no owner_class yet")
+
+        return self._owner_class.translate(self._attribute_name, lang, count=count)
     
     def values(self):
         return self.translations.values()

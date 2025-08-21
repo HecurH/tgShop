@@ -234,7 +234,7 @@ class CartKBs:
             controls,
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment)
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.place)
             ]
         ]
 
@@ -246,10 +246,10 @@ class CartKBs:
     
     @staticmethod
     def cart_order_configuration(used_bonus_money: bool, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
-        use_promocode = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_promocode", ctx.lang)
-        use_bonus_money = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("use_bonus_money", ctx.lang)
-        place = ReplyButtonsTranslates.Cart.translate("place", ctx.lang)
-        change_payment_method = ReplyButtonsTranslates.Cart.OrderConfiguration.translate("change_payment_method", ctx.lang)
+        use_promocode = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode
+        use_bonus_money = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money
+        place = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
+        change_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method
         
         has_bonus_money = ctx.customer.bonus_wallet.amount > 0.0
         
@@ -275,7 +275,7 @@ class CartKBs:
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
-            input_field_placeholder=ReplyButtonsTranslates.translate("choose_an_item", ctx.lang)
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
         
 
