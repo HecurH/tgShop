@@ -369,7 +369,7 @@ async def delivery_edit_service_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Editables.RequirementsLists)
 async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
     
     lists = delivery_info.service.requirements_options
@@ -384,7 +384,7 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Editables.Requirement)
 async def delivery_edit_requirement_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info: DeliveryInfo = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     requirement_index: int = await ctx.fsm.get_value("requirement_index") or 0
 
     
