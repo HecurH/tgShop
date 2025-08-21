@@ -362,7 +362,7 @@ async def delivery_edit_service_handler(ctx: Context, **_):
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.service_text,
         reply_markup=ProfileKBs.Delivery.Editables.services(
-            first_setup, services, ctx.customer, ctx.lang
+            first_setup, services, ctx
         )
     )
     
