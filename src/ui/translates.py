@@ -203,7 +203,31 @@ class TranslatorHub:
         return cls._cache[lang]
     
 class EnumTranslates(Translatable):
-    class OrderState(Translatable):
+    
+    class PromocodeCheckResult(Translatable):
+        only_newbies = {
+            "ru": "Этот промокод можно использовать только при первом заказе!",
+            "en": "This promo code can only be used on your first order!"
+        }
+        
+        max_usages_reached = {
+            "ru": "Данный промокод уже использован максимальное количество раз.",
+            "en": "This promo code has been used the maximum number of times."
+        }
+        
+        expired = {
+            "ru": "Истёк срок действия промокода.",
+            "en": "The promo code has expired."
+        }
+        
+        error = {
+            "ru": "Данный промокод не может быть применён.",
+            "en": "This promo code cannot be applied."
+        }
+        
+        
+    
+    class OrderStateKey(Translatable):
         forming = {
             "ru": "Формирование заказа",
             "en": "Order forming"
@@ -416,6 +440,21 @@ class CartTranslates(Translatable):
         no_promocode_applied = {
             "ru": "Не применён.",
             "en": "Not applied."
+        }
+        
+        enter_promocode = {
+            "ru": "Введите промокод:",
+            "en": "Enter promo code:"
+        }
+        
+        promocode_not_found = {
+            "ru": "Промокод не найден.",
+            "en": "Promo code not found."
+        }
+        
+        promocode_check_failed = { # {reason} = EnumTranslates.PromocodeCheckResult translations without "ok"
+            "ru": "{reason}\n\nПопробуйте другой промокод.",
+            "en": "{reason}\n\nTry another promo code."
         }
         
         not_using_bonus_money = {

@@ -275,7 +275,7 @@ class CartKBs:
             resize_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
-        
+
 
 class ProfileKBs:
     

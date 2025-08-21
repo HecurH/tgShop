@@ -243,10 +243,12 @@ class Cart(StatesGroup):
     Menu = State()
     EntryRemoveConfirm = State()
     
-    OrderConfigurationMenu = State()
+    class OrderConfiguration(StatesGroup):
+        Menu = State()
+        PromocodeSetting = State()
 
 @state_handlers.register(Cart.Menu)
-async def cart_menu_handler(ctx: Context, current: int, **_):
+async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
     if amount == 0:
@@ -275,7 +277,7 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.entry_remove_confirm,
                              reply_markup=UncategorizedKBs.yes_no(ctx))
 
-@state_handlers.register(Cart.OrderConfigurationMenu)
+@state_handlers.register(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
     used_bonus_money: bool = bool(order.price_details.bonuses_applied)
 
@@ -283,10 +285,14 @@ async def order_configuration_handler(ctx: Context, order: Order, **_):
 
     await ctx.message.answer(text,
                              reply_markup=CartKBs.cart_order_configuration(used_bonus_money, ctx))
-  
+
+@state_handlers.register(Cart.OrderConfiguration.PromocodeSetting)
+async def order_promocode_setting_handler(ctx: Context, **_):
+    await ctx.message.answer(ctx.t.CartTranslates.OrderConfiguration.enter_promocode,
+                             reply_markup=UncategorizedKBs.inline_back(ctx))
+
 class Profile(StatesGroup):
     Menu = State()
-    
     class Settings(StatesGroup):
         Menu = State()
         ChangeLanguage = State()
@@ -294,7 +300,6 @@ class Profile(StatesGroup):
     class Delivery(StatesGroup):
         Menu = State()
         DeleteConfimation = State()
-        
         class Editables(StatesGroup):
             IsForeign = State()
             Service = State()

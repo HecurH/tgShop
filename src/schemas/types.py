@@ -135,7 +135,7 @@ class OrderState(BaseModel):
     key: OrderStateKey
 
     def get_localized_name(self, lang: str) -> str:
-        return EnumTranslates.OrderState.translate(self.key.value, lang)
+        return EnumTranslates.OrderStateKey.translate(self.key.value, lang)
     
     def set_state(self, key: OrderStateKey):
         self.key = key 

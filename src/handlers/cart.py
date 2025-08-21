@@ -1,7 +1,8 @@
 from aiogram import Router
-from schemas.db_models import CartEntry, Order, OrderPriceDetails
+from schemas.db_models import CartEntry, Order, OrderPriceDetails, Promocode
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
+from schemas.enums import PromocodeCheckResult
 from ui.translates import *
 
 router = Router(name="cart")
@@ -41,7 +42,10 @@ async def cart_viewer_handler(_, ctx: Context):
     elif text in ['➖', '➕']:
         entry: CartEntry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
         if text == '➖':
-            entry.quantity = entry.quantity if entry.quantity == 1 else entry.quantity - 1
+            if entry.quantity == 1:
+                await call_state_handler(Cart.EntryRemoveConfirm, ctx)
+                return
+            entry.quantity = entry.quantity - 1
         elif text == '➕':
             entry.quantity = entry.quantity if entry.quantity == 99 else entry.quantity + 1
         await ctx.db.cart_entries.save(entry)
@@ -62,7 +66,7 @@ async def cart_viewer_handler(_, ctx: Context):
         order = ctx.db.orders.new_order(ctx.customer, products_price)
         await ctx.fsm.update_data(order=order.model_dump())
         
-        await call_state_handler(Cart.OrderConfigurationMenu,
+        await call_state_handler(Cart.OrderConfiguration.Menu,
                                  order=order,
                                  ctx=ctx)
 
@@ -91,10 +95,41 @@ async def entry_remove_confirm_handler(_, ctx: Context):
                                 ctx,
                                 current=current)
 
-@router.message(Cart.OrderConfigurationMenu)
+@router.message(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(CommonStates.MainMenu,
-                                ctx)
+        await call_state_handler(Cart.Menu, ctx)
         return
+    
+    if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode:
+        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
+
+@router.message(Cart.OrderConfiguration.PromocodeSetting)
+async def order_configuration_promocode_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx)
+        return
+    
+    promocode: Promocode = await ctx.db.promocodes.get_by_code(text)
+    if not promocode:
+        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
+        return
+    
+    check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.db.orders.count_customer_orders(ctx.customer))
+    order = await Order.from_fsm_context(ctx, "order")
+    
+    if check_result != PromocodeCheckResult.ok:
+        check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
+        check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
+        
+        await call_state_handler(Cart.OrderConfiguration.Menu, order=order, ctx=ctx, 
+                                 send_before=(check_result_text, 1))
+        return
+
+    order = await ctx.db.orders.get_order_by_id(ctx.fsm.get_value("order").id)
+    order.promocode = promocode
+    await ctx.db.orders.save(order)
+
+    await call_state_handler(Cart.OrderConfiguration.Menu, ctx)

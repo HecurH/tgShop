@@ -8,7 +8,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
 from configs.supported import SUPPORTED_CURRENCIES
-from core.helper_classes import AsyncCurrencyConverter
+from core.helper_classes import AsyncCurrencyConverter, Context
 from schemas.enums import OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
@@ -22,8 +22,23 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
     def __init__(self, dbs: "DatabaseService"):
         super().__init__(dbs.db)
         self.dbs = dbs
+        
+# класс BaseModel, но со своей функцией для загрузки сериализованных объектов
+class AppBaseModel(BaseModel):
+    @classmethod
+    async def from_fsm_context(cls, ctx: Context, key: str, default=None) -> Optional["AppBaseModel"]:
+        """Загрузка напрямую из контекста по ключу"""
+        value = await ctx.fsm.get_value(key)
+        return cls(**value) if value else default
     
-class OrderPriceDetails(BaseModel):
+    @classmethod
+    async def load_many_from_fsm(cls, ctx: Context, keys: List[str]) -> tuple[Optional["AppBaseModel"]]:
+        """Загрузка нескольких моделей из FSM по списку ключей"""
+        tasks = [cls.from_fsm_context(ctx, key) for key in keys]
+        return tuple(await asyncio.gather(*tasks))
+    
+    
+class OrderPriceDetails(AppBaseModel):
     products_price: Money  # сумма товаров без скидок и доставки
     promocode_discount: Optional[Money] = None  # скидка по промокоду
     
@@ -39,7 +54,7 @@ class OrderPriceDetails(BaseModel):
         
         self.total_price = total - self.bonuses_applied if self.bonuses_applied else total
     
-class Order(BaseModel):
+class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
     state: OrderState = OrderState(key=OrderStateKey.forming)
@@ -76,7 +91,10 @@ class OrdersRepository(AppAbstractRepository[Order]):
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
 
-class CartEntry(BaseModel):
+    async def count_customer_orders(self, customer: "Customer") -> int:
+        return await self.get_collection().count_documents({"customer_id": customer.id})
+
+class CartEntry(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
     product_id: PydanticObjectId
@@ -136,7 +154,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
                 total_price += entry_total
         return total_price
 
-class ConfigurationSwitch(BaseModel):
+class ConfigurationSwitch(AppBaseModel):
     name: LocalizedString
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"ru": 0, "en": 0}))
 
@@ -146,7 +164,7 @@ class ConfigurationSwitch(BaseModel):
         self.name=base_sw.name
         self.price=base_sw.price
 
-class ConfigurationSwitches(BaseModel):
+class ConfigurationSwitches(AppBaseModel):
     label: LocalizedString
     description: LocalizedString
     photo_id: Optional[str] = None
@@ -181,7 +199,7 @@ class ConfigurationSwitches(BaseModel):
                 switch.enabled = not switch.enabled
                 break 
 
-class ConfigurationChoice(BaseModel):
+class ConfigurationChoice(AppBaseModel):
     label: LocalizedString
     description: LocalizedString
     photo_id: Optional[str] = None
@@ -239,7 +257,7 @@ class ConfigurationChoice(BaseModel):
                 return True
         return False
 
-class ConfigurationOption(BaseModel):
+class ConfigurationOption(AppBaseModel):
     name: LocalizedString
     text: LocalizedString
     photo_id: Optional[str] = None
@@ -296,10 +314,10 @@ class ConfigurationOption(BaseModel):
             if choice_key not in update_from_option.choices:
                 del self.choices[choice_key]
 
-class ProductConfiguration(BaseModel):
+class ProductConfiguration(AppBaseModel):
     options: Dict[str, ConfigurationOption]
     additionals: list["ProductAdditional"] = Field(default_factory=list)
-    price: LocalizedMoney = Field(default_factory=LocalizedMoney)
+    price: Optional[LocalizedMoney] = None
     @property
     def can_determine_price(self) -> bool:
         return any(
@@ -386,7 +404,7 @@ class ProductConfiguration(BaseModel):
     def update_price(self):
         self.price = self.calculate_additionals_price() + self.calculate_options_price()
 
-class Product(BaseModel):
+class Product(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
     category: str
@@ -451,7 +469,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
     async def count_in_category(self, category) -> int:
         return await self.get_collection().count_documents({"category": category})
 
-class ProductAdditional(BaseModel):
+class ProductAdditional(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
     category: str
@@ -472,7 +490,7 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
     def get_by_name(self, name, allowed_additionals, lang):
         return next((a for a in allowed_additionals if a.name.get(lang) == name), None)
 
-class Promocode(BaseModel):
+class Promocode(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     code: str
     action: Discount
@@ -503,8 +521,11 @@ class Promocode(BaseModel):
 class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
         collection_name = 'promocodes'
+        
+    def get_by_code(self, code: str) -> Optional[Promocode]:
+        return self.find_one_by({"code": code})
 
-class Inviter(BaseModel):
+class Inviter(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     inviter_code: str
 
@@ -514,17 +535,17 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
 
-class DeliveryRequirement(BaseModel):
+class DeliveryRequirement(AppBaseModel):
     name: LocalizedString
     description: LocalizedString
     value: SecureValue = SecureValue() # для заполнения в будущем при конфигурации
 
-class DeliveryRequirementsList(BaseModel):
+class DeliveryRequirementsList(AppBaseModel):
     name: LocalizedString # типо "По номеру", или "По адресу и ФИО"
     description: LocalizedString
     requirements: list[DeliveryRequirement]
 
-class DeliveryService(BaseModel):
+class DeliveryService(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString  # Название сервиса
     is_foreign: bool = False
@@ -545,11 +566,11 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     async def get_all(self, is_foreign: bool) -> Iterable[DeliveryService]:
         return await self.find_by({"is_foreign": is_foreign})
 
-class DeliveryInfo(BaseModel):
+class DeliveryInfo(AppBaseModel):
     is_foreign: bool = False  # Вне РФ?
     service: Optional[DeliveryService] = None
 
-class Customer(BaseModel):
+class Customer(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     user_id: int
     role: str = "default"
@@ -639,7 +660,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         except PyMongoError as e:
             handle_error(self.logger, e)
 
-class Category(BaseModel):
+class Category(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: str
     localized_name: LocalizedString
