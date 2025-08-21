@@ -85,8 +85,8 @@ class LocalizedMoney(BaseModel):
     def get_money(self, cur: str) -> Money:
         return self.data.get(cur, Money(currency=cur, amount=0.0))
     
-    def set_amount(self, cur: str, amount: float):
-        self.data[cur] = Money(cur, amount)
+    def set_amount(self, curency: str, amount: float):
+        self.data[curency] = Money(currency=curency, amount=amount)
 
     def to_text(self, currency: str) -> str:
         if money := self.data.get(currency):
@@ -111,7 +111,7 @@ class LocalizedMoney(BaseModel):
 
     def __radd__(self, other):
         if other == 0:
-            return LocalizedMoney.from_dict(self.data.copy())
+            return LocalizedMoney(data=self.data.copy())
         return self.__add__(other)
 
     def __mul__(self, factor: float) -> "LocalizedMoney":
@@ -144,8 +144,15 @@ class Discount(BaseModel):
     action_type: DiscountType  # тип действия: фиксированная сумма или процент
     value: LocalizedMoney     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
 
-    def get_discount(self, amount: Money) -> Money:
-        # округляем результат до двух знаков после запятой
+    def get_discount(self, amount: Money | LocalizedMoney) -> Money | LocalizedMoney:
+        if isinstance(amount, LocalizedMoney):
+            return LocalizedMoney(
+                data={
+                    cur: self.get_discount(money)
+                    for cur, money in amount.data.items()
+                }
+            )
+        
         if self.action_type == DiscountType.percent:
             discount = amount.amount * (self.value.get_amount(amount.currency) / 100)
             discount = round(min(discount, amount.amount), 2)

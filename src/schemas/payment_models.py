@@ -18,7 +18,7 @@ class PaymentMethodsRepository:
         self.data = methods
     
     def get_enabled(self) -> list[PaymentMethod]:
-        return [method for method in self.data if method.enabled]
+        return [method for method in self.data.values() if method.enabled]
     
     def get_by_key(self, key) -> Optional[PaymentMethod]:
         return self.data.get(key)

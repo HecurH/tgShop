@@ -174,7 +174,7 @@ class CartTextGen:
 
     @staticmethod
     async def generate_order_forming_caption(order: Order, ctx: Context):
-        promocode = order.promocode
+        promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
         payment_method = order.payment_method
         

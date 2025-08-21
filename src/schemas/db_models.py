@@ -28,7 +28,7 @@ class AppBaseModel(BaseModel):
     @classmethod
     async def from_fsm_context(cls, ctx: Context, key: str, default=None) -> Optional["AppBaseModel"]:
         """Загрузка напрямую из контекста по ключу"""
-        value = await ctx.fsm.get_value(key)
+        value: Optional[dict] = await ctx.fsm.get_value(key)
         return cls(**value) if value else default
     
     @classmethod
@@ -143,7 +143,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
         products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
-        product_map: Dict[str, Product] = {
+        product_map: Dict[PydanticObjectId, Product] = {
             product.id: product for product in products
         }
 
@@ -522,8 +522,8 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
         collection_name = 'promocodes'
         
-    def get_by_code(self, code: str) -> Optional[Promocode]:
-        return self.find_one_by({"code": code})
+    async def get_by_code(self, code: str) -> Optional[Promocode]:
+        return await self.find_one_by({"code": code})
 
 class Inviter(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -599,7 +599,7 @@ class Customer(AppBaseModel):
                 raise RuntimeError(
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
-            self.bonus_wallet = Money(iso, amount)
+            self.bonus_wallet = Money(currency=iso, amount=amount)
 
         self.currency = iso
 
@@ -645,7 +645,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
                 invited_by=inviter.inviter_code if inviter else "",
                 lang=lang,
                 currency=currency,
-                bonus_wallet=Money(currency, 0.0)
+                bonus_wallet=Money(currency=currency, amount=0.0)
             )
         
         await self.save(customer)

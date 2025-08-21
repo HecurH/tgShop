@@ -174,7 +174,7 @@ async def forming_order_entry_handler(ctx: Context,
     await send_media_response(ctx.message,
                                 photo_id or video_id,
                                 AssortmentTextGen.generate_product_configurating_main(product, ctx),
-                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx.lang),
+                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx),
                                 "photo" if photo_id else ("video" if video_id else None))
 
 @state_handlers.register(Assortment.EntryOptionSelect)

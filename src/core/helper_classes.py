@@ -35,7 +35,7 @@ class Context:
     def message(self) -> Message:
         return getattr(self.event, "message", self.event)
     
-    async def get_last_bot_message(self) -> Message:
+    async def get_last_bot_message(self) -> Optional[Message]:
         last_bot_message = await self.fsm.get_value("last_bot_message")
         
         if last_bot_message: return Message(**last_bot_message).as_(self.event.bot)

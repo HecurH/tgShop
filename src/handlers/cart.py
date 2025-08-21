@@ -117,7 +117,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
-    check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.db.orders.count_customer_orders(ctx.customer))
+    check_result: PromocodeCheckResult = await promocode.check_promocode(await ctx.db.orders.count_customer_orders(ctx.customer))
     order = await Order.from_fsm_context(ctx, "order")
     
     if check_result != PromocodeCheckResult.ok:
