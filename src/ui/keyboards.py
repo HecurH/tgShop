@@ -215,7 +215,7 @@ class AssortmentKBs:
 
 class CartKBs:
     @staticmethod
-    def cart_view(entry: CartEntry, current: int, amount: int, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def cart_view(entry: CartEntry, current: int, amount: int, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
         controls = [
             types.KeyboardButton(text="⬅️"),
             types.KeyboardButton(text=f"{current}/{amount}"),
@@ -234,7 +234,7 @@ class CartKBs:
             controls,
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.place)
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.place.format(price=total_price.to_text(ctx.customer.currency)))
             ]
         ]
 
@@ -245,10 +245,10 @@ class CartKBs:
         )
     
     @staticmethod
-    def cart_order_configuration(used_bonus_money: bool, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def cart_order_configuration(used_bonus_money: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
         use_promocode = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode
         use_bonus_money = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money
-        place = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
+        proceed_to_payment = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
         change_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method
         
         has_bonus_money = ctx.customer.bonus_wallet.amount > 0.0
@@ -268,7 +268,7 @@ class CartKBs:
             ],
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-                types.KeyboardButton(text=place.format(price=total_price.to_text(ctx.customer.currency)))
+                types.KeyboardButton(text=proceed_to_payment)
             ]
         ]
 

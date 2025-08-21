@@ -260,6 +260,7 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
     
     entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
     product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
+    total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     
     caption = CartTextGen.generate_cart_viewing_caption(entry,
                                             product,
@@ -269,7 +270,7 @@ async def cart_menu_handler(ctx: Context, current: int, **_):
     await send_media_response(ctx.message,
                             product.short_description_photo_id,
                             caption,
-                            CartKBs.cart_view(entry, current, amount, ctx))
+                            CartKBs.cart_view(entry, current, amount, total_price, ctx))
 
 @state_handlers.register(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
@@ -279,12 +280,11 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
 @state_handlers.register(Cart.OrderConfigurationMenu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
     used_bonus_money: bool = bool(order.price_details.bonuses_applied)
-    total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
 
     text = await CartTextGen.generate_order_forming_caption(order, ctx)
 
     await ctx.message.answer(text,
-                             reply_markup=CartKBs.cart_order_configuration(used_bonus_money, total_price, ctx))
+                             reply_markup=CartKBs.cart_order_configuration(used_bonus_money, ctx))
   
 class Profile(StatesGroup):
     Menu = State()
