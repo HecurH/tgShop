@@ -5,49 +5,59 @@ from typing import ClassVar, Type
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
 
 class TranslationField:
+    """
+    Дескриптор, который возвращает перевод в зависимости от языка экземпляра.
+    """
+
     def __init__(self, translations: dict):
         self.translations = translations
-        self._attribute_name = None
+        self._attribute_name = None  # имя будет установлено метаклассом
         self._owner_class = None
 
     def __set_name__(self, owner, name):
+        # сохраняет имя атрибута, к которому привязан дескриптор
         if self._attribute_name is not None:
             raise RuntimeError(
-                f"TranslationField instance already assigned to attribute '{self._attribute_name}'."
+                f"TranslationField instance already assigned to attribute '{self._attribute_name}'. "
+                f"Do not reuse the same TranslationField instance for multiple attributes/classes."
             )
         self._attribute_name = name
         self._owner_class = owner
 
     def __get__(self, instance, owner):
+        # instance - это экземпляр класса, owner - это сам класс
         if instance is None:
+            # если обращаемся к атрибуту через класс, возвращаем сам дескриптор
             return self
-        # возвращаем строку для текущего языка экземпляра
-        return self.translate(instance._lang)
 
-    def translate(self, lang: str, count: int = None) -> str:
-        # тут больше не идём через cls.translate, а сами достаём
-        value = self.translations.get(lang)
-        if value is None:
-            return f"[missing translation {self._attribute_name} for {lang}]"
+        lang = instance._lang
+        
+        value = (
+            self.translations.get(lang)
+            or self.translations.get('en')
+            or next(iter(self.translations.values()))
+        )
 
-        # если это словарь (plural forms), то можно ещё count учесть
-        if isinstance(value, dict) and count is not None:
-            # простая логика: one/few/many
-            if lang == "ru":
-                if count % 10 == 1 and count % 100 != 11:
-                    return value.get("one", value.get("other"))
-                elif 2 <= count % 10 <= 4 and not (12 <= count % 100 <= 14):
-                    return value.get("few", value.get("other"))
-                else:
-                    return value.get("many", value.get("other"))
-            else:
-                return value.get("one" if count == 1 else "other")
+        if isinstance(value, dict):
+            def pluralizer(count: int):
+                return owner.translate(self._attribute_name, lang, count=count)
+            return pluralizer
+        else:
+            return owner.translate(self._attribute_name, lang)
+    
+    def translate(self, lang: str = None, count: int = None, instance=None) -> str:
+        # если язык не указан, пробуем взять из экземпляра
+        if lang is None and instance is not None and hasattr(instance, "_lang"):
+            lang = instance._lang
+        if lang is None:
+            lang = "en"
+        if self._owner_class is None:
+            raise RuntimeError("TranslationField has no owner_class yet")
 
-        return value
-
+        return self._owner_class.translate(self._attribute_name, lang, count=count)
+    
     def values(self):
         return self.translations.values()
-
         
         
 class TranslationMeta(type):
