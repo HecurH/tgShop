@@ -518,6 +518,19 @@ class UncategorizedKBs:
         return types.InlineKeyboardMarkup(
             inline_keyboard=kb
         )
+        
+    @staticmethod
+    def reply_back(ctx: Context) -> types.ReplyKeyboardMarkup:
+        kb = [
+            [
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+            ]
+        ]
+        return types.ReplyKeyboardMarkup(
+            keyboard=kb,
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+        )
 
     @staticmethod
     def inline_cancel(ctx: Context) -> types.InlineKeyboardMarkup:

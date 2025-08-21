@@ -289,7 +289,7 @@ async def order_configuration_handler(ctx: Context, order: Order, **_):
 @state_handlers.register(Cart.OrderConfiguration.PromocodeSetting)
 async def order_promocode_setting_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.OrderConfiguration.enter_promocode,
-                             reply_markup=UncategorizedKBs.inline_back(ctx))
+                             reply_markup=UncategorizedKBs.reply_back(ctx))
 
 class Profile(StatesGroup):
     Menu = State()
@@ -369,7 +369,7 @@ async def delivery_edit_service_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Editables.RequirementsLists)
 async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
     
     lists = delivery_info.service.requirements_options
@@ -384,7 +384,7 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Delivery.Editables.Requirement)
 async def delivery_edit_requirement_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info: DeliveryInfo = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info: DeliveryInfo = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     requirement_index: int = await ctx.fsm.get_value("requirement_index") or 0
 
     

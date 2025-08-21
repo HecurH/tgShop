@@ -158,7 +158,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
 @router.message(Profile.Delivery.Editables.Service)
 async def editable_service_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
@@ -191,7 +191,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
 @router.message(Profile.Delivery.Editables.RequirementsLists)
 async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
 
@@ -223,7 +223,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
 @router.message(Profile.Delivery.Editables.Requirement)
 async def editable_requirement_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
-    delivery_info = DeliveryInfo(**await ctx.fsm.get_value("delivery_info"))
+    delivery_info = DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         if first_setup:
