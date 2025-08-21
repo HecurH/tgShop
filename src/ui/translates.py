@@ -8,7 +8,7 @@ class TranslationField:
     def __init__(self, translations: dict):
         self.translations = translations
         self._attribute_name = None
-        self._owner_class = None  # сохраним ссылку на класс
+        self._owner_class = None
 
     def __set_name__(self, owner, name):
         if self._attribute_name is not None:
@@ -21,13 +21,29 @@ class TranslationField:
     def __get__(self, instance, owner):
         if instance is None:
             return self
-
-        lang = instance._lang
-        return self.translate(lang)
+        # возвращаем строку для текущего языка экземпляра
+        return self.translate(instance._lang)
 
     def translate(self, lang: str, count: int = None) -> str:
-        cls = self._owner_class
-        return cls.translate(self._attribute_name, lang, count=count)
+        # тут больше не идём через cls.translate, а сами достаём
+        value = self.translations.get(lang)
+        if value is None:
+            return f"[missing translation {self._attribute_name} for {lang}]"
+
+        # если это словарь (plural forms), то можно ещё count учесть
+        if isinstance(value, dict) and count is not None:
+            # простая логика: one/few/many
+            if lang == "ru":
+                if count % 10 == 1 and count % 100 != 11:
+                    return value.get("one", value.get("other"))
+                elif 2 <= count % 10 <= 4 and not (12 <= count % 100 <= 14):
+                    return value.get("few", value.get("other"))
+                else:
+                    return value.get("many", value.get("other"))
+            else:
+                return value.get("one" if count == 1 else "other")
+
+        return value
 
     def values(self):
         return self.translations.values()
