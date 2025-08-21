@@ -45,12 +45,7 @@ class TranslationField:
         else:
             return owner.translate(self._attribute_name, lang)
     
-    def translate(self, lang: str = None, count: int = None, instance=None) -> str:
-        # если язык не указан, пробуем взять из экземпляра
-        if lang is None and instance is not None and hasattr(instance, "_lang"):
-            lang = instance._lang
-        if lang is None:
-            lang = "en"
+    def translate(self, lang: str, count: int = None) -> str:
         if self._owner_class is None:
             raise RuntimeError("TranslationField has no owner_class yet")
 
