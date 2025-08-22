@@ -104,6 +104,10 @@ async def order_configuration_handler(_, ctx: Context):
     
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode:
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
+    elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
+        pass
+    elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method:
+        pass
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
@@ -116,7 +120,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
     
     promocode: Promocode = await ctx.db.promocodes.get_by_code(text)
     if not promocode:
-        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx, 
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
