@@ -192,7 +192,13 @@ class CartTextGen:
         cart_entries_description = build_list(cart_entries_description, before="▫️")
         
         order_configuration_menu_text = ctx.t.CartTranslates.OrderConfiguration.order_configuration_menu
-        promocode_info = f"{promocode.code} — {promocode.description.get(ctx.lang)}" if promocode else ctx.t.CartTranslates.OrderConfiguration.no_promocode_applied
+        if promocode:
+            promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
+                                                                                           discount=order.price_details.promocode_discount.to_text(),
+                                                                                           description=promocode.description.get(ctx.lang))
+        else:
+            promocode_info = ctx.t.CartTranslates.OrderConfiguration.no_promocode_applied
+            
         bonus_money_info = f"{price_details.bonuses_applied.to_text()}" if price_details.bonuses_applied else ctx.t.CartTranslates.OrderConfiguration.not_using_bonus_money
         
         payment_method_info = payment_method.name.get(ctx.lang) if payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected

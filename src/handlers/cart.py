@@ -108,14 +108,15 @@ async def order_configuration_handler(_, ctx: Context):
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
     text = ctx.message.text
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    
     if text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(Cart.OrderConfiguration.Menu, ctx)
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         return
     
     promocode: Promocode = await ctx.db.promocodes.get_by_code(text)
-    order = await Order.from_fsm_context(ctx, "order")
     if not promocode:
-        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, order=order, ctx=ctx, 
+        await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx, 
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
@@ -125,12 +126,11 @@ async def order_configuration_promocode_handler(_, ctx: Context):
         check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
         check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
         
-        await call_state_handler(Cart.OrderConfiguration.Menu, order=order, ctx=ctx, 
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
                                  send_before=(check_result_text, 1))
         return
 
-    order = await ctx.db.orders.get_order_by_id(ctx.fsm.get_value("order").id)
-    order.promocode = promocode
-    await ctx.db.orders.save(order)
-
-    await call_state_handler(Cart.OrderConfiguration.Menu, ctx)
+    order.set_promocode(promocode)
+    await order.save_in_fsm(ctx, "order")
+    
+    await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_applied, 1))

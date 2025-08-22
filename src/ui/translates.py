@@ -452,9 +452,21 @@ class CartTranslates(Translatable):
             "en": "Promo code not found."
         }
         
-        promocode_check_failed = { # {reason} = EnumTranslates.PromocodeCheckResult translations without "ok"
+        promocode_check_failed = {
             "ru": "{reason}\n\nПопробуйте другой промокод.",
             "en": "{reason}\n\nTry another promo code."
+        }
+        
+        promocode_applied = {
+            "ru": "Промокод применён!",
+            "en": "Promo code applied!"
+        }
+        
+        promocode_info = {
+            "ru": """{code}; Скидка — {discount}
+   Описание: {description}""",
+            "en": """{code}; Discount — {discount}
+   Description: {description}"""
         }
         
         not_using_bonus_money = {

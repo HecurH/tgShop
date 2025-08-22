@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from core.db import DatabaseService
 
 T = TypeVar("T")
-TModel = TypeVar("TModel", bound="AppBaseModel[Any]")
+TModel = TypeVar("TModel", bound="AppBaseModel")
 
 
 class AppAbstractRepository(AsyncAbstractRepository[T]):
