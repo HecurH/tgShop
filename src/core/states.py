@@ -58,7 +58,12 @@ async def call_state_handler(state: State,
                 text, sleep_time = send_before
                 
                 await ctx.message.answer(text, reply_markup=ReplyKeyboardRemove())
+                cached_state = await ctx.fsm.get_state()
+                await ctx.fsm.set_state("nothing")
+                
                 await asyncio.sleep(sleep_time)
+                
+                await ctx.fsm.set_state(cached_state)
             
         await handler(ctx=ctx, **kwargs)
 
