@@ -493,6 +493,12 @@ class CartTranslates(Translatable):
             "ru": "Вы выбрали оплату <b>{name}</b>.",
             "en": "You have selected payment <b>{name}</b>."
         }
+        
+        # сделай переменную под текст типо Перед формированием заказа убедитесь что вы заполнили обязательные поля.
+        not_all_required_fields_filled = {
+            "ru": "Не все обязательные поля заполнены.",
+            "en": "Not all required fields are filled."
+        }
 
 class ProfileTranslates(Translatable):
     menu = {

@@ -3,15 +3,15 @@ import logging
 import shutil
 import sys
 from os import getenv
-import os
 from colorlog import ColoredFormatter
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.fsm.storage.mongo import MongoStorage
+from aiogram.fsm.storage.pymongo import PyMongoStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
+
+from pymongo import AsyncMongoClient
 
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
@@ -28,7 +28,7 @@ BOT_TOKEN = load_env("BOT_TOKEN")
 MONGO_URI = load_env("MONGO_URI")
 MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")
 
-dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(MONGO_URI, 
+dp = Dispatcher(storage=PyMongoStorage(AsyncMongoClient(MONGO_URI, 
                                                         tls=True, 
                                                         tlsAllowInvalidCertificates=True, 
                                                         tlsCAFile=MONGO_TLS_CA_PATH)))

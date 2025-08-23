@@ -109,6 +109,8 @@ async def order_configuration_handler(_, ctx: Context):
     change_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method
     choose_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.choose_payment_method
     
+    proceed_to_payment = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
+    
     text = ctx.message.text
     if text == back:
         await call_state_handler(Cart.Menu, ctx)
@@ -128,6 +130,21 @@ async def order_configuration_handler(_, ctx: Context):
                                      send_before=(no_bonus_money, 1))
     elif text in [change_payment_method, choose_payment_method]:
         await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
+    elif text == proceed_to_payment:
+        payment_method_key = order.payment_method_key
+        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) if payment_method_key else None
+        
+        if not payment_method_key or not payment_method:
+            await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order,
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.not_all_required_fields_filled, 1))
+            return
+        
+        if not payment_method.manual: # TODO когда будет интернет-эквайринг
+            return
+        
+        # ...
+        
+        await call_state_handler(Cart.OrderConfiguration, ctx, order=order)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):

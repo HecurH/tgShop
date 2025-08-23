@@ -7,6 +7,7 @@ from schemas.types import LocalizedString
 class PaymentMethod(BaseModel):
     name: LocalizedString
     description: LocalizedString
+    payment_details: LocalizedString # реквизиты для оплаты типо
     enabled: bool = True
     
     can_register_receipts: bool = True

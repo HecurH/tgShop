@@ -8,8 +8,12 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "en": "SBP by phone number"
         }),
         description=LocalizedString(data={
-            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
+        }),
+        payment_details=LocalizedString(data={
+            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "en": "PAYMENT DETAILS PLACEHOLDER"
         }),
         enabled=True,
         can_register_receipts=True,
@@ -21,8 +25,12 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "en": "By card number"
         }),
         description=LocalizedString(data={
-            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
+        }),
+        payment_details=LocalizedString(data={
+            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "en": "PAYMENT DETAILS PLACEHOLDER"
         }),
         enabled=True,
         can_register_receipts=True,
@@ -34,8 +42,12 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "en": "PayPal"
         }),
         description=LocalizedString(data={
-            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
+        }),
+        payment_details=LocalizedString(data={
+            "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
+            "en": "PAYMENT DETAILS PLACEHOLDER"
         }),
         enabled=True,
         can_register_receipts=False,
