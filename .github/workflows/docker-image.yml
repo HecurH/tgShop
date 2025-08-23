@@ -10,6 +10,24 @@ jobs:
     environment: deploy
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check for Docker-related changes
+        id: check-changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+
+          if echo "$CHANGED_FILES" | grep -E "(Dockerfile|docker-compose|requirements\.txt)"; then
+            echo "need_build=true" >> $GITHUB_OUTPUT
+            echo "Docker-related files changed, build is needed"
+          else
+            echo "need_build=false" >> $GITHUB_OUTPUT
+            echo "No Docker-related files changed, skipping build"
+          fi
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
@@ -20,5 +38,10 @@ jobs:
             cd /opt/mapp
             git pull origin main
             docker compose down
-            docker compose build
+            if [ "${{ steps.check-changes.outputs.need_build }}" = "true" ]; then
+              echo "Building Docker images..."
+              docker compose build
+            else
+              echo "Skipping Docker build..."
+            fi
             docker compose up -d --force-recreate --remove-orphans
