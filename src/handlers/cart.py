@@ -1,4 +1,5 @@
 from aiogram import Router
+from configs.payments import SUPPORTED_PAYMENT_METHODS
 from schemas.db_models import CartEntry, Order, OrderPriceDetails, Promocode
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
@@ -107,7 +108,7 @@ async def order_configuration_handler(_, ctx: Context):
     elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
         pass
     elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method:
-        pass
+        await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
@@ -138,3 +139,23 @@ async def order_configuration_promocode_handler(_, ctx: Context):
     await order.save_in_fsm(ctx, "order")
     
     await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_applied, 1))
+
+@router.message(Cart.OrderConfiguration.PaymentMethodSetting)
+async def order_configuration_payment_method_handler(_, ctx: Context):
+    text = ctx.message.text
+    order: Order = await Order.from_fsm_context(ctx, "order")
+
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
+        return
+    
+    key, method = SUPPORTED_PAYMENT_METHODS.get_by_name(text.replace(" ✅"), only_enabled=True)
+    if not method or order.payment_method_key == key:
+        await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
+        return
+    
+    order.payment_method_key = key
+    await order.save_in_fsm(ctx, "order")
+    
+    text = ctx.t.CartTranslates.OrderConfiguration.payment_method_selected.format(name=method.name.get(ctx.lang))
+    await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(text, 1))

@@ -17,8 +17,11 @@ class PaymentMethodsRepository:
     def __init__(self, methods: dict[str, PaymentMethod]):
         self.data = methods
     
-    def get_enabled(self) -> list[PaymentMethod]:
-        return [method for method in self.data.values() if method.enabled]
+    def get_enabled(self) -> dict[str, PaymentMethod]:
+        return {key: method for key, method in self.data.items() if method.enabled}
     
     def get_by_key(self, key) -> Optional[PaymentMethod]:
         return self.data.get(key)
+    
+    def get_by_name(self, name, ctx, only_enabled=False) -> Optional[tuple[str, PaymentMethod]]:
+        return next(((key, method) for key, method in self.data.items() if method.name.get(ctx.lang) == name and (not only_enabled or method.enabled)), None)

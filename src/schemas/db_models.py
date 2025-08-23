@@ -69,7 +69,7 @@ class Order(AppBaseModel):
     promocode: Optional[PydanticObjectId] = None
 
     price_details: OrderPriceDetails
-    payment_method: Optional[PaymentMethod] = None
+    payment_method_key: Optional[str] = None # key for SUPPORTED_PAYMENT_METHODS
 
     async def set_promocode(self, promocode: Optional["Promocode"]):
         self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None

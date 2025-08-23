@@ -437,14 +437,19 @@ class CartTranslates(Translatable):
 💸 <b>TOTAL</b> {total}"""
         }
         
-        no_promocode_applied = {
-            "ru": "Не применён.",
-            "en": "Not applied."
-        }
-        
         enter_promocode = {
             "ru": "Введите промокод:",
             "en": "Enter promo code:"
+        }
+        
+        choose_payment_method = {
+            "ru": "{methods_info}\n\nВыберите способ оплаты:",
+            "en": "{methods_info}\n\nSelect a payment method:"
+        }
+        
+        no_promocode_applied = {
+            "ru": "Не применён.",
+            "en": "Not applied."
         }
         
         promocode_not_found = {
@@ -477,6 +482,11 @@ class CartTranslates(Translatable):
         no_payment_method_selected = {
             "ru": "Не выбран. ❗️",
             "en": "Not selected. ❗️"
+        }
+        
+        payment_method_selected = {
+            "ru": "Вы выбрали оплату <b>{name}</b>.",
+            "en": "You have selected payment <b>{name}</b>."
         }
 
 class ProfileTranslates(Translatable):

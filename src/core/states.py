@@ -251,6 +251,7 @@ class Cart(StatesGroup):
     class OrderConfiguration(StatesGroup):
         Menu = State()
         PromocodeSetting = State()
+        PaymentMethodSetting = State()
 
 @state_handlers.register(Cart.Menu)
 async def cart_menu_handler(ctx: Context, current: int = 1, **_):
@@ -295,6 +296,12 @@ async def order_configuration_handler(ctx: Context, order: Order, **_):
 async def order_promocode_setting_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.OrderConfiguration.enter_promocode,
                              reply_markup=UncategorizedKBs.reply_back(ctx))
+    
+@state_handlers.register(Cart.OrderConfiguration.PaymentMethodSetting)
+async def order_payment_method_setting_handler(ctx: Context, order: Order, **_):
+    text = CartTextGen.generate_payment_method_setting_caption(order, ctx)
+    await ctx.message.answer(text,
+                             reply_markup=CartKBs.payment_method_choose(order, ctx))
 
 class Profile(StatesGroup):
     Menu = State()

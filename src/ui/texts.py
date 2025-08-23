@@ -1,6 +1,7 @@
 import asyncio
 from aiogram import html
 
+from configs.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.payment_models import PaymentMethod
@@ -176,7 +177,7 @@ class CartTextGen:
     async def generate_order_forming_caption(order: Order, ctx: Context):
         promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
-        payment_method = order.payment_method
+        payment_method = order.payment_method_key
         
         async def form_entry_desc(entry):
             product = await ctx.db.products.find_one_by_id(entry.product_id)
@@ -219,4 +220,12 @@ class CartTextGen:
             delivery_requirements_info=delivery_requirements_info,
             total=total
         )
-        
+    
+    @staticmethod
+    def generate_payment_method_setting_caption(order: Order, ctx: Context):
+        choose_payment_method = ctx.t.CartTranslates.OrderConfiguration.choose_payment_method
+        methods_info = "\n\n".join(
+            f"{method.name.get(ctx.lang)}{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx.lang)}"
+            for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items()
+        )
+        return choose_payment_method.format(methods_info=methods_info)

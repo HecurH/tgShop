@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
+from configs.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.types import LocalizedMoney
@@ -276,7 +277,22 @@ class CartKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 
+    @staticmethod
+    def payment_method_choose(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
+        builder = ReplyKeyboardBuilder()
+        
+        for key, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items():
+            name = f"{method.name.get(ctx.lang)} ✅" if key == order.payment_method_key else method.name.get(ctx.lang)
+            builder.add(types.KeyboardButton(text=name))
 
+        builder.adjust(2)
+        builder.attach(ReplyKeyboardBuilder([[types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]]))
+        return builder.as_markup(
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+        )
+            
+                
 class ProfileKBs:
     
     @staticmethod
