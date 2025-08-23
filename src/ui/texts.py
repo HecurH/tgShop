@@ -225,7 +225,7 @@ class CartTextGen:
     def generate_payment_method_setting_caption(order: Order, ctx: Context):
         choose_payment_method = ctx.t.CartTranslates.OrderConfiguration.choose_payment_method
         methods_info = "\n\n".join(
-            f"{method.name.get(ctx.lang)}{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx.lang)}"
+            f"<b>{method.name.get(ctx.lang)}</b>{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx.lang)}"
             for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items()
         )
         return choose_payment_method.format(methods_info=methods_info)

@@ -150,7 +150,7 @@ async def order_configuration_payment_method_handler(_, ctx: Context):
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         return
     
-    key, method = SUPPORTED_PAYMENT_METHODS.get_by_name(text.replace(" ✅"), only_enabled=True)
+    key, method = SUPPORTED_PAYMENT_METHODS.get_by_name(text.replace(" ✅", ""), only_enabled=True)
     if not method or order.payment_method_key == key:
         await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
         return
