@@ -108,7 +108,8 @@ async def order_configuration_handler(_, ctx: Context):
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
     elif text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip() == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
         if ctx.customer.bonus_wallet.amount > 0.0:
-            order.update_applied_bonuses(None if order.price_details.bonuses_applied else ctx.customer.bonus_wallet)
+            await order.update_applied_bonuses(None if order.price_details.bonuses_applied else ctx.customer.bonus_wallet)
+            
             await order.save_in_fsm(ctx, "order")
             await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         else:
