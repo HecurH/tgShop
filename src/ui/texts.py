@@ -177,7 +177,7 @@ class CartTextGen:
     async def generate_order_forming_caption(order: Order, ctx: Context):
         promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
-        payment_method = order.payment_method_key
+        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(order.payment_method_key) if order.payment_method_key else None
         
         async def form_entry_desc(entry):
             product = await ctx.db.products.find_one_by_id(entry.product_id)
