@@ -55,7 +55,11 @@ async def cart_viewer_handler(_, ctx: Context):
         await call_state_handler(Cart.Menu,
                                 ctx,
                                 current=current)
-    elif text.rsplit(" ", 1)[0] == ctx.t.ReplyButtonsTranslates.Cart.place.format(price="").strip():
+    elif text.rsplit(" ", 1)[0] == ctx.t.ReplyButtonsTranslates.Cart.place.format(price="").strip() or text == ctx.t.ReplyButtonsTranslates.Cart.send_to_check:
+        if await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer):
+            await call_state_handler(Cart.OrderPriceConfirmation, ctx)
+            return
+        
         if not ctx.customer.delivery_info:
             await ctx.fsm.update_data(back_to_cart_after_delivery=True)
             await call_state_handler(Profile.Delivery.Menu,
@@ -142,9 +146,7 @@ async def order_configuration_handler(_, ctx: Context):
         if not payment_method.manual: # TODO когда будет интернет-эквайринг
             return
         
-        # ...
-        
-        await call_state_handler(Cart.OrderConfiguration, ctx, order=order)
+        await call_state_handler(Cart.OrderConfiguration.PaymentConfirmation, ctx, order=order)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):

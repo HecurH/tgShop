@@ -294,6 +294,27 @@ class CartKBs:
             resize_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
+        
+    @staticmethod
+    def payment_confirmation(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
+        payment_method_key = order.payment_method_key
+        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) or None
+        
+        if payment_method.manual:
+            kb = [
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
+                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid)
+                ]
+            ]
+
+            return types.ReplyKeyboardMarkup(
+                keyboard=kb,
+                resize_keyboard=True,
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+            )
+        else:
+            return
             
                 
 class ProfileKBs:

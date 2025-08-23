@@ -134,7 +134,7 @@ class AssortmentTextGen:
 
         section = gen_product_configurable_info_text(product.configuration, ctx)
 
-        if product.configuration.can_determine_price:
+        if product.configuration.requires_price_confirmation:
             price_text = f"\n\n{ctx.t.AssortmentTranslates.cannot_price}\n{ctx.t.AssortmentTranslates.approximate_price} {total_price.to_text(currency)}"
         else:
             price_text = f"\n\n{ctx.t.AssortmentTranslates.total} {total_price.to_text(currency)}"
@@ -180,7 +180,7 @@ class CartTextGen:
         payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(order.payment_method_key) if order.payment_method_key else None
         
         async def form_entry_desc(entry):
-            product = await ctx.db.products.find_one_by_id(entry.product_id)
+            product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
             quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
             price = product.price + entry.configuration.price
             price_text = price.to_text(ctx.customer.currency)
@@ -229,3 +229,15 @@ class CartTextGen:
             for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items()
         )
         return choose_payment_method.format(methods_info=methods_info)
+    
+    @staticmethod
+    def generate_payment_confirmation_caption(order: Order, ctx: Context):
+        payment_method_key = order.payment_method_key
+        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) if payment_method_key else None
+
+        if payment_method.manual and payment_method:
+            payment_confirmation_manual = ctx.t.CartTranslates.OrderConfiguration.payment_confirmation_manual
+            return payment_confirmation_manual.format(payment_method_details=payment_method.payment_details.get(ctx.lang))
+        else:
+            return # TODO
+        

@@ -247,11 +247,13 @@ async def additionals_editing_handler(ctx: Context,
 class Cart(StatesGroup):
     Menu = State()
     EntryRemoveConfirm = State()
+    OrderPriceConfirmation = State()
     
     class OrderConfiguration(StatesGroup):
         Menu = State()
         PromocodeSetting = State()
         PaymentMethodSetting = State()
+        PaymentConfirmation = State()
 
 @state_handlers.register(Cart.Menu)
 async def cart_menu_handler(ctx: Context, current: int = 1, **_):
@@ -300,6 +302,12 @@ async def order_payment_method_setting_handler(ctx: Context, order: Order, **_):
     text = CartTextGen.generate_payment_method_setting_caption(order, ctx)
     await ctx.message.answer(text,
                              reply_markup=CartKBs.payment_method_choose(order, ctx))
+    
+@state_handlers.register(Cart.OrderConfiguration.PaymentConfirmation)
+async def order_payment_confirmation_handler(ctx: Context, order: Order, **_):
+    text = CartTextGen.generate_payment_confirmation_caption(order, ctx)
+    await ctx.message.answer(text,
+                             reply_markup=CartKBs.payment_confirmation(order, ctx))
 
 class Profile(StatesGroup):
     Menu = State()

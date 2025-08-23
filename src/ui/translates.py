@@ -494,10 +494,18 @@ class CartTranslates(Translatable):
             "en": "You have selected payment <b>{name}</b>."
         }
         
-        # сделай переменную под текст типо Перед формированием заказа убедитесь что вы заполнили обязательные поля.
         not_all_required_fields_filled = {
             "ru": "Не все обязательные поля заполнены.",
             "en": "Not all required fields are filled."
+        }
+        
+        payment_confirmation_manual = {
+            "ru": """Вы выбрали оплату <b>{payment_method_name}</b>.
+Для оплаты используйте реквизиты ниже:
+{payment_method_details}
+
+Поскольку это не автоматизируемый метод оплаты, произведенный вами платеж будет проверен вручную. (Вам будет выслано уведомление)
+После оплаты заказа нажмите соответствующую кнопку ниже:""",
         }
 
 class ProfileTranslates(Translatable):
@@ -661,6 +669,11 @@ class ReplyButtonsTranslates(Translatable):
             "en": "Place for {price}"
         }
         
+        send_to_check = {
+            "ru": "Отправить на проверку",
+            "en": "Send to check"
+        }
+        
         edit = {
             "ru": "Редактировать",
             "en": "Edit"
@@ -690,6 +703,11 @@ class ReplyButtonsTranslates(Translatable):
             choose_payment_method = {
                 "ru": "Выбрать метод оплаты ❗️",
                 "en": "Choose a payment method ❗️"
+            }
+            
+            i_paid = {
+                "ru": "Я оплатил",
+                "en": "I paid"
             }
     
     class Profile(Translatable):

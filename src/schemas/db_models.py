@@ -118,7 +118,7 @@ class CartEntry(AppBaseModel):
     
     @property
     def need_to_confirm_price(self) -> bool:
-        return self.configuration.can_determine_price
+        return self.configuration.requires_price_confirmation
 
 class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     class Meta:
@@ -163,6 +163,16 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
                 entry_total = (product.price + entry.configuration.price) * entry.quantity
                 total_price += entry_total
         return total_price
+    
+    async def check_price_confirmation_in_cart(self, customer: "Customer") -> bool:
+        query = {
+            "customer_id": customer.id,
+            "order_id": None,
+            "configuration.requires_price_confirmation": True
+        }
+
+        document = await self.get_collection().find_one(query, projection={"_id": 1})
+        return document is not None
 
 class ConfigurationSwitch(AppBaseModel):
     name: LocalizedString
@@ -328,16 +338,21 @@ class ProductConfiguration(AppBaseModel):
     options: Dict[str, ConfigurationOption]
     additionals: list["ProductAdditional"] = Field(default_factory=list)
     price: Optional[LocalizedMoney] = None
-    @property
-    def can_determine_price(self) -> bool:
-        return any(
+    
+    requires_price_confirmation: bool = False
+    price_confirmation_override: bool = False
+    
+    def _sync_price_confirmation_flag(self):
+        self.requires_price_confirmation = any(
             hasattr(option.get_chosen(), "blocks_price_determination") and
             option.get_chosen().blocks_price_determination
             for option in self.options.values()
-        )
+        ) or self.price_confirmation_override
 
     def __init__(self, **data):
         super().__init__(**data)
+        
+        self._sync_price_confirmation_flag()
         if self.price is None: self.update_price()
     
     
@@ -362,6 +377,8 @@ class ProductConfiguration(AppBaseModel):
 
         base_additional_ids = {add.id for add in allowed_additionals}
         self.additionals = [add for add in self.additionals if add.id in base_additional_ids]
+        
+        self._sync_price_confirmation_flag()
 
     def get_all_options_localized_names(self, lang):
         return [option.name.get(lang) for option in self.options.values()]
