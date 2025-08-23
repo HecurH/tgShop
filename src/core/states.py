@@ -285,12 +285,10 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
 
 @state_handlers.register(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
-    used_bonus_money: bool = bool(order.price_details.bonuses_applied)
-
     text = await CartTextGen.generate_order_forming_caption(order, ctx)
 
     await ctx.message.answer(text,
-                             reply_markup=CartKBs.cart_order_configuration(used_bonus_money, ctx))
+                             reply_markup=CartKBs.cart_order_configuration(order, ctx))
 
 @state_handlers.register(Cart.OrderConfiguration.PromocodeSetting)
 async def order_promocode_setting_handler(ctx: Context, **_):

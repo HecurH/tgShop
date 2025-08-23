@@ -480,8 +480,8 @@ class CartTranslates(Translatable):
         }
         
         no_bonus_money = {
-            "ru": "На данный момент вас нет бонусных денег. Узнать подробнее о них вы можете в меню Профиль —> Рефералы.",
-            "en": "You have no bonus money at the moment. You can learn more about them in the Profile menu -> Referrals."
+            "ru": "На данный момент вас нет бонусных денег.\nУзнать подробнее о них вы можете в меню Профиль —> Рефералы.",
+            "en": "You have no bonus money at the moment.\nYou can learn more about them in the Profile menu -> Referrals."
         }
 
         no_payment_method_selected = {
@@ -679,6 +679,11 @@ class ReplyButtonsTranslates(Translatable):
             change_payment_method = {
                 "ru": "Изменить метод оплаты",
                 "en": "Change the payment method"
+            }
+            
+            choose_payment_method = {
+                "ru": "Выбрать метод оплаты ❗️",
+                "en": "Choose a payment method ❗️"
             }
     
     class Profile(Translatable):

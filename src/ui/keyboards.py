@@ -244,11 +244,14 @@ class CartKBs:
         )
     
     @staticmethod
-    def cart_order_configuration(used_bonus_money: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def cart_order_configuration(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
         use_promocode = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode
         use_bonus_money = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money
         proceed_to_payment = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
         change_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method
+        choose_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.choose_payment_method
+
+        used_bonus_money = bool(order.price_details.bonuses_applied)
         
         has_bonus_money = ctx.customer.bonus_wallet.amount > 0.0
         
@@ -263,7 +266,7 @@ class CartKBs:
         kb = [
             first_line,
             [
-                types.KeyboardButton(text=change_payment_method)
+                types.KeyboardButton(text=change_payment_method if order.payment_method_key else choose_payment_method)
             ],
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),

@@ -42,14 +42,15 @@ async def cart_viewer_handler(_, ctx: Context):
                                 current=new_order)
     elif text in ['➖', '➕']:
         entry: CartEntry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
-        if text == '➖':
-            if entry.quantity == 1:
-                await call_state_handler(Cart.EntryRemoveConfirm, ctx)
-                return
-            entry.quantity = entry.quantity - 1
-        elif text == '➕':
-            entry.quantity = entry.quantity if entry.quantity == 99 else entry.quantity + 1
-        await ctx.db.cart_entries.save(entry)
+        if entry:
+            if text == '➖':
+                if entry.quantity == 1:
+                    await call_state_handler(Cart.EntryRemoveConfirm, ctx)
+                    return
+                entry.quantity = entry.quantity - 1
+            elif text == '➕':
+                entry.quantity = entry.quantity if entry.quantity == 99 else entry.quantity + 1
+            await ctx.db.cart_entries.save(entry)
 
         await call_state_handler(Cart.Menu,
                                 ctx,
@@ -85,6 +86,7 @@ async def entry_remove_confirm_handler(_, ctx: Context):
                                  ctx,
                                  current=1,
                                  send_before="Can't find this item in cart.")
+        return
     
     if ctx.message.text == ctx.t.UncategorizedTranslates.yes:
         entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
@@ -98,15 +100,24 @@ async def entry_remove_confirm_handler(_, ctx: Context):
 
 @router.message(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(_, ctx: Context):
+    back = ctx.t.UncategorizedTranslates.back
+    use_promocode = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode
+    
+    use_bonus_money = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money
+    no_bonus_money = ctx.t.CartTranslates.OrderConfiguration.no_bonus_money
+    
+    change_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method
+    choose_payment_method = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.choose_payment_method
+    
     text = ctx.message.text
-    if text == ctx.t.UncategorizedTranslates.back:
+    if text == back:
         await call_state_handler(Cart.Menu, ctx)
         return
     order: Order = await Order.from_fsm_context(ctx, "order")
     
-    if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode:
+    if text == use_promocode:
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
-    elif text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip() == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
+    elif text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip() == use_bonus_money:
         if ctx.customer.bonus_wallet.amount > 0.0:
             await order.update_applied_bonuses(None if order.price_details.bonuses_applied else ctx.customer.bonus_wallet)
             
@@ -114,8 +125,8 @@ async def order_configuration_handler(_, ctx: Context):
             await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         else:
             await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
-                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.no_bonus_money, 1))
-    elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method:
+                                     send_before=(no_bonus_money, 1))
+    elif text in [change_payment_method, choose_payment_method]:
         await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
