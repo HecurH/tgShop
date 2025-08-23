@@ -3,11 +3,11 @@ from schemas.types import LocalizedString
 
 SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
     "manual_sbp": PaymentMethod(
-        name=LocalizedString({
+        name=LocalizedString(data={
             "ru": "СБП по номеру телефона",
             "en": "SBP by phone number"
         }),
-        description=LocalizedString({
+        description=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
@@ -16,11 +16,11 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         manual=True
     ),
     "manual_card": PaymentMethod(
-        name=LocalizedString({
+        name=LocalizedString(data={
             "ru": "По номеру карты",
             "en": "By card number"
         }),
-        description=LocalizedString({
+        description=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
@@ -29,11 +29,11 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         manual=True
     ),
     "manual_paypal": PaymentMethod(
-        name=LocalizedString({
+        name=LocalizedString(data={
             "ru": "PayPal",
             "en": "PayPal"
         }),
-        description=LocalizedString({
+        description=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
