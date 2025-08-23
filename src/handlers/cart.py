@@ -136,7 +136,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
                                  send_before=(check_result_text, 1))
         return
 
-    order.set_promocode(promocode)
+    await order.set_promocode(promocode)
     await order.save_in_fsm(ctx, "order")
     
     await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_applied, 1))
