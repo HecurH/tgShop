@@ -102,13 +102,14 @@ async def order_configuration_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(Cart.Menu, ctx)
         return
+    order: Order = await Order.from_fsm_context(ctx, "order")
     
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode:
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
     elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
         pass
     elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method:
-        await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx)
+        await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
