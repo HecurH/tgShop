@@ -478,6 +478,11 @@ class CartTranslates(Translatable):
             "ru": "Не используются.",
             "en": "Not used."
         }
+        
+        no_bonus_money = {
+            "ru": "На данный момент вас нет бонусных денег. Узнать подробнее о них вы можете в меню Профиль —> Рефералы.",
+            "en": "You have no bonus money at the moment. You can learn more about them in the Profile menu -> Referrals."
+        }
 
         no_payment_method_selected = {
             "ru": "Не выбран. ❗️",

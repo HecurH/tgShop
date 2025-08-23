@@ -75,7 +75,11 @@ class Order(AppBaseModel):
         self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None
         self.price_details.recalculate_price()
     
-    async def update_applied_bonuses(self, customer_bonus_balance: Money):
+    async def update_applied_bonuses(self, customer_bonus_balance: Optional[Money]):
+        if not customer_bonus_balance:
+            self.price_details.bonuses_applied = None
+            return
+        
         price_details = self.price_details
         products_price_after_promocode = (price_details.products_price - price_details.promocode_discount) if price_details.promocode_discount else price_details.products_price
         total = products_price_after_promocode + price_details.delivery_price

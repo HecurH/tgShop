@@ -106,8 +106,14 @@ async def order_configuration_handler(_, ctx: Context):
     
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode:
         await call_state_handler(Cart.OrderConfiguration.PromocodeSetting, ctx)
-    elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
-        pass
+    elif text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip() == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money:
+        if ctx.customer.bonus_wallet.amount > 0.0:
+            order.update_applied_bonuses(None if order.price_details.bonuses_applied else ctx.customer.bonus_wallet)
+            await order.save_in_fsm(ctx, "order")
+            await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
+        else:
+            await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.no_bonus_money, 1))
     elif text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.change_payment_method:
         await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
 
