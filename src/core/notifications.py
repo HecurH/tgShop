@@ -42,3 +42,4 @@ class NotificatorHub:
     def __init__(self, logs_channel_id, admin_chat_id):
         self.TelegramChannelLogs = TelegramChannelLogsNotificator(logs_channel_id)
         self.ManualPaymentConfirmation = ManualPaymentConfirmationNotificator(admin_chat_id)
+        print(f"Logs channel id: {logs_channel_id}, Admin chat id: {admin_chat_id}")

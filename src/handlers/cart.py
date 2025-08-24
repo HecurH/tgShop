@@ -145,14 +145,8 @@ async def order_configuration_handler(_, ctx: Context):
         if not payment_method.manual: # TODO когда будет интернет-эквайринг
             return
         
-        order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
-        await ctx.n.ManualPaymentConfirmation.send_payment_confirmation(order, ctx)
         
-        await ctx.db.orders.save(order)
-        await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
-        
-        await ctx.fsm.update_data(order=None)
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.manual_payment_confirmation_sended, 1))
+        await call_state_handler(Cart.OrderConfiguration.PaymentConfirmation, ctx, order=order)
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
@@ -203,3 +197,26 @@ async def order_configuration_payment_method_handler(_, ctx: Context):
     
     text = ctx.t.CartTranslates.OrderConfiguration.payment_method_selected.format(name=method.name.get(ctx.lang))
     await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(text, 1))
+    
+@router.message(Cart.OrderConfiguration.PaymentConfirmation)
+async def order_configuration_payment_confirmation_handler(_, ctx: Context):
+    text = ctx.message.text
+    order: Order = await Order.from_fsm_context(ctx, "order")
+
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
+        return
+    
+    if not order.payment_method.manual: # TODO когда будет интернет-эквайринг
+        return
+
+    if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
+        order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
+        await ctx.n.ManualPaymentConfirmation.send_payment_confirmation(order, ctx)
+        
+        await ctx.db.orders.save(order)
+        await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+        
+        await ctx.fsm.update_data(order=None)
+        
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.manual_payment_confirmation_sended, 1))
