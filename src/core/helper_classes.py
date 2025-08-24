@@ -14,12 +14,12 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 import aiohttp
 
-from core.notifications import NotificatorHub
 from schemas.db_models import *
 from ui.translates import TypedTranslatorHub
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
+    from core.notifications import NotificatorHub
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -31,7 +31,7 @@ class Context:
     customer: "Customer"
     lang: str
     t: TypedTranslatorHub
-    n: NotificatorHub
+    n: "NotificatorHub"
 
     @property
     def message(self) -> Message:
