@@ -34,7 +34,7 @@ class ManualPaymentConfirmationNotificator(TelegramNotificator):
         
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
-        await self.send_notification(ctx, f"[Пользователь](tg://user?id={ctx.customer.user_id}) сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'};",
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'};",
                                      reply_markup=AdminKBs.Orders.manual_payment_confirmation(ctx, order)
                                      )
         
