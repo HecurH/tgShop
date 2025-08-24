@@ -14,6 +14,6 @@ class PromocodeCheckResult(str, Enum):
 class OrderStateKey(str, Enum):
     forming = "forming"
     waiting_for_payment = "waiting_for_payment"
-    waiting_for_payment_confirm = "waiting_for_payment_confirm"
+    waiting_for_manual_payment_confirm = "waiting_for_payment_confirm"
     sent = "sent"
     received = "received"

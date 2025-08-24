@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from pymongo.errors import PyMongoError
 
+from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import AsyncCurrencyConverter, Context
 from schemas.enums import OrderStateKey, PromocodeCheckResult
@@ -52,8 +53,8 @@ class OrderPriceDetails(AppBaseModel):
     bonuses_applied: Optional[Money] = None # сколько бонусных средств для оплаты
     
     total_price: Optional[Money] = None  # сколько надо заплатить настоящими деньгами
-    paid_total: Optional[Money] = None  # сколько всего заплатил пользователь
-    
+    customer_paid: bool = False
+
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
         total = products_price_after_promocode + self.delivery_price
@@ -62,6 +63,8 @@ class OrderPriceDetails(AppBaseModel):
     
 class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
+    number: Optional[int] = None
+    
     customer_id: PydanticObjectId
     state: OrderState = OrderState(key=OrderStateKey.forming)
     delivery_info: Optional["DeliveryInfo"] = None # при запросе удаления перс данных, обычно не должен быть пуст
@@ -70,6 +73,10 @@ class Order(AppBaseModel):
 
     price_details: OrderPriceDetails
     payment_method_key: Optional[str] = None # key for SUPPORTED_PAYMENT_METHODS
+    
+    @property
+    def payment_method(self) -> Optional[PaymentMethod]:
+        return SUPPORTED_PAYMENT_METHODS.get_by_key(self.payment_method_key)
 
     async def set_promocode(self, promocode: Optional["Promocode"]):
         self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None
@@ -103,6 +110,10 @@ class OrdersRepository(AppAbstractRepository[Order]):
 
     async def count_customer_orders(self, customer: "Customer") -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id})
+    
+    async def save(self, order: Order):
+        order.number = await self.dbs.get_next_for_counter(self.Meta.collection_name)
+        await super().save(order)
 
 class CartEntry(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -149,6 +160,23 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
+    
+    async def assign_cart_entries_to_order(self, customer: "Customer", order: "Order"):
+        entries = await self.get_customer_cart_entries(customer)
+        
+        if not entries:
+            return
+        
+        product_ids = [entry.product_id for entry in entries]
+        products = await self.dbs.products.find_by({"_id": {"$in": product_ids}})
+        
+        products_map = {product.id: product for product in products}
+        
+        for entry in entries:
+            entry.order_id = order.id
+            entry.frozen_product = products_map.get(entry.product_id)
+            
+        await self.save_many(entries)
     
     async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
@@ -679,13 +707,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         return customer
 
     async def get_customer_by_id(self, user_id: int) -> Optional[Customer]:
-        """Возвращает пользователя по его user_id. Если пользователь не найден, возвращает None."""
-        try:
-            doc = await self.find_one_by({"user_id": user_id})
-
-            return doc or None
-        except PyMongoError as e:
-            handle_error(self.logger, e)
+        return await self.find_one_by({"user_id": user_id})
 
 class Category(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -696,16 +718,5 @@ class CategoriesRepository(AppAbstractRepository[Category]):
     class Meta:
         collection_name = 'categories'
 
-    def __init__(self, database: "DatabaseService"):
-        super().__init__(database)
-        self.logger = logging.getLogger(__name__)
-
     async def get_all(self) -> Optional[Iterable[Category]]:
-        try:
-            doc = await self.find_by({})
-            return doc or None
-        except PyMongoError as e:
-            handle_error(self.logger, e)
-
-def handle_error(logger, error: PyMongoError):
-    logger.error(f"Database error: {error}") 
+        return await self.find_by({})

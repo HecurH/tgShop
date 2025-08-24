@@ -22,8 +22,6 @@ class DatabaseService:
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 
-        # self.counters = {}
-
         self.currency_converter = AsyncCurrencyConverter()
         self._init_collections()
 
@@ -40,12 +38,12 @@ class DatabaseService:
 
     async def create_indexes(self):
         await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
+        
+        await self.db["orders"].create_index([("number", pymongo.ASCENDING)], unique=True)
 
         await self.db["cart_entries"].create_index([("customer_id", pymongo.ASCENDING)])
 
         await self.db["customers"].create_index([("user_id", pymongo.ASCENDING)], unique=True)
-
-        # await self.db["products"].create_index([("order_no", pymongo.ASCENDING)], unique=True)
 
         await self.db["categories"].create_index([("name", pymongo.ASCENDING)], unique=True)
 
@@ -53,8 +51,16 @@ class DatabaseService:
 
         await self.db["promocodes"].create_index([("code", pymongo.ASCENDING)], unique=True)
 
-    # def get_updateable(self, updateable_id: PydanticObjectId) -> Optional[Updateable]:
-    #     return self.get(Updateable, updateable_id)
+    async def get_next_for_counter(self, name):
+
+        counter = await self.db.counters.find_one_and_update(
+            {"name": name},
+            {"$inc": {"value": 1}},
+            upsert=True,
+            return_document=True
+        )
+
+        return counter["value"]
 
     async def get_by_id(self, model: Type[T], entity_id: PydanticObjectId) -> Optional[T]:
         try:

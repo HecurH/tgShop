@@ -1,3 +1,4 @@
+from os import getenv
 from typing import Any
 import time
 from aiogram import BaseMiddleware
@@ -6,6 +7,7 @@ from cachetools import TTLCache
 
 from core.db import DatabaseService
 from core.helper_classes import Context
+from core.notifications import NotificatorHub
 from core.states import NewUserStates
 from ui.translates import TranslatorHub
 
@@ -13,6 +15,9 @@ from ui.translates import TranslatorHub
 class ContextMiddleware(BaseMiddleware):
     def __init__(self):
         self.db = DatabaseService()
+        self.notificator_hub = NotificatorHub(logs_channel_id=getenv("TG_LOGS_CHANNEL_ID"), 
+                                              admin_chat_id=getenv("TG_ADMIN_CHAT_ID"))
+
         self.initialized = False
 
     async def __call__(self, handler, event, data):
@@ -37,7 +42,8 @@ class ContextMiddleware(BaseMiddleware):
                               self.db,
                               customer,
                               data["lang"],
-                              TranslatorHub.get_for_lang(data["lang"]))
+                              TranslatorHub.get_for_lang(data["lang"]),
+                              self.notificator_hub)
 
         if not customer and not await data.get("state").get_state() == NewUserStates.LangChoosing:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)

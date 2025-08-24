@@ -177,7 +177,7 @@ class CartTextGen:
     async def generate_order_forming_caption(order: Order, ctx: Context):
         promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
-        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(order.payment_method_key) if order.payment_method_key else None
+        payment_method = order.payment_method
         
         async def form_entry_desc(entry):
             product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
@@ -232,12 +232,12 @@ class CartTextGen:
     
     @staticmethod
     def generate_payment_confirmation_caption(order: Order, ctx: Context):
-        payment_method_key = order.payment_method_key
-        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) if payment_method_key else None
+        payment_method = order.payment_method
 
         if payment_method.manual and payment_method:
             payment_confirmation_manual = ctx.t.CartTranslates.OrderConfiguration.payment_confirmation_manual
-            return payment_confirmation_manual.format(payment_method_details=payment_method.payment_details.get(ctx.lang))
+            return payment_confirmation_manual.format(payment_method_name=payment_method.name.get(ctx.lang),
+                                                      payment_method_details=payment_method.payment_details.get(ctx.lang))
         else:
             return # TODO
         

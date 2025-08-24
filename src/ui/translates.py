@@ -238,7 +238,7 @@ class EnumTranslates(Translatable):
             "en": "Waiting for payment"
         }
 
-        waiting_for_payment_confirm = {
+        waiting_for_manual_payment_confirm = {
             "ru": "Ожидание подтверждения оплаты",
             "en": "Waiting for payment confirmation"
         }
@@ -507,6 +507,11 @@ class CartTranslates(Translatable):
 Поскольку это не автоматизируемый метод оплаты, произведенный вами платеж будет проверен вручную. (Вам будет выслано уведомление)
 После оплаты заказа нажмите соответствующую кнопку ниже:""",
         }
+        
+        manual_payment_confirmation_sended = {
+            "ru": "Заказ сформирован и ожидает подтверждения оплаты. ✅\nПосле подтверждения бот вышлет вам уведомление. Для дополнительной информации о заказе вы можете перейти в соответствующее меню.",
+            "en": "The order has been formed and is awaiting payment confirmation. ✅\nAfter confirmation, the bot will send you a notification. For more information about the order, you can go to the corresponding menu."
+        }
 
 class ProfileTranslates(Translatable):
     menu = {
@@ -762,6 +767,11 @@ class ReplyButtonsTranslates(Translatable):
                     "ru": "Удалить информацию о доставке",
                     "en": "Delete delivery information"
                 }
+    class Admin(Translatable):
+        confirm_manual_payment = {
+            "ru": "Подтвердить оплату ✅",
+            "en": "Confirm payment ✅"
+        }
                 
 class TypedTranslatorHub(TranslatorHub):
     EnumTranslates: EnumTranslates

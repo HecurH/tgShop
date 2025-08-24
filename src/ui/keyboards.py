@@ -52,6 +52,21 @@ class CommonKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 
+class AdminKBs:
+    class Orders:
+        @staticmethod
+        def manual_payment_confirmation(ctx: Context, order: Order) -> types.InlineKeyboardMarkup:
+            keyboard = [
+                [
+                    types.InlineKeyboardButton(
+                        text=ctx.t.ReplyButtonsTranslates.Admin.confirm_manual_payment,
+                        callback_data=f"confirm_manual_payment_{str(order.id)}"
+                    )
+                ]
+            ]
+            return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
 class AssortmentKBs:
 
     @staticmethod
@@ -266,7 +281,7 @@ class CartKBs:
         kb = [
             first_line,
             [
-                types.KeyboardButton(text=change_payment_method if order.payment_method_key else choose_payment_method)
+                types.KeyboardButton(text=change_payment_method if order.payment_method else choose_payment_method)
             ],
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
@@ -297,10 +312,8 @@ class CartKBs:
         
     @staticmethod
     def payment_confirmation(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
-        payment_method_key = order.payment_method_key
-        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) or None
         
-        if payment_method.manual:
+        if order.payment_method and order.payment_method.manual:
             kb = [
                 [
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
@@ -315,8 +328,7 @@ class CartKBs:
             )
         else:
             return
-            
-                
+           
 class ProfileKBs:
     
     @staticmethod

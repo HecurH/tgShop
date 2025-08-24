@@ -3,7 +3,8 @@ from configs.payments import SUPPORTED_PAYMENT_METHODS
 from schemas.db_models import CartEntry, Order, OrderPriceDetails, Promocode
 from core.helper_classes import Context
 from core.states import Cart, CommonStates, Profile, call_state_handler
-from schemas.enums import PromocodeCheckResult
+from schemas.enums import OrderStateKey, PromocodeCheckResult
+from schemas.types import OrderState
 from ui.translates import *
 
 router = Router(name="cart")
@@ -135,10 +136,8 @@ async def order_configuration_handler(_, ctx: Context):
     elif text in [change_payment_method, choose_payment_method]:
         await call_state_handler(Cart.OrderConfiguration.PaymentMethodSetting, ctx, order=order)
     elif text == proceed_to_payment:
-        payment_method_key = order.payment_method_key
-        payment_method = SUPPORTED_PAYMENT_METHODS.get_by_key(payment_method_key) if payment_method_key else None
-        
-        if not payment_method_key or not payment_method:
+        payment_method = order.payment_method
+        if not payment_method:
             await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order,
                                      send_before=(ctx.t.CartTranslates.OrderConfiguration.not_all_required_fields_filled, 1))
             return
@@ -146,7 +145,14 @@ async def order_configuration_handler(_, ctx: Context):
         if not payment_method.manual: # TODO когда будет интернет-эквайринг
             return
         
-        await call_state_handler(Cart.OrderConfiguration.PaymentConfirmation, ctx, order=order)
+        order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
+        await ctx.n.ManualPaymentConfirmation.send_payment_confirmation(order, ctx)
+        
+        await ctx.db.orders.save(order)
+        await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+        
+        await ctx.fsm.update_data(order=None)
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.manual_payment_confirmation_sended, 1))
 
 @router.message(Cart.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):

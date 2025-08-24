@@ -1,15 +1,13 @@
 from abc import abstractmethod, ABC
-import re
 from typing import Optional
 from aiogram.types import ReplyMarkupUnion
-from configs.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import Order
 from ui.keyboards import AdminKBs
 
 class Notificator(ABC):
     @abstractmethod
-    async def send_notification(self, message: str, **kwargs): ...
+    async def send_notification(self, **_): ...
     
 class TelegramNotificator(Notificator):
     def __init__(self, chat_id: str):
