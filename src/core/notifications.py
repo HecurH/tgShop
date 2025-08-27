@@ -36,12 +36,16 @@ class AdminChatNotificator(TelegramNotificator):
     async def send_price_confirmation(self, order: Order, ctx: Context):
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> собрал корзину и отправил ее на подтверждение.\nБазовая стоимость без наценки за сложность: {order.price_details.products_price.to_text()}\n\n<b>Содержимое заказа:</b>\n"
         ctx.lang = "ru"
-        
+
         entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        products = await ctx.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products_dict = {product.id: product for product in products}
+
         for entry in entries:
-            text += f"{entry.frozen_product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
-        
-        
+            if product := products_dict.get(entry.product_id):
+                text += f"{product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+
+
         await self.send_notification(ctx, text,
                                      reply_markup=await AdminKBs.Orders.price_confirmation(order, ctx)
                                      )
