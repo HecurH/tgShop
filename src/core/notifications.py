@@ -34,7 +34,7 @@ class AdminChatNotificator(TelegramNotificator):
         super().__init__(chat_id=chat_id)
         
     async def send_price_confirmation(self, order: Order, ctx: Context):
-        text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> собрал корзину и отправил ее на подтверждение.\nБазовая стоимость без наценки за сложность: {order.price_details.total_price.to_text()}\n\n<b>Содержимое заказа:</b>\n"
+        text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> собрал корзину и отправил ее на подтверждение.\nБазовая стоимость без наценки за сложность: {order.price_details.products_price.to_text()}\n\n<b>Содержимое заказа:</b>\n"
         ctx.lang = "ru"
         
         entries = await ctx.db.cart_entries.get_entries_by_order(order)

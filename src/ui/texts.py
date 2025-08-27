@@ -175,7 +175,7 @@ class CartTextGen:
 
     @staticmethod
     async def generate_cart_price_confirmation_caption(order: Order, ctx: Context):
-        return ctx.t.CartTranslates.cart_price_confirmation.format(price=order.price_details.total_price.to_text())
+        return ctx.t.CartTranslates.cart_price_confirmation.format(price=order.price_details.products_price.to_text())
         
 
     @staticmethod
