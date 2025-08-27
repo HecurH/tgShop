@@ -112,7 +112,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         return await self.get_collection().count_documents({"customer_id": customer.id})
     
     async def save(self, order: Order):
-        order.number = await self.dbs.get_next_for_counter(self.Meta.collection_name)
+        order.number = order.number or await self.dbs.get_next_for_counter(self.Meta.collection_name)
         await super().save(order)
 
 class CartEntry(AppBaseModel):
@@ -153,7 +153,11 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
     async def get_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
-        return await self.find_by({"customer_id": customer.id}, sort=[("_id", 1)])
+        return await self.find_by({"customer_id": customer.id, "order_id": None}, sort=[("_id", 1)])
+    
+    async def get_entries_by_order(self, order: "Order", query: Optional[dict] = None) -> Iterable[CartEntry]:
+        base_query = {**(query or {}), "order_id": order.id}
+        return await self.find_by(base_query, sort=[("_id", 1)])
 
     async def get_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> Optional[CartEntry]:
         ids = await self.get_customer_cart_ids_sorted_by_date(customer)
@@ -368,14 +372,14 @@ class ProductConfiguration(AppBaseModel):
     price: Optional[LocalizedMoney] = None
     
     requires_price_confirmation: bool = False
-    price_confirmation_override: bool = False
+    price_confirmed_override: bool = False
     
     def _sync_price_confirmation_flag(self):
         self.requires_price_confirmation = any(
             hasattr(option.get_chosen(), "blocks_price_determination") and
             option.get_chosen().blocks_price_determination
             for option in self.options.values()
-        ) or self.price_confirmation_override
+        ) and not self.price_confirmed_override
 
     def __init__(self, **data):
         super().__init__(**data)

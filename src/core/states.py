@@ -247,7 +247,7 @@ async def additionals_editing_handler(ctx: Context,
 class Cart(StatesGroup):
     Menu = State()
     EntryRemoveConfirm = State()
-    OrderPriceConfirmation = State()
+    CartPriceConfirmation = State()
     
     class OrderConfiguration(StatesGroup):
         Menu = State()
@@ -285,11 +285,14 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.entry_remove_confirm,
                              reply_markup=UncategorizedKBs.yes_no(ctx))
 
+@state_handlers.register(Cart.CartPriceConfirmation)
+async def order_price_confirmation_handler(ctx: Context, order: Order, **_):
+    await ctx.message.answer(CartTextGen.generate_cart_price_confirmation_caption(order, ctx),
+                             reply_markup=CartKBs.cart_price_confirmation(ctx))
+
 @state_handlers.register(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
-    text = await CartTextGen.generate_order_forming_caption(order, ctx)
-
-    await ctx.message.answer(text,
+    await ctx.message.answer(await CartTextGen.generate_order_forming_caption(order, ctx),
                              reply_markup=CartKBs.cart_order_configuration(order, ctx))
 
 @state_handlers.register(Cart.OrderConfiguration.PromocodeSetting)

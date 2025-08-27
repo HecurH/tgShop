@@ -11,6 +11,7 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
+        currency="RUB",
         payment_details=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "PAYMENT DETAILS PLACEHOLDER"
@@ -28,6 +29,7 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
+        currency="RUB",
         payment_details=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "PAYMENT DETAILS PLACEHOLDER"
@@ -45,6 +47,7 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
             "ru": "Здесь описание метода оплаты, инфа которая мб нужна перед оформлением заказа",
             "en": "DESCRIPTION PLACEHOLDER"
         }),
+        currency="USD",
         payment_details=LocalizedString(data={
             "ru": "Тут надо указать реквизиты для проведения оплаты, и что-то типо \"Если вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на кнопку такую-то.\"",
             "en": "PAYMENT DETAILS PLACEHOLDER"

@@ -54,12 +54,36 @@ class CommonKBs:
 
 class AdminKBs:
     class Orders:
+        
         @staticmethod
-        def manual_payment_confirmation(ctx: Context, order: Order) -> types.InlineKeyboardMarkup:
+        async def price_confirmation(order: Order, ctx: Context) -> types.InlineKeyboardMarkup:
+            me = await ctx.message.bot.get_me()
             keyboard = [
                 [
                     types.InlineKeyboardButton(
-                        text=ctx.t.ReplyButtonsTranslates.Admin.confirm_manual_payment,
+                        text="Спросить у клиента",
+                        url=f"tg://resolve?domain={me.username}&start=admin_msg_to_{ctx.customer.user_id}"
+                    )
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text="Расформировать заказ",
+                        url=f"tg://resolve?domain={me.username}&start=admin_unform_order_{order.id}"
+                    ),
+                    types.InlineKeyboardButton(
+                        text="Назначить цену",
+                        url=f"tg://resolve?domain={me.username}&start=admin_confirm_price_{order.id}"
+                    )
+                ]
+            ]
+            return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+        
+        @staticmethod
+        def manual_payment_confirmation(order: Order, ctx: Context) -> types.InlineKeyboardMarkup:
+            keyboard = [
+                [
+                    types.InlineKeyboardButton(
+                        text="Подтвердить оплату ✅",
                         callback_data=f"confirm_manual_payment_{str(order.id)}"
                     )
                 ]
@@ -259,6 +283,19 @@ class CartKBs:
         )
     
     @staticmethod
+    def cart_price_confirmation(ctx: Context) -> types.ReplyKeyboardMarkup:
+        return types.ReplyKeyboardMarkup(
+            keyboard=[
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
+                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.send)
+                ]
+            ],
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+        )
+    
+    @staticmethod
     def cart_order_configuration(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
         use_promocode = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_promocode
         use_bonus_money = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.use_bonus_money
@@ -299,7 +336,7 @@ class CartKBs:
     def payment_method_choose(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
         
-        for key, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items():
+        for key, method in SUPPORTED_PAYMENT_METHODS.get_enabled(ctx.customer.currency).items():
             name = f"{method.name.get(ctx.lang)} ✅" if key == order.payment_method_key else method.name.get(ctx.lang)
             builder.add(types.KeyboardButton(text=name))
 

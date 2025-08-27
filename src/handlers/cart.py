@@ -50,17 +50,13 @@ async def cart_viewer_handler(_, ctx: Context):
                     return
                 entry.quantity = entry.quantity - 1
             elif text == '➕':
-                entry.quantity = entry.quantity if entry.quantity == 99 else entry.quantity + 1
+                entry.quantity = min(entry.quantity + 1, 99)
             await ctx.db.cart_entries.save(entry)
 
         await call_state_handler(Cart.Menu,
                                 ctx,
                                 current=current)
     elif text.rsplit(" ", 1)[0] == ctx.t.ReplyButtonsTranslates.Cart.place.format(price="").strip() or text == ctx.t.ReplyButtonsTranslates.Cart.send_to_check:
-        if await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer):
-            await call_state_handler(Cart.OrderPriceConfirmation, ctx)
-            return
-        
         if not ctx.customer.delivery_info:
             await ctx.fsm.update_data(back_to_cart_after_delivery=True)
             await call_state_handler(Profile.Delivery.Menu,
@@ -73,9 +69,11 @@ async def cart_viewer_handler(_, ctx: Context):
         order = ctx.db.orders.new_order(ctx.customer, products_price)
         await order.save_in_fsm(ctx, "order")
         
-        await call_state_handler(Cart.OrderConfiguration.Menu,
-                                 order=order,
-                                 ctx=ctx)
+        if await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer):
+            await call_state_handler(Cart.CartPriceConfirmation, ctx, order=order)
+            return
+        
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
 
     else:
         await call_state_handler(Cart.Menu,
@@ -84,7 +82,7 @@ async def cart_viewer_handler(_, ctx: Context):
         
 @router.message(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(_, ctx: Context):
-    current = await ctx.fsm.get_value("current")
+    current = await ctx.fsm.get_value("current") or 1
     
     if not current:
         await call_state_handler(Cart.Menu,
@@ -102,6 +100,29 @@ async def entry_remove_confirm_handler(_, ctx: Context):
     await call_state_handler(Cart.Menu,
                                 ctx,
                                 current=current)
+
+@router.message(Cart.CartPriceConfirmation)
+async def cart_price_confirmation_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back or text != ctx.t.ReplyButtonsTranslates.Cart.send:
+        await ctx.fsm.update_data(order=None)
+        await call_state_handler(Cart.Menu, ctx)
+        return
+    
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    
+    order.state.set_state(OrderStateKey.waiting_for_price_confirmation)
+    await ctx.n.AdminChatNotificator.send_price_confirmation(order, ctx)
+    
+    await ctx.db.orders.save(order)
+    await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+    
+    await ctx.fsm.update_data(order=None)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.price_confirmation_sent, 1))
+        
+        
+    
+
 
 @router.message(Cart.OrderConfiguration.Menu)
 async def order_configuration_handler(_, ctx: Context):
@@ -212,7 +233,7 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
 
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
         order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
-        await ctx.n.ManualPaymentConfirmation.send_payment_confirmation(order, ctx)
+        await ctx.n.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
         await ctx.db.orders.save(order)
         await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)

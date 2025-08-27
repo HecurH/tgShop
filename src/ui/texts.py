@@ -174,6 +174,11 @@ class CartTextGen:
         return ctx.t.CartTranslates.cart_view_menu.format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
 
     @staticmethod
+    async def generate_cart_price_confirmation_caption(order: Order, ctx: Context):
+        return ctx.t.CartTranslates.cart_price_confirmation.format(price=order.price_details.total_price.to_text(ctx.customer.currency))
+        
+
+    @staticmethod
     async def generate_order_forming_caption(order: Order, ctx: Context):
         promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
@@ -226,7 +231,7 @@ class CartTextGen:
         choose_payment_method = ctx.t.CartTranslates.OrderConfiguration.choose_payment_method
         methods_info = "\n\n".join(
             f"<b>{method.name.get(ctx.lang)}</b>{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx.lang)}"
-            for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled().items()
+            for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled(ctx.customer.currency).items()
         )
         return choose_payment_method.format(methods_info=methods_info)
     

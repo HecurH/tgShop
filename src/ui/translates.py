@@ -234,13 +234,18 @@ class EnumTranslates(Translatable):
         }
 
         waiting_for_payment = {
-            "ru": "Ожидание оплаты",
+            "ru": "Ожидает оплаты",
             "en": "Waiting for payment"
         }
 
         waiting_for_manual_payment_confirm = {
-            "ru": "Ожидание подтверждения оплаты",
+            "ru": "Ожидает подтверждения оплаты",
             "en": "Waiting for payment confirmation"
+        }
+        
+        waiting_for_price_confirmation = {
+            "ru": "Ожидает подтверждения цены",
+            "en": "Waiting for price confirmation"
         }
         
         assembled_waiting_for_send = {
@@ -248,7 +253,7 @@ class EnumTranslates(Translatable):
             "en": "Assembled, waiting to be shipped"
         }
 
-        sended = {
+        sent = {
             "ru": "Отправлен",
             "en": "Sent"
         }
@@ -408,6 +413,17 @@ class CartTranslates(Translatable):
         "ru": "Перед оформлением заказа необходимо настроить доставку.",
         "en": "Before placing an order, you need to set up delivery."
     }
+        
+    cart_price_confirmation = {
+        "ru": "В вашей корзине есть товары с индивидуальными параметрами, поэтому мы рассчитаем итоговую цену вручную.\n\nОтправьте заказ на подтверждение, и мы пришлем уведомление, как только все будет готово. После этого можно будет перейти к оплате.\n\nБазовая стоимость: {price}",
+        "en": "There are products with individual parameters in your cart, so we will calculate the total price manually.\n\nSend the order for confirmation, and we will send a notification as soon as everything is ready. After that, you can proceed to payment.\n\nBase price: {price}"
+    }
+    
+    price_confirmation_sent = {
+        "ru": "Корзина отправлена на подтверждение!",
+        "en": "The cart has been sent for confirmation!"
+    }
+    
     class OrderConfiguration(Translatable):
     
         order_configuration_menu = {
@@ -674,6 +690,11 @@ class ReplyButtonsTranslates(Translatable):
             "en": "Place for {price}"
         }
         
+        send = {
+            "ru": "Отправить",
+            "en": "Send"
+        }
+        
         send_to_check = {
             "ru": "Отправить на проверку",
             "en": "Send to check"
@@ -767,11 +788,6 @@ class ReplyButtonsTranslates(Translatable):
                     "ru": "Удалить информацию о доставке",
                     "en": "Delete delivery information"
                 }
-    class Admin(Translatable):
-        confirm_manual_payment = {
-            "ru": "Подтвердить оплату ✅",
-            "en": "Confirm payment ✅"
-        }
                 
 class TypedTranslatorHub(TranslatorHub):
     EnumTranslates: EnumTranslates

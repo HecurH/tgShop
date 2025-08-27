@@ -15,5 +15,6 @@ class OrderStateKey(str, Enum):
     forming = "forming"
     waiting_for_payment = "waiting_for_payment"
     waiting_for_manual_payment_confirm = "waiting_for_payment_confirm"
+    waiting_for_price_confirmation = "waiting_for_price_confirmation"
     sent = "sent"
     received = "received"
