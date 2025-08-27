@@ -43,7 +43,7 @@ class AdminChatNotificator(TelegramNotificator):
         
         
         await self.send_notification(ctx, text,
-                                     reply_markup=AdminKBs.Orders.price_confirmation(order, ctx)
+                                     reply_markup=await AdminKBs.Orders.price_confirmation(order, ctx)
                                      )
     
     async def send_payment_confirmation(self, order: Order, ctx: Context):
