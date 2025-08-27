@@ -27,4 +27,4 @@ class PaymentMethodsRepository:
         return self.data.get(key)
     
     def get_by_name(self, name, ctx, only_enabled=False, for_currency=True) -> Optional[tuple[str, PaymentMethod]]:
-        return next(((key, method) for key, method in self.data.items() if method.name.get(ctx.lang) == name and (not only_enabled or method.enabled) and (not for_currency or method.currency == ctx.currency)), None)
+        return next(((key, method) for key, method in self.data.items() if method.name.get(ctx.lang) == name and (not only_enabled or method.enabled) and (not for_currency or method.currency == ctx.customer.currency)), None)
