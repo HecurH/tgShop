@@ -278,7 +278,7 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     await send_media_response(ctx.message,
                             product.short_description_photo_id,
                             caption,
-                            CartKBs.cart_view(entry, current, amount, total_price, ctx))
+                            await CartKBs.cart_view(entry, current, amount, total_price, ctx))
 
 @state_handlers.register(Cart.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
@@ -287,7 +287,7 @@ async def entry_remove_confirm_handler(ctx: Context, **_):
 
 @state_handlers.register(Cart.CartPriceConfirmation)
 async def order_price_confirmation_handler(ctx: Context, order: Order, **_):
-    await ctx.message.answer(CartTextGen.generate_cart_price_confirmation_caption(order, ctx),
+    await ctx.message.answer(await CartTextGen.generate_cart_price_confirmation_caption(order, ctx),
                              reply_markup=CartKBs.cart_price_confirmation(ctx))
 
 @state_handlers.register(Cart.OrderConfiguration.Menu)

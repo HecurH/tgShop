@@ -253,7 +253,7 @@ class AssortmentKBs:
 
 class CartKBs:
     @staticmethod
-    def cart_view(entry: CartEntry, current: int, amount: int, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
+    async def cart_view(entry: CartEntry, current: int, amount: int, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
         controls = [
             types.KeyboardButton(text="⬅️"),
             types.KeyboardButton(text=f"{current}/{amount}"),
@@ -261,6 +261,8 @@ class CartKBs:
         ] if amount > 1 else [
             types.KeyboardButton(text=f"{current}/{amount}")
         ]
+        
+        requires_price_confirmation = await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
         
         kb = [
             [
@@ -272,7 +274,7 @@ class CartKBs:
             controls,
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.place.format(price=total_price.to_text(ctx.customer.currency)))
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Cart.send_to_check if requires_price_confirmation else ctx.t.ReplyButtonsTranslates.Cart.place.format(price=total_price.to_text(ctx.customer.currency)))
             ]
         ]
 
