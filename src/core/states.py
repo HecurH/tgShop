@@ -318,7 +318,7 @@ class Orders(StatesGroup):
 async def orders_menu_handler(ctx: Context, **_):
     orders = await ctx.db.orders.get_customer_orders(ctx.customer)
 
-    await ctx.message.answer(OrdersTextGen.generate_orders_menu_text(orders, ctx),
+    await ctx.message.answer(await OrdersTextGen.generate_orders_menu_text(orders, ctx),
                              reply_markup=UncategorizedKBs.reply_back(ctx))
 
 class Profile(StatesGroup):
