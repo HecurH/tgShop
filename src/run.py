@@ -16,7 +16,7 @@ from pymongo import AsyncMongoClient
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from handlers import orders, profile, admin, bottom, cart, common, assortment
+from handlers import profile, admin, bottom, cart, orders, common, assortment
 from core import middlewares
 
 def load_env(name: str) -> str:
