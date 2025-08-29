@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-from enum import Enum
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Cryptography
 
