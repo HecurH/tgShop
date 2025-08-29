@@ -156,7 +156,8 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
                     description=LocalizedString(data={
                         "ru": "на картинке типо дилдак с полосами, разделяющими зоны, и юзер типо расписывает, - (кнот мягкий, кончик и основание средние)",
                         "en": "The picture shows a dildo with stripes dividing zones, and the user can specify, for example: (knot - soft, the rest are medium)."
-                    })
+                    }),
+                    price=LocalizedMoney.from_dict({"RUB":400.00, "USD":6.00})
 
                 )
             }

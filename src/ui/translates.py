@@ -529,6 +529,12 @@ class CartTranslates(Translatable):
             "en": "The order has been formed and is awaiting payment confirmation. ✅\nAfter confirmation, the bot will send you a notification. For more information about the order, you can go to the corresponding menu."
         }
 
+class OrdersTranslates(Translatable):
+    menu = {
+        "ru": "текст над\n\n{orders_info}\n\nвведите номер заказа бла-бла:",
+        "en": "text above\n\n{orders_info}\n\nenter order number bla-bla:"
+    }
+
 class ProfileTranslates(Translatable):
     menu = {
         "ru": "Выберите пункт вашего профиля:",

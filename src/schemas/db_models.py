@@ -53,7 +53,9 @@ class OrderPriceDetails(AppBaseModel):
     bonuses_applied: Optional[Money] = None # сколько бонусных средств для оплаты
     
     total_price: Optional[Money] = None  # сколько надо заплатить настоящими деньгами
+    
     customer_paid: bool = False
+    payment_time: Optional[datetime.datetime] = None
 
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
@@ -107,6 +109,9 @@ class OrdersRepository(AppAbstractRepository[Order]):
         price_details.recalculate_price()
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
+    
+    async def get_customer_orders(self, customer: "Customer") -> Iterable[Order]:
+        return await self.find_by({"customer_id": customer.id})
 
     async def count_customer_orders(self, customer: "Customer") -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id})

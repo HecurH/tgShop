@@ -367,6 +367,9 @@ class CartKBs:
             )
         else:
             return
+        
+class OrdersKBs:
+    ...
            
 class ProfileKBs:
     

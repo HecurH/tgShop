@@ -90,7 +90,7 @@ class AsyncMoyNalog:
                        operation_time: datetime,
                        svs: list[Service],
                        client: Client,
-                       payment_type: Literal["CASH", "WIRE"] = "CASH",
+                       payment_type: Literal["CASH", "WIRE"] = "WIRE",
                        ignore_max_total_income_restriction: bool = False,
                        return_receipt_url: bool = False):
         """
@@ -99,7 +99,7 @@ class AsyncMoyNalog:
         :param operation_time: Время операции.
         :param svs: Список услуг (объекты Service).
         :param client: Клиент, для которого создается чек (объект Client).
-        :param payment_type: Тип оплаты ("CASH" или "CARD").
+        :param payment_type: Тип оплаты ("CASH" или "WIRE").
         :param ignore_max_total_income_restriction: Игнорировать ограничение на максимальный доход (по умолчанию False).
         :param return_receipt_url: Возвращать URL чека (по умолчанию False).
         :return: Ответ от API в формате approvedReceiptUuid или URL чека, если return_receipt_url=True.

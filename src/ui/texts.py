@@ -245,4 +245,21 @@ class CartTextGen:
                                                       payment_method_details=payment_method.payment_details.get(ctx.lang))
         else:
             return # TODO
+
+class OrdersTextGen:
         
+    @staticmethod
+    async def generate_orders_menu_text(orders: Iterable[Order], ctx: Context):
+        def gen_order_summary(order: Order):
+            if order.state.key == OrderStateKey.waiting_for_price_confirmation:
+                price_info = f">{order.price_details.products_price.to_text()}"
+            else:
+                price_info = order.price_details.total_price.to_text()
+            
+            return f"#{order.number} — {order.status.name.get(ctx.lang)}: {price_info}"
+
+        
+        orders_info = "\n".join(gen_order_summary(order) for order in orders)
+        
+        
+        return ctx.t.OrdersTranslates.menu.format(orders_info=orders_info)

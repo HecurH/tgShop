@@ -5,7 +5,7 @@ from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from core.helper_classes import Context
 from ui.message_tools import clear_keyboard_effect, send_media_response
-from ui.texts import CartTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
+from ui.texts import CartTextGen, OrdersTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
 from ui.keyboards import *
 
 
@@ -302,15 +302,24 @@ async def order_promocode_setting_handler(ctx: Context, **_):
     
 @state_handlers.register(Cart.OrderConfiguration.PaymentMethodSetting)
 async def order_payment_method_setting_handler(ctx: Context, order: Order, **_):
-    text = CartTextGen.generate_payment_method_setting_caption(order, ctx)
-    await ctx.message.answer(text,
+    await ctx.message.answer(CartTextGen.generate_payment_method_setting_caption(order, ctx),
                              reply_markup=CartKBs.payment_method_choose(order, ctx))
     
 @state_handlers.register(Cart.OrderConfiguration.PaymentConfirmation)
 async def order_payment_confirmation_handler(ctx: Context, order: Order, **_):
-    text = CartTextGen.generate_payment_confirmation_caption(order, ctx)
-    await ctx.message.answer(text,
+    await ctx.message.answer(CartTextGen.generate_payment_confirmation_caption(order, ctx),
                              reply_markup=CartKBs.payment_confirmation(order, ctx))
+
+class Orders(StatesGroup):
+    Menu = State()
+    OrderView = State()
+    
+@state_handlers.register(Orders.Menu)
+async def orders_menu_handler(ctx: Context, **_):
+    orders = await ctx.db.orders.get_customer_orders(ctx.customer)
+
+    await ctx.message.answer(OrdersTextGen.generate_orders_menu_text(orders, ctx),
+                             reply_markup=UncategorizedKBs.reply_back(ctx))
 
 class Profile(StatesGroup):
     Menu = State()
