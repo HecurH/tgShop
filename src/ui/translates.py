@@ -541,17 +541,29 @@ class OrdersTranslates(Translatable):
 
 Статус заказа: {order_status}
 
-Доставка: {delivery_info}
+{delivery_info}
 Способ оплаты: {payment_method_info}
+{promocode_info}
+{bonus_money_info}
 
 Суммарная стоимость товаров: {products_price}
 {price_info}
 """,
     }
     
-    no_delivery_info = {
-        "ru": "Не выбрана.",
-        "en": "Not selected."
+    delivery_info = {
+        "ru": "Доставка: {info}",
+        "en": "Delivery: {info}"
+    }
+    
+    promocode_info = {
+        "ru": "Промокод: {info}",
+        "en": "Promo code: {info}"
+    }
+
+    bonus_money_info = {
+        "ru": "Оплата бонусами: {info}",
+        "en": "Bonus payment: {info}"
     }
     
     waiting_for_price_confirmation_info = {

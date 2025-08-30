@@ -278,20 +278,27 @@ class OrdersTextGen:
             delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
             delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
                                                     padding=2)
-        else:
-            delivery_description = ctx.t.OrdersTranslates.no_delivery_info
         
         if order.state == OrderStateKey.waiting_for_price_confirmation:
             price_info = ctx.t.OrdersTranslates.waiting_for_price_confirmation_info
         else:
             price_info = ctx.t.OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
+            
+        promocode = await ctx.db.promocodes.get_by_code(order.promocode) if order.promocode else None
+        promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
+                                                                                           discount=order.price_details.promocode_discount.to_text(),
+                                                                                           description=promocode.description.get(ctx.lang)) if promocode else None
+        
+        bonus_money_info = f"{order.price_details.bonuses_applied.to_text()}" if order.price_details.bonuses_applied else None
         
         return order_viewing_menu.format(order_puid=order.puid,
                                             order_forming_date=order.id.generation_time.strftime("%d.%m.%Y %H:%M UTC"),
                                             order_entries_description=entries_description,
                                             order_status=order.state.get_localized_name(ctx.lang),
-                                            delivery_info=delivery_description,
+                                            delivery_info=ctx.t.OrdersTranslates.delivery_info.format(info=delivery_description) if delivery_info else "",
                                             payment_method_info=order.payment_method.name.get(ctx.lang) if order.payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected,
+                                            promocode_info=ctx.t.OrdersTranslates.promocode_info.format(info=promocode_info) if promocode else "",
+                                            bonus_money_info=ctx.t.OrdersTranslates.bonus_money_info.format(info=bonus_money_info) if bonus_money_info else "",
                                             products_price=order.price_details.products_price.to_text(),
                                             price_info=price_info
                                             )
