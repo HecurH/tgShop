@@ -11,6 +11,10 @@ router = Router(name="orders")
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.orders.values()) if message.text else False)
 async def profile_entrance_handler(_, ctx: Context) -> None:
+    if await ctx.db.orders.count_customer_orders(ctx.customer) == 0:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.OrdersTranslates.no_orders, 1))
+        return
+    
     await call_state_handler(Orders.Menu, ctx)
     
 @router.message(Orders.Menu)

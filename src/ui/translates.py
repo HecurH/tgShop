@@ -530,6 +530,11 @@ class CartTranslates(Translatable):
         }
 
 class OrdersTranslates(Translatable):
+    no_orders = {
+        "ru": "У вас нет заказов.",
+        "en": "You have no orders."
+    }
+    
     menu = {
         "ru": "текст над\n\n{orders_info}\n\nвведите номер заказа бла-бла:",
         "en": "text above\n\n{orders_info}\n\nenter order number bla-bla:"

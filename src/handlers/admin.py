@@ -486,6 +486,68 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
         ]
     )
     
+    boxberry_international = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Boxberry [Зарубеж]",
+            "en":"Boxberry [International]"
+            }
+        ),
+        is_foreign=True,
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedString(data={
+                    "ru":"По адресу, номеру и ФИО",
+                    "en":""
+                    }
+                ),
+                description=LocalizedString(data={
+                    "ru":"описание чего-то там не знаю чего",
+                    "en":"сначала на русском текст нормально надо"
+                    }
+                ),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Адрес доставки",
+                            "en":"Delivery address"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"ФИО",
+                            "en":"Full name"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите типо сюда свою Фамилию, Имя и Отчество лол",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedString(data={
+                            "ru":"Номер телефона",
+                            "en":"Phone number"
+                            }
+                        ),
+                        description=LocalizedString(data={
+                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "en":"на русском сначала блин давай"
+                            }
+                        )
+                    )
+                ]
+            )
+        ]
+    ) 
+        
+    
     ya_delivery = DeliveryService(
         name=LocalizedString(data={
             "ru":"Яндекс Доставка",
@@ -588,10 +650,11 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
     )
 
 
-    await ctx.db.delivery_services.save(service)
+    # await ctx.db.delivery_services.save(service)
     # await ctx.db.delivery_services.save(cdek)
-    await ctx.db.delivery_services.save(boxberry)
-    await ctx.db.delivery_services.save(ya_delivery)
+    # await ctx.db.delivery_services.save(boxberry)
+    await ctx.db.delivery_services.save(boxberry_international)
+    # await ctx.db.delivery_services.save(ya_delivery)
     # await ctx.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))
