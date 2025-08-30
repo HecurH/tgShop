@@ -5,7 +5,7 @@ from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, 
 
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
-from pymongo.errors import PyMongoError
+from pymongo.results import InsertOneResult
 
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.supported import SUPPORTED_CURRENCIES
@@ -65,6 +65,7 @@ class OrderPriceDetails(AppBaseModel):
     
 class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
+    puid: Optional[str] = None
     number: Optional[int] = None
     
     customer_id: PydanticObjectId
@@ -79,6 +80,31 @@ class Order(AppBaseModel):
     @property
     def payment_method(self) -> Optional[PaymentMethod]:
         return SUPPORTED_PAYMENT_METHODS.get_by_key(self.payment_method_key)
+    
+    @staticmethod
+    def generate_puid(hex_string: str, length: int = 5) -> str:
+        ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+        BASE = len(ALPHABET)
+        
+        try:
+            num = int(hex_string, 16)
+        except ValueError as e:
+            raise ValueError("Input must be a valid hex string") from e
+        
+        max_value = BASE ** length
+        num %= max_value
+        
+        result = []
+        for _ in range(length):
+            num, remainder = divmod(num, BASE)
+            result.append(ALPHABET[remainder])
+        
+        return ''.join(reversed(result))
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        if not self.puid and self.id:
+            self.puid = self.generate_puid(str(self.id))
 
     async def set_promocode(self, promocode: Optional["Promocode"]):
         self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None
@@ -118,6 +144,15 @@ class OrdersRepository(AppAbstractRepository[Order]):
     
     async def save(self, order: Order):
         order.number = order.number or await self.dbs.get_next_for_counter(self.Meta.collection_name)
+        
+        # puid только для нового заказа
+        if not order.id:
+            result = await super().save(order)
+            inserted_id = str(result.inserted_id)
+            
+            order.id = PydanticObjectId(inserted_id)
+            order.puid = Order.generate_puid(inserted_id)
+            
         await super().save(order)
 
 class CartEntry(AppBaseModel):

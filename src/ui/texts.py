@@ -256,7 +256,7 @@ class OrdersTextGen:
             else:
                 price_info = order.price_details.total_price.to_text()
             
-            return f"#{order.number} — {order.state.get_localized_name(ctx.lang)}: {price_info}"
+            return f"#{order.puid} — {order.state.get_localized_name(ctx.lang)}: {price_info}"
 
         
         orders_info = "\n".join(gen_order_summary(order) for order in orders)
