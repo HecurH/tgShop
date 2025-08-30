@@ -3,7 +3,7 @@ from aiogram import Router
 from core.helper_classes import Context
 from core.states import CommonStates, Orders, call_state_handler
 from schemas.db_models import Order
-from ui.translates import OrdersTranslates, ReplyButtonsTranslates
+from ui.translates import ReplyButtonsTranslates
 
 
 router = Router(name="orders")
@@ -42,6 +42,6 @@ async def order_view_handler(_, ctx: Context) -> None:
         return
     
     order = await Order.from_fsm_context(ctx, "order")
-    attribute = ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
+    attribute = ctx.t.ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
     
-    await call_state_handler(Orders.OrderView, ctx, order=order, send_before=(getattr(OrdersTranslates.Infos, attribute), 2) if attribute else None)
+    await call_state_handler(Orders.OrderView, ctx, order=order, send_before=(getattr(ctx.t.OrdersTranslates.Infos, attribute), 2) if attribute else None)
