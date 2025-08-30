@@ -6,6 +6,7 @@ from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
+from ui.translates import CartTranslates, OrdersTranslates
 
 
 def gen_product_configurable_info_text(
@@ -70,6 +71,15 @@ def gen_product_configurable_info_text(
         selected_options += build_list([gen_additional_text(additional) for additional in additionals], '•', 2)
 
     return f"{ctx.t.AssortmentTranslates.currently_selected}\n{selected_options}"
+
+async def form_entry_description(entry, ctx):
+    product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
+    quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
+    price = product.price + entry.configuration.price
+    price_text = price.to_text(ctx.customer.currency)
+    price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
+    
+    return f"{product.name.get(ctx.lang)}{quantity_text} — {price_text}"
 
 class AssortmentTextGen:
     @staticmethod
@@ -183,18 +193,9 @@ class CartTextGen:
         promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
         payment_method = order.payment_method
-        
-        async def form_entry_desc(entry):
-            product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
-            quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
-            price = product.price + entry.configuration.price
-            price_text = price.to_text(ctx.customer.currency)
-            price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
-            
-            return f"{product.name.get(ctx.lang)}{quantity_text} — {price_text}"
             
         entries = await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
-        cart_entries_description = await asyncio.gather(*(form_entry_desc(entry) for entry in entries))
+        cart_entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
         cart_entries_description = build_list(cart_entries_description, before="▫️")
         
         order_configuration_menu_text = ctx.t.CartTranslates.OrderConfiguration.order_configuration_menu
@@ -251,7 +252,7 @@ class OrdersTextGen:
     @staticmethod
     async def generate_orders_menu_text(orders: Iterable[Order], ctx: Context):
         def gen_order_summary(order: Order):
-            if order.state.key == OrderStateKey.waiting_for_price_confirmation:
+            if order.state == OrderStateKey.waiting_for_price_confirmation:
                 price_info = f">{order.price_details.products_price.to_text()}"
             else:
                 price_info = order.price_details.total_price.to_text()
@@ -263,3 +264,31 @@ class OrdersTextGen:
         
         
         return ctx.t.OrdersTranslates.menu.format(orders_info=orders_info)
+    
+    @staticmethod
+    async def generate_order_viewing_caption(order: Order, ctx: Context):
+        order_viewing_caption = ctx.t.OrdersTranslates.order_viewing_caption
+        
+        entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
+        entries_description = build_list(entries_description, before="▫️")
+        
+        delivery_info = ctx.customer.delivery_info
+        delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
+        delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+                                                padding=2)
+        
+        if order.state == OrderStateKey.waiting_for_price_confirmation:
+            price_info = OrdersTranslates.waiting_for_price_confirmation_info
+        else:
+            price_info = OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
+        
+        return order_viewing_caption.format(order_puid=order.puid,
+                                            order_forming_date=order.id.generation_time.strftime("%d.%m.%Y %H:%M UTC"),
+                                            order_entries_description=entries_description,
+                                            order_status=order.state.get_localized_name(ctx.lang),
+                                            delivery_info=delivery_description,
+                                            payment_method_info=order.payment_method.name.get(ctx.lang) if order.payment_method else CartTranslates.OrderConfiguration.no_payment_method_selected,
+                                            products_price=order.price_details.products_price.to_text(),
+                                            price_info=price_info
+                                            )

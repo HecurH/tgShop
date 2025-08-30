@@ -8,6 +8,7 @@ from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
+from ui.translates import ReplyButtonsTranslates
 
 class CommonKBs:
 
@@ -369,7 +370,24 @@ class CartKBs:
             return
         
 class OrdersKBs:
-    ...
+    @staticmethod
+    def order_view(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
+        kb = [
+            [
+                types.KeyboardButton(text=ReplyButtonsTranslates.Orders.Infos.any_question)
+            ] if order.state == OrderStateKey.waiting_for_manual_payment_confirm else None,
+            [
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+            ]
+            
+        ]
+        
+        kb.remove(None)
+        return types.ReplyKeyboardMarkup(
+            keyboard=kb,
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+        )
            
 class ProfileKBs:
     
@@ -475,21 +493,6 @@ class ProfileKBs:
                         types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                     ]
                 ]
-
-            return types.ReplyKeyboardMarkup(
-                keyboard=keyboard,
-                resize_keyboard=True,
-                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
-            )
-        
-        @staticmethod
-        def delete_confimation(ctx: Context) -> types.ReplyKeyboardMarkup:
-            keyboard = [
-                [
-                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.no),
-                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.yes)
-                ]
-            ]
 
             return types.ReplyKeyboardMarkup(
                 keyboard=keyboard,

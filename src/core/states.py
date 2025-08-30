@@ -320,6 +320,11 @@ async def orders_menu_handler(ctx: Context, **_):
 
     await ctx.message.answer(await OrdersTextGen.generate_orders_menu_text(orders, ctx),
                              reply_markup=UncategorizedKBs.reply_back(ctx))
+    
+@state_handlers.register(Orders.OrderView)
+async def order_view_handler(ctx: Context, order: Order, **_):
+    await ctx.message.answer(await OrdersTextGen.generate_order_viewing_caption(order, ctx),
+                             reply_markup=OrdersKBs.order_view(order, ctx))
 
 class Profile(StatesGroup):
     Menu = State()
@@ -431,5 +436,5 @@ async def delivery_edit_requirement_handler(ctx: Context, **_):
 async def delivery_delete_confirmation_handler(ctx: Context, **_):
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.delete_confimation,
-        reply_markup=ProfileKBs.Delivery.delete_confimation(ctx)
+        reply_markup=UncategorizedKBs.yes_no(ctx)
     )

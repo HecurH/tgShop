@@ -534,6 +534,36 @@ class OrdersTranslates(Translatable):
         "ru": "текст над\n\n{orders_info}\n\nвведите номер заказа бла-бла:",
         "en": "text above\n\n{orders_info}\n\nenter order number bla-bla:"
     }
+    
+    order_viewing_menu = {
+        "ru": """<b>Заказ #{order_puid}</b> от {order_forming_date}
+{order_entries_description}        
+
+Статус заказа: {order_status}
+
+Доставка: {delivery_info}
+Способ оплаты: {payment_method_info}
+
+Суммарная стоимость товаров: {products_price}
+{price_info}
+""",
+    }
+    
+    waiting_for_price_confirmation_info = {
+        "ru": "Ваш заказ ожидает подтверждения цены.",
+        "en": "Your order is waiting for price confirmation."
+    }
+    
+    total_price_info = {
+        "ru": "Итого: {total_price}",
+        "en": "Total: {total_price}"
+    }
+    
+    class Infos(Translatable):
+        any_question = {
+            "ru": "ну тут ответ на него лол",
+            "en": "lol"
+        }
 
 class ProfileTranslates(Translatable):
     menu = {
@@ -741,6 +771,14 @@ class ReplyButtonsTranslates(Translatable):
                 "ru": "Я оплатил",
                 "en": "I paid"
             }
+    
+    class Orders(Translatable):
+        class Infos(Translatable):
+            any_question = {
+                "ru": "Есть какой-то вопрос?",
+                "en": "Any question?"
+            }
+            
     
     class Profile(Translatable):
         settings = {

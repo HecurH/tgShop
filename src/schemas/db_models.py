@@ -138,6 +138,9 @@ class OrdersRepository(AppAbstractRepository[Order]):
     
     async def get_customer_orders(self, customer: "Customer") -> Iterable[Order]:
         return await self.find_by({"customer_id": customer.id})
+    
+    async def get_by_puid(self, puid: str, customer: "Customer") -> Optional[Order]:
+        return await self.find_one({"puid": puid, "customer_id": customer.id})
 
     async def count_customer_orders(self, customer: "Customer") -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id})

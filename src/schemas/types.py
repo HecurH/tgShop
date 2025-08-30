@@ -138,6 +138,10 @@ class OrderState(BaseModel):
     
     def set_state(self, key: OrderStateKey):
         self.key = key 
+    
+    def __eq__(self, value):
+        return self.key == value
+    
         
 class Discount(BaseModel):
     action_type: DiscountType  # тип действия: фиксированная сумма или процент
