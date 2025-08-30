@@ -540,11 +540,9 @@ class OrdersTranslates(Translatable):
 {order_entries_description}        
 
 Статус заказа: {order_status}
-
 {delivery_info}
 Способ оплаты: {payment_method_info}
-{promocode_info}
-{bonus_money_info}
+{promocode_info}{bonus_money_info}
 
 Суммарная стоимость товаров: {products_price}
 {price_info}
@@ -552,18 +550,18 @@ class OrdersTranslates(Translatable):
     }
     
     delivery_info = {
-        "ru": "Доставка: {info}",
-        "en": "Delivery: {info}"
+        "ru": "\nДоставка: {info}",
+        "en": "\nDelivery: {info}"
     }
     
     promocode_info = {
-        "ru": "Промокод: {info}",
-        "en": "Promo code: {info}"
+        "ru": "\nПромокод: {info}",
+        "en": "\nPromo code: {info}"
     }
 
     bonus_money_info = {
-        "ru": "Оплата бонусами: {info}",
-        "en": "Bonus payment: {info}"
+        "ru": "\nОплата бонусами: {info}",
+        "en": "\nBonus payment: {info}"
     }
     
     waiting_for_price_confirmation_info = {
