@@ -839,5 +839,6 @@ class TypedTranslatorHub(TranslatorHub):
     CommonTranslates: CommonTranslates
     AssortmentTranslates: AssortmentTranslates
     CartTranslates: CartTranslates
+    OrdersTranslates: OrdersTranslates
     ProfileTranslates: ProfileTranslates
     ReplyButtonsTranslates: ReplyButtonsTranslates

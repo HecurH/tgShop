@@ -267,7 +267,7 @@ class OrdersTextGen:
     
     @staticmethod
     async def generate_order_viewing_caption(order: Order, ctx: Context):
-        order_viewing_caption = ctx.t.OrdersTranslates.order_viewing_caption
+        order_viewing_menu = ctx.t.OrdersTranslates.order_viewing_menu
         
         entries = await ctx.db.cart_entries.get_entries_by_order(order)
         entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
@@ -283,7 +283,7 @@ class OrdersTextGen:
         else:
             price_info = OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
         
-        return order_viewing_caption.format(order_puid=order.puid,
+        return order_viewing_menu.format(order_puid=order.puid,
                                             order_forming_date=order.id.generation_time.strftime("%d.%m.%Y %H:%M UTC"),
                                             order_entries_description=entries_description,
                                             order_status=order.state.get_localized_name(ctx.lang),
