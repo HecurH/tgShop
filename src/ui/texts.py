@@ -296,7 +296,7 @@ class OrdersTextGen:
                                             order_entries_description=entries_description,
                                             order_status=order.state.get_localized_name(ctx.lang),
                                             delivery_info=ctx.t.OrdersTranslates.delivery_info.format(info=delivery_description) if delivery_info else "",
-                                            payment_method_info=order.payment_method.name.get(ctx.lang) if order.payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected,
+                                            payment_method=ctx.t.OrdersTranslates.payment_method.format(info=order.payment_method.name.get(ctx.lang)) if order.payment_method else "",
                                             promocode_info=ctx.t.OrdersTranslates.promocode_info.format(info=promocode_info) if promocode else "",
                                             bonus_money_info=ctx.t.OrdersTranslates.bonus_money_info.format(info=bonus_money_info) if bonus_money_info else "",
                                             products_price=order.price_details.products_price.to_text(),
