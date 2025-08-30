@@ -66,10 +66,12 @@ async def cart_viewer_handler(_, ctx: Context):
         
         products_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         
-        order = ctx.db.orders.new_order(ctx.customer, products_price)
+        
+        requires_price_confirmation = await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
+        order = ctx.db.orders.new_order(ctx.customer, products_price, save_delivery_info=not requires_price_confirmation)
         await order.save_in_fsm(ctx, "order")
         
-        if await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer):
+        if requires_price_confirmation:
             await call_state_handler(Cart.CartPriceConfirmation, ctx, order=order)
             return
         

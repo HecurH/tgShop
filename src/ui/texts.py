@@ -273,10 +273,13 @@ class OrdersTextGen:
         entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
         entries_description = build_list(entries_description, before="▫️")
         
-        delivery_info = ctx.customer.delivery_info
-        delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
-        delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
-                                                padding=2)
+        delivery_info = order.delivery_info
+        if delivery_info:
+            delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
+            delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+                                                    padding=2)
+        else:
+            delivery_description = ctx.t.OrdersTranslates.no_delivery_info
         
         if order.state == OrderStateKey.waiting_for_price_confirmation:
             price_info = ctx.t.OrdersTranslates.waiting_for_price_confirmation_info

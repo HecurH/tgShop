@@ -49,7 +49,7 @@ class OrderPriceDetails(AppBaseModel):
     products_price: Money  # сумма товаров без скидок и доставки
     promocode_discount: Optional[Money] = None  # скидка по промокоду
     
-    delivery_price: Money  # доставка
+    delivery_price: Optional[Money] = None  # доставка
     bonuses_applied: Optional[Money] = None # сколько бонусных средств для оплаты
     
     total_price: Optional[Money] = None  # сколько надо заплатить настоящими деньгами
@@ -59,7 +59,7 @@ class OrderPriceDetails(AppBaseModel):
 
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
-        total = products_price_after_promocode + self.delivery_price
+        total = products_price_after_promocode + self.delivery_price if self.delivery_price else products_price_after_promocode
         
         self.total_price = total - self.bonuses_applied if self.bonuses_applied else total
     
@@ -125,12 +125,12 @@ class OrdersRepository(AppAbstractRepository[Order]):
     class Meta:
         collection_name = 'orders'
         
-    def new_order(self, customer: "Customer", products_price: LocalizedMoney) -> Order:
-        delivery_info = customer.delivery_info
+    def new_order(self, customer: "Customer", products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
+        delivery_info = customer.delivery_info if save_delivery_info else None
         currency = customer.currency
         
         price_details = OrderPriceDetails(products_price=products_price.get_money(currency),
-                                          delivery_price=delivery_info.service.price.get_money(currency)
+                                          delivery_price=delivery_info.service.price.get_money(currency) if delivery_info else None
                                           )
         price_details.recalculate_price()
         

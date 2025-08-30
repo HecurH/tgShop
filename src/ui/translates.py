@@ -549,6 +549,11 @@ class OrdersTranslates(Translatable):
 """,
     }
     
+    no_delivery_info = {
+        "ru": "Не выбрана.",
+        "en": "Not selected."
+    }
+    
     waiting_for_price_confirmation_info = {
         "ru": "Ваш заказ ожидает подтверждения цены.",
         "en": "Your order is waiting for price confirmation."
