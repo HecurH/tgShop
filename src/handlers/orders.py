@@ -44,4 +44,4 @@ async def order_view_handler(_, ctx: Context) -> None:
     order = await Order.from_fsm_context(ctx, "order")
     attribute = ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
     
-    await call_state_handler(Orders.OrderInfo, ctx, order=order, send_before=(getattr(OrdersTranslates.Infos, attribute), 2) if attribute else None)
+    await call_state_handler(Orders.OrderView, ctx, order=order, send_before=(getattr(OrdersTranslates.Infos, attribute), 2) if attribute else None)
