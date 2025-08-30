@@ -288,7 +288,7 @@ class OrdersTextGen:
                                             order_entries_description=entries_description,
                                             order_status=order.state.get_localized_name(ctx.lang),
                                             delivery_info=delivery_description,
-                                            payment_method_info=order.payment_method.name.get(ctx.lang) if order.payment_method else CartTranslates.OrderConfiguration.no_payment_method_selected,
+                                            payment_method_info=order.payment_method.name.get(ctx.lang) if order.payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected,
                                             products_price=order.price_details.products_price.to_text(),
                                             price_info=price_info
                                             )
