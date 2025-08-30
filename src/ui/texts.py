@@ -6,7 +6,7 @@ from core.helper_classes import Context
 from schemas.db_models import *
 from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
-from ui.translates import CartTranslates, OrdersTranslates
+from ui.translates import CartTranslates
 
 
 def gen_product_configurable_info_text(
@@ -279,9 +279,9 @@ class OrdersTextGen:
                                                 padding=2)
         
         if order.state == OrderStateKey.waiting_for_price_confirmation:
-            price_info = OrdersTranslates.waiting_for_price_confirmation_info
+            price_info = ctx.t.OrdersTranslates.waiting_for_price_confirmation_info
         else:
-            price_info = OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
+            price_info = ctx.t.OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
         
         return order_viewing_menu.format(order_puid=order.puid,
                                             order_forming_date=order.id.generation_time.strftime("%d.%m.%Y %H:%M UTC"),
