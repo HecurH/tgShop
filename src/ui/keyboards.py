@@ -374,7 +374,7 @@ class OrdersKBs:
     def order_view(order: Order, ctx: Context) -> types.ReplyKeyboardMarkup:
         kb = [
             [
-                types.KeyboardButton(text=ReplyButtonsTranslates.Orders.Infos.any_question)
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.Infos.any_question)
             ] if order.state == OrderStateKey.waiting_for_manual_payment_confirm else None,
             [
                 types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
