@@ -540,8 +540,7 @@ class OrdersTranslates(Translatable):
 {order_entries_description}        
 
 Статус заказа: {order_status}{delivery_info}
-Способ оплаты: {payment_method_info}
-{promocode_info}{bonus_money_info}
+Способ оплаты: {payment_method_info}{promocode_info}{bonus_money_info}
 
 Суммарная стоимость товаров: {products_price}
 {price_info}
