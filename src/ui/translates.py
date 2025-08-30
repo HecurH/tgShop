@@ -539,8 +539,7 @@ class OrdersTranslates(Translatable):
         "ru": """<b>Заказ #{order_puid}</b> от {order_forming_date}
 {order_entries_description}        
 
-Статус заказа: {order_status}
-{delivery_info}
+Статус заказа: {order_status}{delivery_info}
 Способ оплаты: {payment_method_info}
 {promocode_info}{bonus_money_info}
 
