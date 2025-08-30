@@ -3,6 +3,7 @@ from typing import Type, TypeVar, Union
 
 import pymongo
 from pymongo import AsyncMongoClient
+from pymongo.errors import PyMongoError
 
 from schemas.db_models import *
 from core.helper_classes import AsyncCurrencyConverter
