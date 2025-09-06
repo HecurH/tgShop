@@ -51,6 +51,10 @@ async def delivery_command_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Menu, ctx)
         return
     
+    if ctx.customer.waiting_for_manual_delivery_info_confirmation:
+        await call_state_handler(Profile.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Delivery.waiting_for_manual_confirmation, 1))
+        return
+    
     if text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.menu_not_set and not delivery_info:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return

@@ -670,6 +670,11 @@ class ProfileTranslates(Translatable):
             "en": "Лееее ишак чо не сконфигурировал свою доставку чорт баля, кнопки ниже решат алёу"
         }
         
+        waiting_for_manual_confirmation = {
+            "ru": "Ваша доставка ожидает ручного подтверждения.",
+            "en": "Your delivery is waiting for manual confirmation."
+        }
+        
         delete_confimation = {
             "ru": "Вы уверены что хотите удалить данные о доставке?",
             "en": "Are you sure you want to delete your delivery information?"
