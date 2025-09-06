@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import datetime
+import json
 import logging
 from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING
 
@@ -661,6 +663,37 @@ class DeliveryService(AppBaseModel):
                                            )
     requirements_options: list[DeliveryRequirementsList] # для почты россии, например, можно оформить как по адресу с ФИО, так и просто по номеру до востребования
     selected_option: Optional[DeliveryRequirementsList] = None # для заполнения в будущем при конфигурации
+    
+    def index_option_by_name(self, name: LocalizedString) -> int:
+        return next((idx for idx, option in enumerate(self.requirements_options) if option.name.get("en") == name.get("en")), -1)
+    
+    def get_selected_option_index(self):
+        return self.index_option_by_name(self.selected_option.name) if self.selected_option else 0
+    
+    def serialize_securs_to_str(self) -> str: # получить список всех SecureValue из выбранной опции
+        if self.selected_option is None:
+            return ""
+        securs = [req.value.model_dump() for req in self.selected_option.requirements]
+        
+        base64str = base64.b64encode(json.dumps(securs).encode()).decode()
+        return base64str
+
+    def restore_securs_from_base64(self, securs: str):
+        if self.selected_option is None:
+            return
+            
+        try:
+            decoded_securs = json.loads(base64.b64decode(securs.encode()).decode())
+            if not decoded_securs:
+                return
+                
+            for req in self.selected_option.requirements:
+                if decoded_securs:
+                    req.value = SecureValue(**decoded_securs.pop(0))
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            # Обработка ошибок декодирования или десериализации
+            logging.error(f"Ошибка при восстановлении securs из base64: {e}")
+            return
 
 class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     class Meta:

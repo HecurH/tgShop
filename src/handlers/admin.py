@@ -492,6 +492,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
         ),
         is_foreign=True,
         requires_manual_confirmation=True,
+        price=LocalizedMoney.from_dict({"RUB": 0,"USD": 0}),
         requirements_options=[
             DeliveryRequirementsList(
                 name=LocalizedString(data={
