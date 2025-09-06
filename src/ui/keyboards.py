@@ -538,7 +538,8 @@ class ProfileKBs:
                 builder = ReplyKeyboardBuilder()
             
                 for service in services:
-                    builder.add(types.KeyboardButton(text=f"{service.name.get(ctx.lang)} ({service.price.to_text(ctx.customer.currency)})"))
+                    price_text = "" if service.requires_manual_confirmation else f" ({service.price.to_text(ctx.customer.currency)})"
+                    builder.add(types.KeyboardButton(text=f"{service.name.get(ctx.lang)}{price_text}"))
 
                 builder.adjust(2)
                 
