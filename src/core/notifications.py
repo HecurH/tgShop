@@ -57,7 +57,7 @@ class AdminChatNotificator(TelegramNotificator):
                                      )
         
     async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
-        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.model_dump(mode='python')}</code>",
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.model_dump(exclude_defaults=True)}</code>",
                                      reply_markup=await AdminKBs.Orders.delivery_manual_price_confirmation(ctx)
                                      )
         
