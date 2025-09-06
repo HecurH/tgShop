@@ -675,14 +675,14 @@ class DeliveryService(AppBaseModel):
             return ""
         securs = [req.value.get() for req in self.selected_option.requirements]
         
-        return json.dumps(securs)
+        return json.dumps(securs, ensure_ascii=False)
 
     def restore_securs_from_str(self, securs: str):
         if self.selected_option is None:
             return
             
         try:
-            decoded_securs = json.loads(securs)
+            decoded_securs = json.loads(securs.encode('utf-8').decode('utf-8'))
             if not decoded_securs:
                 return
                 
