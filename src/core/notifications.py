@@ -5,6 +5,7 @@ from schemas.db_models import Order, DeliveryInfo
 from ui.keyboards import AdminKBs
 
 from core.helper_classes import Context
+from ui.message_tools import build_list
 from ui.texts import gen_product_configurable_info_text
 
 class Notificator(ABC):
@@ -57,7 +58,11 @@ class AdminChatNotificator(TelegramNotificator):
                                      )
         
     async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
-        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.service.id} {delivery_info.service.get_selected_option_index()} {delivery_info.service.securs_to_str()} {delivery_info.service.price.model_dump()}</code>",
+        
+        delivery_requirements_info = build_list([f"{requirement.name.get('ru')} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+                                                padding=2)
+        
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.service.id} {delivery_info.service.get_selected_option_index()} {delivery_info.service.securs_to_str()} {delivery_info.service.price.model_dump()}</code>",
                                      reply_markup=await AdminKBs.Orders.delivery_manual_price_confirmation(ctx)
                                      )
         
