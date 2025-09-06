@@ -652,7 +652,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
     # await ctx.db.delivery_services.save(service)
     # await ctx.db.delivery_services.save(cdek)
     # await ctx.db.delivery_services.save(boxberry)
-    await ctx.db.delivery_services.save(boxberry_international)
+    await ctx.db.delivery_services.save(universal_international)
     # await ctx.db.delivery_services.save(ya_delivery)
     # await ctx.db.delivery_services.save(ozon_delivery)
 
