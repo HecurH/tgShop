@@ -310,8 +310,6 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
     
 @router.message(Command("delete_acc"))
 async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
-
-
     await ctx.db.customers.delete(ctx.customer)
     
 @router.message(Command("add_delivery_services"))
@@ -486,13 +484,14 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
         ]
     )
     
-    boxberry_international = DeliveryService(
+    universal_international = DeliveryService(
         name=LocalizedString(data={
-            "ru":"Boxberry [Зарубеж]",
-            "en":"Boxberry [International]"
+            "ru":"Универсальная",
+            "en":"Universal"
             }
         ),
         is_foreign=True,
+        requires_manual_confirmation=True,
         requirements_options=[
             DeliveryRequirementsList(
                 name=LocalizedString(data={
@@ -513,7 +512,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
                             }
                         ),
                         description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
+                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
                             "en":"на русском сначала блин давай"
                             }
                         )

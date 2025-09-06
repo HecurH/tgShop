@@ -612,6 +612,11 @@ class ProfileTranslates(Translatable):
         "ru": "Внимание! Конвертировать валюту в следующий раз вы сможете только через неделю!",
         "en": "Conversion will be made at the rate from {fromVal} to {toVal}."
     }
+    
+    delivery_info_price_sent_to_confirmation = {
+        "ru": "Ваша доставка ожидает подтверждения цены.",
+        "en": "Your delivery is waiting for price confirmation."
+    }
 
     class Settings(Translatable):
     
@@ -698,6 +703,11 @@ class ProfileTranslates(Translatable):
         requirement_value_text = { # Телефон / Адрес; пишите номер в формате +7xxxxxxxxxx
             "ru": "Примечание:\n{description}\n\nВведите <b>{name}</b>:",
             "en": "Note:\n{description}\n\nEnter <b>{name}</b>:"
+        }
+        
+        send_to_manual_confirmation_text = {
+            "ru": "Вы уверены что бла-бла-бла доставка бла-бла ручное подтверждение стоимости?",
+            "en": "Are you sure you want to send the delivery to manual confirmation?"
         }
 
 class ReplyButtonsTranslates(Translatable):

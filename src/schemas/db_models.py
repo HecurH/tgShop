@@ -651,6 +651,7 @@ class DeliveryService(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString  # Название сервиса
     is_foreign: bool = False
+    requires_manual_confirmation: bool = False
     
     price: LocalizedMoney = LocalizedMoney.from_dict(
                                            {
@@ -669,6 +670,9 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
         return await self.find_by({"is_foreign": is_foreign})
 
 class DeliveryInfo(AppBaseModel):
+    ### TODO: 
+    ## сделать эту модель постоянной, чтобы остальная инфа была дочерней, и waiting_for_manual_delivery_info_confirmation был здесь
+    
     is_foreign: bool = False  # Вне РФ?
     service: Optional[DeliveryService] = None
 
@@ -684,7 +688,9 @@ class Customer(AppBaseModel):
     
     currency: str
     bonus_wallet: Money
+    
     delivery_info: Optional[DeliveryInfo] = None
+    waiting_for_manual_delivery_info_confirmation: bool = False
     
     async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
         """Изменить основную валюту"""

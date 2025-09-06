@@ -60,17 +60,17 @@ async def delivery_command_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     elif text == delivery_info.service.name.get(ctx.lang):
-        await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
-        await call_state_handler(Profile.Delivery.Editables.Service, ctx)
+        await delivery_info.save_in_fsm(ctx, "delivery_info")
+        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
         return
     elif text == delivery_info.service.selected_option.name.get(ctx.lang):
-        await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
-        await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
+        await delivery_info.save_in_fsm(ctx, "delivery_info")
+        await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx, delivery_info=delivery_info)
         return
     elif text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.change_data:
-        await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
+        await delivery_info.save_in_fsm(ctx, "delivery_info")
         await ctx.fsm.update_data(requirement_index=0)
-        await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
+        await call_state_handler(Profile.Delivery.Editables.Requirement, ctx, delivery_info=delivery_info, requirement_index=0)
         return
     elif text == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.delete:
         await call_state_handler(Profile.Delivery.DeleteConfimation, ctx)
@@ -149,11 +149,11 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     
     
     # при изменении этого параметра все равно надо менять сервис доставки
-    info = ctx.customer.delivery_info or DeliveryInfo()
-    info.is_foreign = is_foreign
+    delivery_info = ctx.customer.delivery_info or DeliveryInfo()
+    delivery_info.is_foreign = is_foreign
     
-    await ctx.fsm.update_data(delivery_info=info.model_dump())
-    await call_state_handler(Profile.Delivery.Editables.Service, ctx)
+    await delivery_info.save_in_fsm(ctx, "delivery_info")
+    await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
     
 @router.message(Profile.Delivery.Editables.Service)
 async def editable_service_handler(_, ctx: Context) -> None:
@@ -175,7 +175,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     
     if service is None:
-        await call_state_handler(Profile.Delivery.Editables.Service, ctx)
+        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
         return
 
     if not first_setup and delivery_info.service.name == service.name:
@@ -185,18 +185,18 @@ async def editable_service_handler(_, ctx: Context) -> None:
     
     delivery_info.service = service
 
-    await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
-    await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
+    await delivery_info.save_in_fsm(ctx, "delivery_info")
+    await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx, ctx, delivery_info=delivery_info)
     
 @router.message(Profile.Delivery.Editables.RequirementsLists)
 async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
-    delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
 
         if first_setup:      
-            await call_state_handler(Profile.Delivery.Editables.Service, ctx)
+            await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
         else:  
             await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
             await call_state_handler(Profile.Delivery.Menu, ctx)
@@ -206,7 +206,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     req_list = next((lst for lst in lists if lst.name.get(ctx.lang) == ctx.message.text), None)
     
     if req_list is None:
-        await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
+        await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx, delivery_info=delivery_info)
         return
     
     if not first_setup and delivery_info.service.selected_option and delivery_info.service.selected_option.name == req_list.name:
@@ -216,18 +216,18 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     
     delivery_info.service.selected_option = req_list
 
-    await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
+    await delivery_info.save_in_fsm(ctx, "delivery_info")
     await ctx.fsm.update_data(requirement_index=0)
-    await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
+    await call_state_handler(Profile.Delivery.Editables.Requirement, ctx, delivery_info=delivery_info, requirement_index=0)
 
 @router.message(Profile.Delivery.Editables.Requirement)
 async def editable_requirement_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
-    delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         if first_setup:
-            await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx)
+            await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx, delivery_info=delivery_info)
         else:        
             await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
             await call_state_handler(Profile.Delivery.Menu, ctx)
@@ -237,33 +237,54 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
 
     requirement: DeliveryRequirement = delivery_info.service.selected_option.requirements[requirement_index]
     if ctx.message.text.isdigit():
-        await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
+        await call_state_handler(Profile.Delivery.Editables.Requirement, ctx, delivery_info=delivery_info, requirement_index=requirement_index)
         return
     
     requirement.value.update(ctx.message.text)
     
     if len(delivery_info.service.selected_option.requirements)-1 == requirement_index:
+        await ctx.fsm.update_data(requirement_index=None)
+        if delivery_info.service.requires_manual_confirmation:
+            await call_state_handler(Profile.Delivery.Editables.SendToManualConfirmation, ctx, delivery_info=delivery_info)
+            return
+
+        
+        
         ctx.customer.delivery_info = delivery_info
         await ctx.db.customers.save(ctx.customer)
-        
-        await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
         
         if await ctx.fsm.get_value("back_to_cart_after_delivery"):
             await ctx.fsm.update_data(back_to_cart_after_delivery=None)
             await call_state_handler(Cart.Menu, ctx, current=await ctx.fsm.get_value("current") or 1)
             return
         
+        
+        
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return
         
 
-    await ctx.fsm.update_data(delivery_info=delivery_info.model_dump())
+    await delivery_info.save_in_fsm(ctx, "delivery_info")
     await ctx.fsm.update_data(requirement_index=requirement_index+1)
-    await call_state_handler(Profile.Delivery.Editables.Requirement, ctx)
+    await call_state_handler(Profile.Delivery.Editables.Requirement, ctx, delivery_info=delivery_info, requirement_index=requirement_index+1)
+    
+@router.message(Profile.Delivery.Editables.SendToManualConfirmation)
+async def editable_send_to_manual_confirmation_handler(_, ctx: Context) -> None:
+    if ctx.message.text != ctx.t.UncategorizedTranslates.yes:
+        await call_state_handler(Profile.Delivery.Menu, ctx)
+        return
+    
+    delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    
+    await ctx.n.AdminChatNotificator.send_delivery_manual_price_confirmation(delivery_info, ctx)
+    
+    ctx.customer.waiting_for_manual_delivery_info_confirmation = True
+    await ctx.db.customers.save(ctx.customer)
+    
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.ProfileTranslates.delivery_info_price_sent_to_confirmation, 1))
     
 @router.message(Profile.Delivery.DeleteConfimation)
 async def delete_confimation_handler(_, ctx: Context) -> None:
-
     if ctx.message.text != ctx.t.UncategorizedTranslates.yes: 
         await call_state_handler(Profile.Delivery.Menu, ctx)
         return

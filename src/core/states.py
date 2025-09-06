@@ -109,7 +109,6 @@ class Assortment(StatesGroup):
 
 @state_handlers.register(Assortment.Menu)
 async def assortment_menu_handler(ctx: Context, **_):
-    
     categories = await ctx.db.categories.get_all()
     if not categories:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before="Err: There's no categories!")
@@ -340,6 +339,7 @@ class Profile(StatesGroup):
             Service = State()
             RequirementsLists = State()
             Requirement = State()
+            SendToManualConfirmation = State()
 
 @state_handlers.register(Profile.Menu)
 async def profile_menu_handler(ctx: Context, **_):
@@ -375,9 +375,6 @@ async def settings_change_currency_handler(ctx: Context, **_):
 async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
-    # serialized_service = await ctx.fsm.get_value("service")
-    # service = DeliveryService(**serialized_service) if serialized_service else None
-    
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.is_foreign_text,
         reply_markup=ProfileKBs.Delivery.Editables.is_foreign(
@@ -386,11 +383,8 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     )
     
 @state_handlers.register(Profile.Delivery.Editables.Service)
-async def delivery_edit_service_handler(ctx: Context, **_):
+async def delivery_edit_service_handler(ctx: Context, delivery_info: DeliveryInfo = DeliveryInfo(), **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info_serialized = await ctx.fsm.get_value("delivery_info")
-    delivery_info = DeliveryInfo(**delivery_info_serialized) if delivery_info_serialized else DeliveryInfo()
-    
     
     services = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
     
@@ -402,11 +396,8 @@ async def delivery_edit_service_handler(ctx: Context, **_):
     )
     
 @state_handlers.register(Profile.Delivery.Editables.RequirementsLists)
-async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
+async def delivery_edit_requirements_lists_handler(ctx: Context, delivery_info: DeliveryInfo, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
-    
-    
     lists = delivery_info.service.requirements_options
     
     await ctx.message.answer(
@@ -417,12 +408,8 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, **_):
     )
 
 @state_handlers.register(Profile.Delivery.Editables.Requirement)
-async def delivery_edit_requirement_handler(ctx: Context, **_):
+async def delivery_edit_requirement_handler(ctx: Context, delivery_info: DeliveryInfo, requirement_index: int = 0, **_):
     first_setup: bool = ctx.customer.delivery_info is None
-    delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
-    requirement_index: int = await ctx.fsm.get_value("requirement_index") or 0
-
-    
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
@@ -431,6 +418,11 @@ async def delivery_edit_requirement_handler(ctx: Context, **_):
             first_setup, ctx
         )
     )
+
+@state_handlers.register(Profile.Delivery.Editables.SendToManualConfirmation)
+async def delivery_edit_send_to_manual_confirmation_handler(ctx: Context, **_):
+    await ctx.message.answer(ctx.t.ProfileTranslates.Delivery.send_to_manual_confirmation_text,
+                             reply_markup=UncategorizedKBs.yes_no(ctx))
 
 @state_handlers.register(Profile.Delivery.DeleteConfimation)
 async def delivery_delete_confirmation_handler(ctx: Context, **_):

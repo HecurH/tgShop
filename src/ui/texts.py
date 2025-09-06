@@ -1,12 +1,7 @@
-import asyncio
 from aiogram import html
 
-from configs.payments import SUPPORTED_PAYMENT_METHODS
-from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.payment_models import PaymentMethod
 from ui.message_tools import build_list
-from ui.translates import CartTranslates
 
 
 def gen_product_configurable_info_text(
@@ -274,6 +269,7 @@ class OrdersTextGen:
         entries_description = build_list(entries_description, before="▫️")
         
         delivery_info = order.delivery_info
+        delivery_description = ""
         if delivery_info:
             delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
             delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],

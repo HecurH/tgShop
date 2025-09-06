@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 from aiogram.types import ReplyMarkupUnion
-from schemas.db_models import Order
+from schemas.db_models import Order, DeliveryInfo
 from ui.keyboards import AdminKBs
 
 from core.helper_classes import Context
@@ -54,6 +54,11 @@ class AdminChatNotificator(TelegramNotificator):
         payment_method = order.payment_method
         await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}.",
                                      reply_markup=AdminKBs.Orders.manual_payment_confirmation(order, ctx)
+                                     )
+        
+    async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n```/manual_delivery_price {ctx.customer.user_id} {delivery_info.model_dump()}```",
+                                     reply_markup=await AdminKBs.Orders.delivery_manual_price_confirmation(ctx)
                                      )
         
 class NotificatorHub:

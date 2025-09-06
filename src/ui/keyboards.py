@@ -90,6 +90,23 @@ class AdminKBs:
                 ]
             ]
             return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+        
+        @staticmethod
+        async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:
+            me = await ctx.message.bot.get_me()
+            keyboard = [
+                [
+                    types.InlineKeyboardButton(text="Перейти к боту",
+                                               url=f"tg://resolve?domain={me.username}")
+                ],
+                [
+                    types.InlineKeyboardButton(
+                        text="Отменить",
+                        callback_data=f"cancel__manual_delivery_price_confirm_{ctx.customer.user_id}"
+                    )
+                ]
+            ]
+            return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 class AssortmentKBs:
