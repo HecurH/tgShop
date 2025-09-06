@@ -670,29 +670,28 @@ class DeliveryService(AppBaseModel):
     def get_selected_option_index(self):
         return self.index_option_by_name(self.selected_option.name) if self.selected_option else 0
     
-    def serialize_securs_to_str(self) -> str: # получить список всех SecureValue из выбранной опции
+    def securs_to_str(self) -> str:
         if self.selected_option is None:
             return ""
-        securs = [req.value.model_dump() for req in self.selected_option.requirements]
+        securs = [req.value.get() for req in self.selected_option.requirements]
         
-        base64str = base64.b64encode(json.dumps(securs).encode()).decode()
-        return base64str
+        return json.dumps(securs)
 
-    def restore_securs_from_base64(self, securs: str):
+    def restore_securs_from_str(self, securs: str):
         if self.selected_option is None:
             return
             
         try:
-            decoded_securs = json.loads(base64.b64decode(securs.encode()).decode())
+            decoded_securs = json.loads(securs)
             if not decoded_securs:
                 return
                 
             for req in self.selected_option.requirements:
                 if decoded_securs:
-                    req.value = SecureValue(**decoded_securs.pop(0))
+                    req.value.update(decoded_securs.pop(0))
         except (json.JSONDecodeError, TypeError, ValueError) as e:
             # Обработка ошибок декодирования или десериализации
-            logging.error(f"Ошибка при восстановлении securs из base64: {e}")
+            logging.error(f"Ошибка при восстановлении securs из строки: {e}")
             return
 
 class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
