@@ -249,6 +249,7 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
     if len(delivery_info.service.selected_option.requirements)-1 == requirement_index:
         await ctx.fsm.update_data(requirement_index=None)
         if delivery_info.service.requires_manual_confirmation:
+            await delivery_info.save_in_fsm(ctx, "delivery_info")
             await call_state_handler(Profile.Delivery.Editables.SendToManualConfirmation, ctx, delivery_info=delivery_info)
             return
 
