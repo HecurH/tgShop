@@ -84,7 +84,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         print(e)
         return
     
-    customer = await ctx.db.customers.find_one_by_id({"user_id": user_id})
+    customer = await ctx.db.customers.find_one_by({"user_id": user_id})
     delivery_service = await ctx.db.delivery_services.find_one_by_id(PydanticObjectId(delivery_service_id)) if delivery_service_id else None
     
     if not customer or not delivery_service:
@@ -93,6 +93,9 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     
     if customer.delivery_info and customer.delivery_info.service:
         await ctx.message.answer("У пользователя уже выбран другой сервис доставки")
+        return
+    if not customer.waiting_for_manual_delivery_info_confirmation:
+        await ctx.message.answer("Пользователь уже не ждет подтверждения цены")
         return
     
     delivery_service.selected_option = delivery_service.requirements_options[req_options_list_idx]
