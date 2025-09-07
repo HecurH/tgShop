@@ -44,8 +44,8 @@ class ContextMiddleware(BaseMiddleware):
                               data["lang"],
                               TranslatorHub.get_for_lang(data["lang"]),
                               self.notificator_hub)
-
-        if not customer and not await data.get("state").get_state() == NewUserStates.LangChoosing:
+        state = await data.get("state").get_state()
+        if not customer and not state == NewUserStates.LangChoosing and state != None:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
