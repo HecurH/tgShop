@@ -714,7 +714,6 @@ class DeliveryInfo(AppBaseModel):
     ### TODO: 
     ## сделать эту модель постоянной, чтобы остальная инфа была дочерней, и waiting_for_manual_delivery_info_confirmation был здесь
     
-    is_foreign: bool = False  # Вне РФ?
     service: Optional[DeliveryService] = None
 
 class Customer(AppBaseModel):
