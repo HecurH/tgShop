@@ -472,6 +472,9 @@ class ProductConfiguration(AppBaseModel):
         return next(((key, option) for key, option in self.options.items() 
                      if option.name.get(lang) == name), None)
         
+    def get_price_blocking_options(self) -> dict[str, ConfigurationOption]:
+        return {key: option for key, option in self.options.items() if option.get_chosen().blocks_price_determination}
+        
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
     

@@ -42,6 +42,24 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
     
+    #формат данных = 0: {'data': {'RUB': {'currency': 'RUB', 'amount': 1000.0}, 'USD': {'currency': 'USD', 'amount': 30.0}}}\n1: {'data': {'RUB': {'currency': 'RUB', 'amount': 1000.0}, 'USD': {'currency': 'USD', 'amount': 30.0}}}
+    text = text.replace("'", '"')
+    text = text.split('\n')
+    try:
+        prices = [LocalizedMoney(**json.loads(entry.split(": ")[-1])) for entry in text]
+    except (json.JSONDecodeError, TypeError) as e:
+        await ctx.message.answer("Неверный формат цен")
+        return
+    
+    order = await Order.from_fsm_context(ctx, "order")
+    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
+    for idx, entry in enumerate(entries):
+        entry.configuration.price = prices[idx]
+        entry.configuration.price_confirmed_override = True
+    
+    
+    
+    
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
 @router.message(Command("manual_delivery_price"))
 async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject):
@@ -77,7 +95,6 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         price = LocalizedMoney(**price_data)
     except (json.JSONDecodeError, TypeError) as e:
         await ctx.message.answer("Неверный формат цены")
-        print(e)
         return
     
     customer = await ctx.db.customers.find_one_by({"user_id": user_id})
