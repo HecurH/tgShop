@@ -22,13 +22,15 @@ router.callback_query.middleware.register(middleware)
 @router.message(Command("admin_confirm_order_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
     order_id: str = command.args
-    order = await ctx.db.orders.find_one_by(PydanticObjectId(order_id)) if order_id else None
+    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
     if not order:
         await ctx.message.answer("Заказ не найден")
         return
     
     entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(ctx.customer, order))
     if order.state != OrderStateKey.waiting_for_price_confirmation or not entries:
+        print(order.state)
+        print(entries)
         await ctx.message.answer("Заказ не в ожидании подтверждения цены")
         return
     
