@@ -99,6 +99,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     delivery_service.price = price
     customer.delivery_info = DeliveryInfo()
     customer.delivery_info.service = delivery_service
+    customer.waiting_for_manual_delivery_info_confirmation = False
     await ctx.db.customers.save(customer)
     
     await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer, ctx)
