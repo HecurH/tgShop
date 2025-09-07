@@ -1,19 +1,20 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 from aiogram.types import ReplyMarkupUnion
-from schemas.db_models import Order, DeliveryInfo
+from schemas.db_models import Customer, Order, DeliveryInfo
 from ui.keyboards import AdminKBs
 
 from core.helper_classes import Context
 from ui.message_tools import build_list
 from ui.texts import gen_product_configurable_info_text
+from ui.translates import NotificatorTranslates
 
 class Notificator(ABC):
     @abstractmethod
     async def send_notification(self, **_): ...
     
 class TelegramNotificator(Notificator):
-    def __init__(self, chat_id: str):
+    def __init__(self, chat_id: Optional[str] = None):
         self._chat_id = chat_id
 
     async def send_notification(self, ctx: Context, message: str, reply_markup: Optional[ReplyMarkupUnion] = None, **_):
@@ -66,7 +67,22 @@ class AdminChatNotificator(TelegramNotificator):
                                      reply_markup=await AdminKBs.Orders.delivery_manual_price_confirmation(ctx)
                                      )
         
+class UserTelegramNotificator(TelegramNotificator):
+    async def send_delivery_price_confirmed(self, customer: Customer, ctx: Context):
+        super().__init__(chat_id=customer.user_id)
+        await self.send_notification(ctx, NotificatorTranslates.Delivery.translate("delivery_price_confirmed", customer.lang))
+        
+    async def send_delivery_price_rejected(self, customer: Customer, ctx: Context):
+        super().__init__(chat_id=customer.user_id)
+        await self.send_notification(ctx, NotificatorTranslates.Delivery.translate("delivery_price_rejected", customer.lang))
+        
+    async def send_delivery_price_rejected_with_reason(self, customer: Customer, ctx: Context, reason: str):
+        super().__init__(chat_id=customer.user_id)
+        await self.send_notification(ctx, NotificatorTranslates.Delivery.translate("delivery_price_rejected_with_reason", customer.lang).format(reason=reason))
+
+        
 class NotificatorHub:
     def __init__(self, logs_channel_id, admin_chat_id):
         self.TelegramChannelLogs = TelegramChannelLogsNotificator(logs_channel_id)
         self.AdminChatNotificator = AdminChatNotificator(admin_chat_id)
+        self.UserTelegramNotificator = UserTelegramNotificator()

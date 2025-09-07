@@ -102,7 +102,7 @@ class AdminKBs:
                 [
                     types.InlineKeyboardButton(
                         text="Отменить",
-                        callback_data=f"cancel__manual_delivery_price_confirm|{ctx.customer.user_id}"
+                        callback_data=f"cancel_manual_delivery_price_confirm|{ctx.customer.user_id}"
                     )
                 ]
             ]
@@ -481,7 +481,7 @@ class ProfileKBs:
                 # Текст для иностранной доставки
                 foreign_text = (
                     ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.foreign + (" ✅"
-                    if delivery_info.is_foreign else " ❌")
+                    if delivery_info.service.is_foreign else " ❌")
                 )
                 keyboard = [
                     [
@@ -652,6 +652,19 @@ class UncategorizedKBs:
         ]
         return types.InlineKeyboardMarkup(
             inline_keyboard=kb
+        )
+    
+    @staticmethod
+    def reply_cancel(ctx: Context) -> types.ReplyKeyboardMarkup:
+        kb = [
+            [
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.cancel)
+            ]
+        ]
+        return types.ReplyKeyboardMarkup(
+            keyboard=kb,
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
     
     @staticmethod

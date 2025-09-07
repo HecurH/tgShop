@@ -146,7 +146,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     
-    if not first_setup and ctx.customer.delivery_info.is_foreign == is_foreign:
+    if not first_setup and ctx.customer.delivery_info.service and ctx.customer.delivery_info.service.is_foreign == is_foreign:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
         await call_state_handler(Profile.Delivery.Menu, ctx, send_before=(ctx.t.UncategorizedTranslates.ok_dont_changing, 1))
         return
@@ -154,10 +154,10 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     
     # при изменении этого параметра все равно надо менять сервис доставки
     delivery_info = ctx.customer.delivery_info or DeliveryInfo()
-    delivery_info.is_foreign = is_foreign
     
     await delivery_info.save_in_fsm(ctx, "delivery_info")
-    await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
+    
+    await call_state_handler(Profile.Delivery.Editables.Service, ctx, is_foreign_services=is_foreign)
     
 @router.message(Profile.Delivery.Editables.Service)
 async def editable_service_handler(_, ctx: Context) -> None:
@@ -174,7 +174,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
         return
 
 
-    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
+    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all()
     service_name = ctx.message.text.rsplit(" ", 1)[0]
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     

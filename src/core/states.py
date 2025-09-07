@@ -76,11 +76,17 @@ async def call_state_handler(state: State,
     
 class AdminStates(StatesGroup):
     PriceConfirmationWaiting = State()
+    PriceConfirmationCancel = State()
 
 @state_handlers.register(AdminStates.PriceConfirmationWaiting)
 async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):
     text = AdminTextGen.price_confirmation_text(list(entries), ctx)
-    await ctx.message.answer(text, reply_markup=UncategorizedKBs.reply_back(ctx))
+    await ctx.message.answer(text, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    
+@state_handlers.register(AdminStates.PriceConfirmationCancel)
+async def handle_price_confirmation_cancel(ctx: Context, customer: Customer, **_):
+    await ctx.message.answer(f"Если хотить отменить доставку с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
+                             reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
 
 class NewUserStates(StatesGroup):
@@ -392,10 +398,10 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     )
     
 @state_handlers.register(Profile.Delivery.Editables.Service)
-async def delivery_edit_service_handler(ctx: Context, delivery_info: DeliveryInfo = DeliveryInfo(), **_):
+async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool = False, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
-    services = await ctx.db.delivery_services.get_all(delivery_info.is_foreign)
+    services = await ctx.db.delivery_services.get_all(is_foreign_services)
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.service_text,

@@ -9,7 +9,7 @@ from core.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
-from core.states import AdminStates, call_state_handler
+from core.states import AdminStates, CommonStates, call_state_handler
 from schemas.types import LocalizedMoney, LocalizedString
 
 router = Router(name="admin")
@@ -32,7 +32,85 @@ async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Заказ не в ожидании подтверждения цены")
         return
     
+    await order.save_in_fsm(ctx, "order")
     await call_state_handler(AdminStates.PriceConfirmationWaiting, ctx, entries=entries)
+    
+@router.message(AdminStates.PriceConfirmationWaiting)
+async def price_confirmation_waiting_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+        return
+    
+#command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
+@router.message(Command("manual_delivery_price"))
+async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject):
+    args = command.args.split()
+    
+    if len(args) != 5:
+        await ctx.message.answer("Неверный формат команды")
+        return
+    user_id = args[0]
+    delivery_service_id = args[1]
+    req_options_list_idx = int(args[2])
+    securs: list[str] = json.loads(args[3])
+    
+    price = LocalizedMoney(**args[4]) if args[4] else None
+    if not price:
+        await ctx.message.answer("Неверный формат цены")
+        return
+    
+    customer = await ctx.db.customers.find_one_by_id({"user_id": user_id})
+    delivery_service = await ctx.db.delivery_services.find_one_by_id(PydanticObjectId(delivery_service_id)) if delivery_service_id else None
+    
+    if not customer or not delivery_service:
+        await ctx.message.answer("Пользователь или сервис доставки не найдены")
+        return
+    
+    if customer.delivery_info and customer.delivery_info.service:
+        await ctx.message.answer("У пользователя уже выбран другой сервис доставки")
+        return
+    
+    delivery_service.selected_option = delivery_service.requirements_options[req_options_list_idx]
+    delivery_service.restore_securs_from_str(securs)
+    delivery_service.price = price
+    customer.delivery_info.service = delivery_service
+    await ctx.db.customers.save(customer)
+    
+    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer, ctx)
+    
+    await ctx.message.answer("Цена установлена!")
+
+@router.message(CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"^cancel_manual_delivery_price_confirm\|(.+)$"))))
+async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
+    args = command.args.split("|")
+    user_id = args[1] if len(args) == 2 else None
+    customer = await ctx.db.customers.find_one_by_id({"user_id": user_id}) if user_id else None
+
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+    
+    await customer.save_in_fsm(ctx, "customer")
+    await call_state_handler(AdminStates.PriceConfirmationCancel, ctx, customer=customer)
+    
+@router.message(AdminStates.PriceConfirmationCancel)
+async def price_confirmation_cancel_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+        return
+    customer = await Customer.from_fsm_context(ctx, "customer")
+    if not customer:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Пользователь не найден.", 1))
+        return
+    
+    if text == "0":
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer, ctx)
+    else:
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, ctx, text)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
+        
 
 @router.message(Command("save_image"))
 async def image_saving_handler(_, ctx: Context):

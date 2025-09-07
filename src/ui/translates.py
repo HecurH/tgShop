@@ -201,7 +201,7 @@ class TranslatorHub:
                 return cls.get_for_lang('en')
             cls._cache[lang] = TranslatorHub(lang=lang)
         return cls._cache[lang]
-    
+ 
 class EnumTranslates(Translatable):
     
     class PromocodeCheckResult(Translatable):
@@ -713,6 +713,25 @@ class ProfileTranslates(Translatable):
         send_to_manual_confirmation_text = {
             "ru": "Вы уверены что бла-бла-бла доставка бла-бла ручное подтверждение стоимости?",
             "en": "Are you sure you want to send the delivery to manual confirmation?"
+        }
+        
+        
+        
+class NotificatorTranslates(Translatable):
+    class Delivery(Translatable):
+        delivery_price_confirmed = {
+            "ru": "Стоимость вашей доставки подтверждена. Теперь вы можете оформлять заказы.",
+            "en": "Your delivery price has been confirmed. You can now place orders."
+        }
+        
+        delivery_price_rejected = {
+            "ru": "Вашу доставку отклонили. Вы можете изменить информацию о доставке и попробовать еще раз.",
+            "en": "Your delivery was rejected. You can change your delivery information and try again."
+        }
+        
+        delivery_price_rejected_with_reason = {
+            "ru": "Вашу доставку отклонили. Вы можете изменить информацию о доставке и попробовать еще раз.\nПричина: {reason}",
+            "en": "Your delivery was rejected. You can change your delivery information and try again.\nReason: {reason}"
         }
 
 class ReplyButtonsTranslates(Translatable):
