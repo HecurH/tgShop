@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+import asyncio
 from typing import Optional
 from aiogram.types import ReplyMarkupUnion
 from schemas.db_models import Customer, Order, DeliveryInfo
@@ -46,11 +47,16 @@ class AdminChatNotificator(TelegramNotificator):
         for entry in entries:
             if product := products_dict.get(entry.product_id):
                 text += f"{product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                
+        text += f"\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>\n\n<code>/admin_unform_order {order.id}</code>\n\n<code>/admin_confirm_order_price {order.id}</code>"
 
-
-        await self.send_notification(ctx, text,
-                                     reply_markup=await AdminKBs.Orders.price_confirmation(order, ctx)
-                                     )
+        if len(text) <= 4096:
+            await self.send_notification(ctx, text)
+        else:
+            for part in text.split("\n\n"):
+                await self.send_notification(ctx, part)
+                await asyncio.sleep(0.3)
+            
     
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method

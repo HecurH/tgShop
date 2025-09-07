@@ -55,30 +55,6 @@ class CommonKBs:
 
 class AdminKBs:
     class Orders:
-        
-        @staticmethod
-        async def price_confirmation(order: Order, ctx: Context) -> types.InlineKeyboardMarkup:
-            me = await ctx.message.bot.get_me()
-            keyboard = [
-                [
-                    types.InlineKeyboardButton(
-                        text="Спросить у клиента",
-                        url=f"tg://resolve?domain={me.username}&start=admin_msg_to|{ctx.customer.user_id}"
-                    )
-                ],
-                [
-                    types.InlineKeyboardButton(
-                        text="Расформировать заказ",
-                        url=f"tg://resolve?domain={me.username}&start=admin_unform_order|{order.id}"
-                    ),
-                    types.InlineKeyboardButton(
-                        text="Назначить цену",
-                        url=f"tg://resolve?domain={me.username}&start=admin_confirm_price|{order.id}"
-                    )
-                ]
-            ]
-            return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-        
         @staticmethod
         async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:
             me = await ctx.message.bot.get_me()
