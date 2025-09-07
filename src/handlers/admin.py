@@ -124,10 +124,14 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
-    customer = await Customer.from_fsm_context(ctx, "customer")
+    customer: Customer = await Customer.from_fsm_context(ctx, "customer")
     if not customer:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Пользователь не найден.", 1))
         return
+    
+    customer.waiting_for_manual_delivery_info_confirmation = False
+    await ctx.db.customers.save(customer)
+    await ctx.fsm.update_data(customer=None)
     
     if text == "0":
         await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer, ctx)
