@@ -63,17 +63,17 @@ class AdminKBs:
                 [
                     types.InlineKeyboardButton(
                         text="Спросить у клиента",
-                        url=f"tg://resolve?domain={me.username}&start=admin_msg_to_{ctx.customer.user_id}"
+                        url=f"tg://resolve?domain={me.username}&start=admin_msg_to|{ctx.customer.user_id}"
                     )
                 ],
                 [
                     types.InlineKeyboardButton(
                         text="Расформировать заказ",
-                        url=f"tg://resolve?domain={me.username}&start=admin_unform_order_{order.id}"
+                        url=f"tg://resolve?domain={me.username}&start=admin_unform_order|{order.id}"
                     ),
                     types.InlineKeyboardButton(
                         text="Назначить цену",
-                        url=f"tg://resolve?domain={me.username}&start=admin_confirm_price_{order.id}"
+                        url=f"tg://resolve?domain={me.username}&start=admin_confirm_price|{order.id}"
                     )
                 ]
             ]
@@ -85,7 +85,7 @@ class AdminKBs:
                 [
                     types.InlineKeyboardButton(
                         text="Подтвердить оплату ✅",
-                        callback_data=f"confirm_manual_payment_{str(order.id)}"
+                        callback_data=f"confirm_manual_payment|{str(order.id)}"
                     )
                 ]
             ]
@@ -102,7 +102,7 @@ class AdminKBs:
                 [
                     types.InlineKeyboardButton(
                         text="Отменить",
-                        callback_data=f"cancel__manual_delivery_price_confirm_{ctx.customer.user_id}"
+                        callback_data=f"cancel__manual_delivery_price_confirm|{ctx.customer.user_id}"
                     )
                 ]
             ]

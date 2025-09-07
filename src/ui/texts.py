@@ -76,6 +76,15 @@ async def form_entry_description(entry, ctx):
     
     return f"{product.name.get(ctx.lang)}{quantity_text} — {price_text}"
 
+
+class AdminTextGen:
+    @staticmethod
+    def price_confirmation_text(entries: list[CartEntry], ctx: Context):
+        entries_desc = "\n".join(f"{idx}: {gen_product_configurable_info_text(entry.configuration, ctx)}" for idx, entry in enumerate(entries))
+        next_input_info = "\n".join(f"{idx}: {entry.frozen_product.price.model_dump()}" for idx, entry in enumerate(entries))
+        return f"{entries_desc}\n\nИзмени цену для продуктов относительно их айди\n\n<code>{next_input_info}</code>"
+        
+
 class AssortmentTextGen:
     @staticmethod
     def generate_viewing_entry_caption(product: Product, ctx: Context):

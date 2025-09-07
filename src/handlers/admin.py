@@ -1,13 +1,15 @@
+import re
 from aiogram.fsm.context import FSMContext
 
-from aiogram import Router
-from aiogram.filters import CommandObject, Command
+from aiogram import F, Router
+from aiogram.filters import CommandObject, Command, CommandStart
 from aiogram.types import Message, BufferedInputFile
 
 from core.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
+from core.states import AdminStates, call_state_handler
 from schemas.types import LocalizedMoney, LocalizedString
 
 router = Router(name="admin")
@@ -17,10 +19,23 @@ router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
 
-
+@router.message(CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"^admin_confirm_price\|(.+)$"))))
+async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
+    order_id: str = command.args.split("|")[1]
+    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    if not order:
+        await ctx.message.answer("Заказ не найден")
+        return
+    
+    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(ctx.customer, order))
+    if order.state != OrderStateKey.waiting_for_price_confirmation or not entries:
+        await ctx.message.answer("Заказ не в ожидании подтверждения цены")
+        return
+    
+    await call_state_handler(AdminStates.PriceConfirmationWaiting, ctx, entries=entries)
 
 @router.message(Command("save_image"))
-async def image_saving_handler(_, ctx: Context) -> None:
+async def image_saving_handler(_, ctx: Context):
     raw = await ctx.message.bot.download(ctx.message.document)
 
     msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
@@ -31,39 +46,39 @@ async def image_saving_handler(_, ctx: Context) -> None:
     await ctx.message.answer(msg_id.photo[-1].file_id)
 
 @router.message(Command("save_video"))
-async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
-    raw = await message.bot.download(message.document)
+async def image_saving_handler(_, ctx: Context):
+    raw = await ctx.message.bot.download(ctx.message.document)
 
-    msg_id = await message.answer_video(video=BufferedInputFile(
+    msg_id = await ctx.message.answer_video(video=BufferedInputFile(
         raw.read(),
         filename="image.mp4"
     )
     )
-    await message.answer(msg_id.video.file_id)
+    await ctx.message.answer(msg_id.video.file_id)
 
 @router.message(Command("add_cats"))
-async def cats_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
+async def cats_handler(_, ctx: Context) -> None:
     cat = Category(
         name="dildos",
         localized_name=LocalizedString(data={
                 "ru": "Дилдо",
                 "en": "Dildos"
             }))
-    await db.categories.save(cat)
+    await ctx.db.categories.save(cat)
     cat = Category(
         name="masturbators",
         localized_name=LocalizedString(data={
                 "ru": "Мастурбаторы",
                 "en": "Masturbators"
             }))
-    await db.categories.save(cat)
+    await ctx.db.categories.save(cat)
     cat = Category(
         name="anal_plugs",
         localized_name=LocalizedString(data={
                 "ru": "Анальные пробки",
                 "en": "Anal plugs"
             }))
-    await db.categories.save(cat)
+    await ctx.db.categories.save(cat)
 
     cat = Category(
         name="other",
@@ -71,11 +86,11 @@ async def cats_handler(message: Message, command: CommandObject, state: FSMConte
                 "ru": "Другое",
                 "en": "Other"
             }))
-    await db.categories.save(cat)
+    await ctx.db.categories.save(cat)
 
 
 @router.message(Command("add_product"))
-async def image_saving_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
+async def image_saving_handler(_, ctx: Context) -> None:
     configuration = ProductConfiguration(options={
         "size": ConfigurationOption(
             name=LocalizedString(data={
@@ -288,7 +303,7 @@ async def image_saving_handler(message: Message, command: CommandObject, state: 
         configuration=configuration
     )
 
-    await db.products.save(product)
+    await ctx.db.products.save(product)
 
 
 @router.message(Command("add_addit"))

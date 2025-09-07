@@ -5,7 +5,7 @@ from typing import Callable, Dict, Any, Awaitable, Tuple, Union
 
 from core.helper_classes import Context
 from ui.message_tools import clear_keyboard_effect, send_media_response
-from ui.texts import CartTextGen, OrdersTextGen, ProfileTextGen, AssortmentTextGen, AssortmentTextGen
+from ui.texts import *
 from ui.keyboards import *
 
 
@@ -72,7 +72,16 @@ async def call_state_handler(state: State,
         if state != CommonStates.MainMenu:
             await call_state_handler(CommonStates.MainMenu, ctx)
         raise e
+    
+    
+class AdminStates(StatesGroup):
+    PriceConfirmationWaiting = State()
 
+@state_handlers.register(AdminStates.PriceConfirmationWaiting)
+async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):
+    text = AdminTextGen.price_confirmation_text(list(entries), ctx)
+    await ctx.message.answer(text, reply_markup=UncategorizedKBs.reply_back(ctx))
+    
 
 class NewUserStates(StatesGroup):
     LangChoosing = State()

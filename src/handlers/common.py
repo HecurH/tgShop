@@ -20,7 +20,6 @@ router = Router(name="common")
 @router.message(CommandStart(deep_link=True))
 async def command_start_handler(_, ctx: Context, command: CommandObject) -> None:
     await ctx.fsm.clear()
-    # print(ctx.message.from_user.language_code)
 
     user = await ctx.db.customers.get_customer_by_id(ctx.message.from_user.id)
     if not user:
@@ -47,6 +46,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         await call_state_handler(NewUserStates.LangChoosing, 
                            ctx)
         return
+    
     await ctx.message.reply(ctx.t.CommonTranslates.hi)
 
     await call_state_handler(CommonStates.MainMenu, 
