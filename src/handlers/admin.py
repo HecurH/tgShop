@@ -55,7 +55,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         await ctx.message.answer("Неверный формат команды")
         return
         
-    user_id = args[0]
+    user_id = int(args[0]) if args[0].isdigit() else None
     delivery_service_id = args[1]
     req_options_list_idx = int(args[2])
     
@@ -108,7 +108,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
 @router.message(Command("cancel_manual_delivery_price_confirm"))
 async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
     args = command.args
-    user_id = args if args else None
+    user_id = int(args) if args and args.isdigit() else None
     customer = await ctx.db.customers.find_one_by_id({"user_id": user_id}) if user_id else None
 
     if not customer:
