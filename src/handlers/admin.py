@@ -109,7 +109,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
 async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
     args = command.args
     user_id = int(args) if args and args.isdigit() else None
-    customer = await ctx.db.customers.find_one_by_id({"user_id": user_id}) if user_id else None
+    customer = await ctx.db.customers.find_one_by({"user_id": user_id}) if user_id else None
 
     if not customer:
         await ctx.message.answer("Пользователь не найден")
