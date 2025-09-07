@@ -67,11 +67,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         await ctx.message.answer("Неверный формат JSON")
         return
         
-    try:
-        securs: list[str] = json.loads(command.args[json_start:json_end+1])
-    except json.JSONDecodeError:
-        await ctx.message.answer("Неверный формат JSON")
-        return
+    securs: str = command.args[json_start:json_end+1]
         
     # все что после JSON и до конца строки - это price
     price_str = command.args[json_end+1:].strip()
