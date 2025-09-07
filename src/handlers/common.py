@@ -10,7 +10,7 @@ from core.db import *
 from core.helper_classes import Context
 from ui.keyboards import CommonKBs
 from core.states import CommonStates, NewUserStates, call_state_handler
-from ui.translates import ReplyButtonsTranslates
+from ui.translates import ReplyButtonsTranslates, TranslatorHub
 
 router = Router(name="common")
 
@@ -38,8 +38,9 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         if lang in SUPPORTED_LANGUAGES_TEXT.values():
             ctx.customer.lang = lang
             ctx.lang = lang
+            ctx.t = TranslatorHub.get_for_lang(lang)
 
-            await ctx.db.update(ctx.customer)
+            await ctx.db.customers.save(ctx.customer)
             await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
             return
         
