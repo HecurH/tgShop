@@ -112,12 +112,11 @@ async def cart_price_confirmation_handler(_, ctx: Context):
         return
     
     order: Order = await Order.from_fsm_context(ctx, "order")
-    
     order.state.set_state(OrderStateKey.waiting_for_price_confirmation)
-    await ctx.n.AdminChatNotificator.send_price_confirmation(order, ctx)
     
     await ctx.db.orders.save(order)
     await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+    await ctx.n.AdminChatNotificator.send_price_confirmation(order, ctx)
     
     await ctx.fsm.update_data(order=None)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.price_confirmation_sent, 1))
@@ -235,10 +234,11 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
 
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
         order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
-        await ctx.n.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
         await ctx.db.orders.save(order)
         await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+        
+        await ctx.n.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
         await ctx.fsm.update_data(order=None)
         

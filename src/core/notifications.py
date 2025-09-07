@@ -19,7 +19,12 @@ class TelegramNotificator(Notificator):
         self._chat_id = chat_id
 
     async def send_notification(self, ctx: Context, message: str, reply_markup: Optional[ReplyMarkupUnion] = None, **_):
-        await ctx.message.bot.send_message(chat_id=self._chat_id, text=message, reply_markup=reply_markup)
+        if len(message) <= 4096:
+            await ctx.message.bot.send_message(chat_id=self._chat_id, text=message, reply_markup=reply_markup)
+        else:
+            for part in message.split("\n\n"):
+                await self.send_notification(ctx, part, reply_markup=reply_markup)
+                await asyncio.sleep(0.3)
         
 
 
@@ -44,24 +49,18 @@ class AdminChatNotificator(TelegramNotificator):
         products = await ctx.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
         products_dict = {product.id: product for product in products}
 
-        for entry in entries:
+        for idx, entry in enumerate(entries):
             if product := products_dict.get(entry.product_id):
-                text += f"{product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                text += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
                 
         text += f"\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>\n\n<code>/admin_unform_order {order.id}</code>\n\n<code>/admin_confirm_order_price {order.id}</code>"
 
-        if len(text) <= 4096:
-            await self.send_notification(ctx, text)
-        else:
-            for part in text.split("\n\n"):
-                await self.send_notification(ctx, part)
-                await asyncio.sleep(0.3)
+        await self.send_notification(ctx, text)
             
     
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
-        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
-                                     )
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}.")
         
     async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
         
