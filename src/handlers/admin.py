@@ -45,18 +45,40 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
 @router.message(Command("manual_delivery_price"))
 async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject):
-    args = command.args.split()
+    if not command.args:
+        await ctx.message.answer("Неверный формат команды")
+        return
+        
+    args = command.args.split(maxsplit=4)  # разделяем только первые 4 аргумента
     
     if len(args) < 5:
         await ctx.message.answer("Неверный формат команды")
         return
+        
     user_id = args[0]
     delivery_service_id = args[1]
     req_options_list_idx = int(args[2])
-    securs: list[str] = json.loads(args[3])
     
-    price = LocalizedMoney(**" ".join(args[4:]))
-    if not price:
+    # начало и конец JSON
+    json_start = command.args.find('[')
+    json_end = command.args.find(']')
+    
+    if json_start == -1 or json_end == -1:
+        await ctx.message.answer("Неверный формат JSON")
+        return
+        
+    try:
+        securs: list[str] = json.loads(command.args[json_start:json_end+1])
+    except json.JSONDecodeError:
+        await ctx.message.answer("Неверный формат JSON")
+        return
+        
+    # все что после JSON и до конца строки - это price
+    price_str = command.args[json_end+1:].strip()
+    try:
+        price_data = json.loads(price_str)
+        price = LocalizedMoney(**price_data)
+    except (json.JSONDecodeError, TypeError):
         await ctx.message.answer("Неверный формат цены")
         return
     
