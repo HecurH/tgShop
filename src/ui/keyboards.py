@@ -80,12 +80,13 @@ class AdminKBs:
             return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
         
         @staticmethod
-        def manual_payment_confirmation(order: Order, ctx: Context) -> types.InlineKeyboardMarkup:
+        async def manual_payment_confirmation(order: Order, ctx: Context) -> types.InlineKeyboardMarkup:
+            me = await ctx.message.bot.get_me()
             keyboard = [
                 [
                     types.InlineKeyboardButton(
                         text="Подтвердить оплату ✅",
-                        callback_data=f"confirm_manual_payment|{str(order.id)}"
+                        url=f"tg://resolve?domain={me.username}&start=confirm_manual_payment|{str(order.id)}"
                     )
                 ]
             ]
@@ -102,7 +103,7 @@ class AdminKBs:
                 [
                     types.InlineKeyboardButton(
                         text="Отменить",
-                        callback_data=f"cancel_manual_delivery_price_confirm|{ctx.customer.user_id}"
+                        url=f"tg://resolve?domain={me.username}&start=cancel_manual_delivery_price_confirm|{ctx.customer.user_id}"
                     )
                 ]
             ]
