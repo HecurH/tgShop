@@ -77,7 +77,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     price_str = command.args[json_end+1:].strip()
     try:
         print(price_str)
-        price_data = json.loads(price_str)
+        price_data = json.loads(price_str.replace("'", '"'))
         price = LocalizedMoney(**price_data)
     except (json.JSONDecodeError, TypeError) as e:
         await ctx.message.answer("Неверный формат цены")
