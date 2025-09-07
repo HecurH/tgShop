@@ -640,3 +640,13 @@ class UncategorizedKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
 
+    @staticmethod
+    async def go_to_bot(ctx: Context) -> types.InlineKeyboardMarkup:
+        me = await ctx.message.bot.get_me()
+        keyboard = [
+            [
+                types.InlineKeyboardButton(text="Перейти к боту",
+                                            url=f"tg://resolve?domain={me.username}")
+            ]
+        ]
+        return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
