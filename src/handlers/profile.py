@@ -283,6 +283,7 @@ async def editable_send_to_manual_confirmation_handler(_, ctx: Context) -> None:
     
     await ctx.n.AdminChatNotificator.send_delivery_manual_price_confirmation(delivery_info, ctx)
     
+    ctx.customer.delivery_info = None
     ctx.customer.waiting_for_manual_delivery_info_confirmation = True
     await ctx.db.customers.save(ctx.customer)
     
