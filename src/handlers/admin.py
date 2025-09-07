@@ -97,6 +97,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     delivery_service.selected_option = delivery_service.requirements_options[req_options_list_idx]
     delivery_service.restore_securs_from_str(securs)
     delivery_service.price = price
+    customer.delivery_info = DeliveryInfo()
     customer.delivery_info.service = delivery_service
     await ctx.db.customers.save(customer)
     
