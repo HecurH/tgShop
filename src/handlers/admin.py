@@ -47,7 +47,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
 async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject):
     args = command.args.split()
     
-    if len(args) != 5:
+    if len(args) < 5:
         await ctx.message.answer("Неверный формат команды")
         return
     user_id = args[0]
@@ -55,7 +55,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     req_options_list_idx = int(args[2])
     securs: list[str] = json.loads(args[3])
     
-    price = LocalizedMoney(**args[4]) if args[4] else None
+    price = LocalizedMoney(**" ".join(args[4:]))
     if not price:
         await ctx.message.answer("Неверный формат цены")
         return
