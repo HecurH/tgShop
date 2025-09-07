@@ -76,9 +76,12 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     # все что после JSON и до конца строки - это price
     price_str = command.args[json_end+1:].strip()
     try:
-        price = LocalizedMoney(**price_str)
-    except:
+        print(price_str)
+        price_data = json.loads(price_str)
+        price = LocalizedMoney(**price_data)
+    except (json.JSONDecodeError, TypeError) as e:
         await ctx.message.answer("Неверный формат цены")
+        print(e)
         return
     
     customer = await ctx.db.customers.find_one_by_id({"user_id": user_id})
