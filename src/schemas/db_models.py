@@ -251,9 +251,8 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         document = await self.get_collection().find_one(query, projection={"_id": 1})
         return document is not None
     
-    async def get_price_confirmation_entries(self, customer: "Customer", order: "Order") -> Iterable[CartEntry]:
+    async def get_price_confirmation_entries(self, order: "Order") -> Iterable[CartEntry]:
         query = {
-            "customer_id": customer.id,
             "order_id": order.id,
             "configuration.requires_price_confirmation": True
         }

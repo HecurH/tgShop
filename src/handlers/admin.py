@@ -27,10 +27,8 @@ async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Заказ не найден")
         return
     
-    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(ctx.customer, order))
+    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
     if order.state != OrderStateKey.waiting_for_price_confirmation or not entries:
-        print(order.state)
-        print(entries)
         await ctx.message.answer("Заказ не в ожидании подтверждения цены")
         return
     
