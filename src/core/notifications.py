@@ -54,8 +54,7 @@ class AdminChatNotificator(TelegramNotificator):
     
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
-        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}.",
-                                     reply_markup=await AdminKBs.Orders.manual_payment_confirmation(order, ctx)
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
                                      )
         
     async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
@@ -63,7 +62,7 @@ class AdminChatNotificator(TelegramNotificator):
         delivery_requirements_info = build_list([f"{requirement.name.get('ru')} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
                                                 padding=2)
         
-        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.service.id} {delivery_info.service.get_selected_option_index()} {delivery_info.service.securs_to_str()} {delivery_info.service.price.model_dump(mode='json')}</code>",
+        await self.send_notification(ctx, f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.service.id} {delivery_info.service.get_selected_option_index()} {delivery_info.service.securs_to_str()} {delivery_info.service.price.model_dump(mode='json')}</code>\n\n<code>/cancel_manual_delivery_price_confirm {ctx.customer.user_id}</code>",
                                      reply_markup=await AdminKBs.Orders.delivery_manual_price_confirmation(ctx)
                                      )
         

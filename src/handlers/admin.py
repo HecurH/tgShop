@@ -19,9 +19,9 @@ router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
 
-@router.message(CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"^admin_confirm_price\|(.+)$"))))
+@router.message(Command("admin_confirm_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
-    order_id: str = command.args.split("|")[1]
+    order_id: str = command.args
     order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
     if not order:
         await ctx.message.answer("Заказ не найден")
@@ -105,10 +105,10 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     
     await ctx.message.answer("Цена установлена!")
 
-@router.message(CommandStart(deep_link=True, magic=F.args.regexp(re.compile(r"^cancel_manual_delivery_price_confirm\|(.+)$"))))
+@router.message(Command("cancel_manual_delivery_price_confirm"))
 async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
-    args = command.args.split("|")
-    user_id = args[1] if len(args) == 2 else None
+    args = command.args
+    user_id = args if args else None
     customer = await ctx.db.customers.find_one_by_id({"user_id": user_id}) if user_id else None
 
     if not customer:
