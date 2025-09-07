@@ -93,6 +93,9 @@ class LocalizedMoney(BaseModel):
         
         template = SUPPORTED_CURRENCIES.get(currency, f"{{amount}}{currency}")
         return template.format(amount=0)
+    
+    def to_text_all(self) -> str:
+        return ", ".join(self.to_text(cur) for cur in self.data)
 
     def __add__(self, other):
         if not isinstance(other, LocalizedMoney):

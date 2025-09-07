@@ -7,7 +7,7 @@ from ui.keyboards import AdminKBs, UncategorizedKBs
 
 from core.helper_classes import Context
 from ui.message_tools import build_list
-from ui.texts import gen_product_configurable_info_text
+from ui.texts import form_entry_description, gen_product_configurable_info_text
 from ui.translates import NotificatorTranslates
 
 class Notificator(ABC):
@@ -61,6 +61,10 @@ class AdminChatNotificator(TelegramNotificator):
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
+        text += "Содержимое заказа:\n"
+        
+        entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        text += "\n".join((form_entry_description(entry) for entry in entries))
         text += f"\n\n<code>/confirm_manual_payment {order.id}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
 
         await self.send_notification(ctx, text)

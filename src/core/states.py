@@ -85,7 +85,7 @@ async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[Cart
     
 @state_handlers.register(AdminStates.PriceConfirmationCancel)
 async def handle_price_confirmation_cancel(ctx: Context, customer: Customer, **_):
-    await ctx.message.answer(f"Если хотить отменить доставку с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
+    await ctx.message.answer(f"Если хотите отменить доставку с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
                              reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
 
