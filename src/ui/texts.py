@@ -87,8 +87,7 @@ class AdminTextGen:
                     key: option.get_chosen().price.model_dump()
                 }
                 for key, option in entry.configuration.get_price_blocking_options().items()
-            ], ensure_ascii=False)}"
-            for idx, entry in enumerate(entries)
+            ], ensure_ascii=False)}" for idx, entry in enumerate(entries)
         )
 
         return f"{entries_desc}\n\nИзмени цену конфигурации для товаров относительно их айди\n\n<code>{next_input_info}</code>"
