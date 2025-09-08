@@ -46,7 +46,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
     text = text.replace("'", '"')
     text = text.split('\n')
     try:
-        prices = [LocalizedMoney(**json.loads(entry.split(": ")[-1])) for entry in text]
+        prices = [LocalizedMoney.model_validate_json(entry.split(": ")[-1]) for entry in text]
     except (json.JSONDecodeError, TypeError) as e:
         await ctx.message.answer("Неверный формат цен")
         return
@@ -90,10 +90,8 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     # все что после JSON и до конца строки - это price
     price_str = command.args[json_end+1:].strip()
     try:
-        print(price_str)
-        price_data = json.loads(price_str.replace("'", '"'))
-        price = LocalizedMoney(**price_data)
-    except (json.JSONDecodeError, TypeError) as e:
+        price = LocalizedMoney.model_validate_json(price_str)
+    except:
         await ctx.message.answer("Неверный формат цены")
         return
     
