@@ -131,6 +131,10 @@ async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command:
         await ctx.message.answer("Пользователь не найден")
         return
     
+    if not customer.waiting_for_manual_delivery_info_confirmation:
+        await ctx.message.answer("Пользователь не не ожидает подтверждения")
+        return
+    
     await customer.save_in_fsm(ctx, "customer")
     await call_state_handler(AdminStates.PriceConfirmationCancel, ctx, customer=customer)
     
