@@ -36,7 +36,7 @@ class MessageWrapper:
     def __init__(self, message: Message):
         self._message = message
         
-    async def answer(self, text, *args, **kwargs) -> SendMessage:
+    async def answer(self, text, *args, **kwargs):
         parts = split_message(text, 4096)
         if len(parts) == 1:
             return await self._message.answer(text, *args, **kwargs)
@@ -69,7 +69,7 @@ class MessageWrapper:
                 temp_kwargs.pop('reply_markup', None)
                 await self._message.answer_photo(*args, **temp_kwargs)
                 
-                return await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
+                return await self._message.answer(caption, reply_markup=kwargs.get('reply_markup', None))
             
             return await self._message.answer_photo(*args, caption=caption, **kwargs)
         
@@ -105,7 +105,7 @@ class MessageWrapper:
                 temp_kwargs.pop('reply_markup', None)
                 await self._message.answer_video(*args, **temp_kwargs)
                 
-                return await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
+                return await self._message.answer(caption, reply_markup=kwargs.get('reply_markup', None))
             
             return await self._message.answer_video(*args, caption=caption, **kwargs)
         
@@ -160,11 +160,6 @@ class Context:
             return None
 
         return text
-
-    async def get_last_bot_message(self) -> Optional[Message]:
-        last_bot_message = await self.fsm.get_value("last_bot_message")
-        
-        if last_bot_message: return Message(**last_bot_message).as_(self.event.bot)
     
     async def get_last_bot_message(self) -> Optional[Message]:
         last_bot_message = await self.fsm.get_value("last_bot_message")
