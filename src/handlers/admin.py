@@ -65,7 +65,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await ctx.message.answer("Ошибка при обработке данных")
         return
     
-    order = Order.from_fsm_context(ctx, "order")
+    order = await Order.from_fsm_context(ctx, "order")
     cart_entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
     
     for idx, cart_entry in enumerate(cart_entries):
