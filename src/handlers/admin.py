@@ -66,7 +66,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         return
     
     order: Order = await Order.from_fsm_context(ctx, "order")
-    customer = ctx.db.customers.find_one_by_id(order.customer_id)
+    customer = await ctx.db.customers.find_one_by_id(order.customer_id)
     if not customer:
         await ctx.message.answer("Пользователь не найден")
         return
