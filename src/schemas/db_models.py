@@ -428,18 +428,26 @@ class ProductConfiguration(AppBaseModel):
     price_confirmed_override: bool = False
     
     def _sync_price_confirmation_flag(self):
-        self.requires_price_confirmation = any(
+        new_value = any(
             hasattr(option.get_chosen(), "blocks_price_determination") and
             option.get_chosen().blocks_price_determination
             for option in self.options.values()
         ) and not self.price_confirmed_override
+        
+        if self.requires_price_confirmation != new_value:
+            super().__setattr__('requires_price_confirmation', new_value)
 
     def __init__(self, **data):
         super().__init__(**data)
         
         self._sync_price_confirmation_flag()
         if self.price is None: self.update_price()
-    
+        
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        
+        if name in ["options", "price_confirmed_override"]:
+            self._sync_price_confirmation_flag()
     
     def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
         """

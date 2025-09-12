@@ -64,6 +64,24 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
     except (ValueError, json.JSONDecodeError, ValidationError):
         await ctx.message.answer("Ошибка при обработке данных")
         return
+    
+    order = Order.from_fsm_context(ctx, "order")
+    cart_entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
+    
+    for idx, cart_entry in enumerate(cart_entries):
+        updater_entry = entries[idx]
+        for key, price in updater_entry.items():
+            cart_entry.configuration.options[key].get_chosen().priсe = price
+        
+        cart_entry.configuration.update_price()
+        cart_entry.configuration.price_confirmed_override = True
+    print(cart_entries)
+        
+    # await ctx.db.cart_entries.save_many(cart_entries)
+    
+    
+            
+    
     print(entries)
         
     
