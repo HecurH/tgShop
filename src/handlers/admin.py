@@ -65,30 +65,29 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await ctx.message.answer("Ошибка при обработке данных")
         return
     
-    order = await Order.from_fsm_context(ctx, "order")
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    customer = ctx.db.customers.find_one_by_id(order.customer_id)
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+    
     cart_entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
     
     for idx, cart_entry in enumerate(cart_entries):
         updater_entry = entries[idx]
         for key, price in updater_entry.items():
             chosen = cart_entry.configuration.options[key].get_chosen()
-            print(chosen)
             chosen.price = price
         
-        cart_entry.configuration.update_price()
         cart_entry.configuration.price_confirmed_override = True
-    print(cart_entries)
+        cart_entry.configuration.update_price()
         
-    # await ctx.db.cart_entries.save_many(cart_entries)
+    order.state.set_state(OrderStateKey.waiting_for_forming)
+    await ctx.db.cart_entries.save_many(cart_entries)
+    await ctx.db.orders.save(order)
     
-    
-            
-    
-    print(entries)
-        
-    
-    
-    
+    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer, ctx)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Цена подтверждена.", 1))
     
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
 @router.message(Command("manual_delivery_price"))

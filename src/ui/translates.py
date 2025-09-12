@@ -232,6 +232,16 @@ class EnumTranslates(Translatable):
             "ru": "Формирование заказа",
             "en": "Order forming"
         }
+        
+        waiting_for_price_confirmation = {
+            "ru": "Ожидает подтверждения цены",
+            "en": "Waiting for price confirmation"
+        }
+        
+        waiting_for_forming = {
+            "ru": "Ожидает формирования",
+            "en": "Waiting for forming"
+        }
 
         waiting_for_payment = {
             "ru": "Ожидает оплаты",
@@ -241,11 +251,6 @@ class EnumTranslates(Translatable):
         waiting_for_manual_payment_confirm = {
             "ru": "Ожидает подтверждения оплаты",
             "en": "Waiting for payment confirmation"
-        }
-        
-        waiting_for_price_confirmation = {
-            "ru": "Ожидает подтверждения цены",
-            "en": "Waiting for price confirmation"
         }
         
         assembled_waiting_for_send = {
@@ -732,6 +737,12 @@ class NotificatorTranslates(Translatable):
         delivery_price_rejected_with_reason = {
             "ru": "Вашу доставку отклонили. Вы можете изменить информацию о доставке и попробовать еще раз.\nПричина: {reason}",
             "en": "Your delivery was rejected. You can change your delivery information and try again.\nReason: {reason}"
+        }
+    
+    class Order(Translatable):
+        order_price_confirmed = {
+            "ru": "Стоимость вашего заказа была подтверждена. Вы можете продолжить формирование заказа в меню Заказы.",
+            "en": "Your order price has been confirmed. You can continue forming your order in the Orders menu."
         }
 
 class ReplyButtonsTranslates(Translatable):

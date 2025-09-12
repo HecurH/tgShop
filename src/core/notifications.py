@@ -19,6 +19,10 @@ class TelegramNotificator(Notificator):
         self._chat_id = chat_id
 
     async def send_notification(self, ctx: Context, message: str, reply_markup: Optional[ReplyMarkupUnion] = None, **_):
+        cus = await ctx.db.customers.find_one_by({"user_id": self._chat_id})
+        if cus and cus.kicked:
+            raise Exception("Пользователь заблокировал бота!")
+        
         if len(message) <= 4096:
             await ctx.message.bot.send_message(chat_id=self._chat_id, text=message, reply_markup=reply_markup)
         else:
@@ -91,6 +95,9 @@ class UserTelegramNotificator(TelegramNotificator):
         super().__init__(chat_id=customer.user_id)
         await self.send_notification(ctx, NotificatorTranslates.Delivery.translate("delivery_price_rejected_with_reason", customer.lang).format(reason=reason))
 
+    async def order_price_confirmed(self, customer: Customer, ctx: Context):
+        super().__init__(chat_id=customer.user_id)
+        await self.send_notification(ctx, NotificatorTranslates.Order.translate("order_price_confirmed", customer.lang))
         
 class NotificatorHub:
     def __init__(self, logs_channel_id, admin_chat_id):

@@ -809,7 +809,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         await self.save(customer)
         return customer
 
-    async def get_customer_by_id(self, user_id: int) -> Optional[Customer]:
+    async def get_customer_by_user_id(self, user_id: int) -> Optional[Customer]:
         return await self.find_one_by({"user_id": user_id})
 
 class Category(AppBaseModel):
