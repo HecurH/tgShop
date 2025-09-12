@@ -131,7 +131,7 @@ class AdminChatNotificator(TelegramNotificator):
         
         entries = await ctx.db.cart_entries.get_entries_by_order(order)
         text += "\n".join(await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries)))
-        text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.now(datetime.timezone.utc)}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
+        text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
 
         await self.send_notification(ctx, text)
         
