@@ -59,13 +59,7 @@ def _open_tags_stack(text: str):
 
 
 def split_message(text: str, limit: int) -> List[str]:
-    """
-    Разбивает text на части не длиннее limit, пытаясь резать по двойным переносам,
-    затем по переносам, затем по пробелу. Гарантирует, что теги не будут обрываться:
-    - если рез попадает внутрь тега, он сдвигается до следующего '>'
-    - незакрытые теги в конце части автоматически закрываются
-    - в начале следующей части эти теги переоткрываются (восстанавливаются с атрибутами)
-    """
+    print(text)
     if len(text) <= limit:
         return [text]
 
@@ -120,6 +114,7 @@ def split_message(text: str, limit: int) -> List[str]:
     if buffer:
         parts.append(buffer)
 
+    print(parts)
     return parts
 
 async def send_media_response(
