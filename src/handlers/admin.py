@@ -20,6 +20,75 @@ router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
 
+@router.message(Command("confirm_manual_payment"))
+async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):
+    args = command.args.split("|")
+    if len(args) < 2:
+        await ctx.message.answer(f"Недостаточно аргументов.")
+        return
+    
+    order_id: str = args[0]
+    try:
+        parsed_datetime = datetime.datetime.fromisoformat(args[1])
+    except ValueError as e:
+        await ctx.message.answer(f"Неправильный формат времени: {e}")
+        return
+    
+    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    customer = await ctx.db.customers.find_one_by_id(order.customer_id) if order else None
+    if not order:
+        await ctx.message.answer("Заказ не найден")
+        return
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+    
+    if order.state != OrderStateKey.waiting_for_manual_payment_confirm:
+        await ctx.message.answer("Заказ не в ожидании подтверждения оплаты")
+        return
+    
+    order.price_details.customer_paid = True
+    order.price_details.payment_time = parsed_datetime
+    order.state.set_state(OrderStateKey.accepted)
+    
+    if not order.payment_method.can_register_receipts:
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, ctx=ctx)
+        await ctx.db.orders.save(order)
+        await ctx.message.answer("Заказ подтвержден")
+        return
+    
+    await order.save_in_fsm(ctx, "order")
+    await call_state_handler(AdminStates.AskGenerateReceipt, ctx)
+    
+@router.message(AdminStates.PriceConfirmationWaiting)
+async def price_confirmation_waiting_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.yes:
+        order = Order.from_fsm_context(ctx, "order")
+        customer = await ctx.db.customers.find_one_by_id(order.customer_id)
+        cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        
+        try:
+            receipts = await ctx.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
+        except Exception as e:
+            await call_state_handler(CommonStates.MainMenu, ctx, send_before=(f"Ошибка при генерации чеков: {e}", 1))
+            return
+
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts, ctx)
+        await ctx.db.orders.save(order)
+        
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
+    elif text == ctx.t.UncategorizedTranslates.no:
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, ctx=ctx)
+        await ctx.db.orders.save(order)
+        
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
+        return
+    else:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+    
+    
+
 @router.message(Command("admin_confirm_order_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
     order_id: str = command.args
@@ -438,6 +507,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
             "ru":"Дракон Хайден",
             "en":"Hiden Dragon"}
         ),
+        name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Хайден\"",
         category="dildos",
         short_description=LocalizedString(data={
             "ru":"Заглушка хд",

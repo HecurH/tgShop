@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
@@ -15,7 +15,7 @@ async def send_media_response(
     media_id: str,
     caption: str,
     keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None,
-    media_type: str = "photo"
+    media_type: Literal["photo", "video"] = "photo"
 ) -> None:
     if media_type == "photo":
         await message.answer_photo(media_id, caption=caption, reply_markup=keyboard)

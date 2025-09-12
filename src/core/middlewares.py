@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
 from core.db import DatabaseService
-from core.helper_classes import Context
+from core.helper_classes import Context, TaxSystem
 from core.notifications import NotificatorHub
 from core.states import NewUserStates
 from ui.translates import TranslatorHub
@@ -17,6 +17,7 @@ class ContextMiddleware(BaseMiddleware):
         self.db = DatabaseService()
         self.notificator_hub = NotificatorHub(logs_channel_id=getenv("TG_LOGS_CHANNEL_ID"), 
                                               admin_chat_id=getenv("TG_ADMIN_CHAT_ID"))
+        self.tax_system = TaxSystem()
 
         self.initialized = False
 
@@ -43,6 +44,7 @@ class ContextMiddleware(BaseMiddleware):
                               customer,
                               data["lang"],
                               TranslatorHub.get_for_lang(data["lang"]),
+                              self.tax_system,
                               self.notificator_hub)
         state = await data.get("state").get_state()
         if not customer and not state == NewUserStates.LangChoosing and state != None:

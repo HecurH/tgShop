@@ -14,6 +14,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 import aiohttp
 
+from MoyNalogAPI import AsyncMoyNalog
+from MoyNalogAPI.schemas import Service, Client
 from schemas.db_models import *
 from ui.translates import TypedTranslatorHub
 
@@ -31,6 +33,7 @@ class Context:
     customer: "Customer"
     lang: str
     t: TypedTranslatorHub
+    tax: "TaxSystem"
     n: "NotificatorHub"
 
     @property
@@ -75,6 +78,86 @@ class Cryptography:
         unpadder = padding.PKCS7(128).unpadder()
         unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
         return unpadded_data.decode()
+
+# класс для учета налогов в системе
+class TaxSystem:
+    def __init__(self, config_path: str = "src/configs/"):
+        self.client = AsyncMoyNalog(config_path)
+        
+        
+    def distribute_discounts(cart_entries: list[CartEntry], total_discount: Money) -> list[Money]:
+        entry_prices = [
+            (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity
+            for entry in cart_entries
+        ]
+        
+        total_price = sum(entry_prices, LocalizedMoney())
+        
+        if total_price.amount == 0:
+            return [Money(currency=total_discount.currency, amount=0.0) for _ in cart_entries]
+        
+        discounts = []
+        remaining_discount = total_discount.amount
+        
+        for price in entry_prices[:-1]:
+            fraction = price.get_amount(total_discount.currency) / total_price.get_amount(total_discount.currency)
+            discount_amount = fraction * total_discount.amount
+            discount_amount = min(discount_amount, price.get_amount(total_discount.currency))
+            discount_amount = round(discount_amount, 2)
+            discounts.append(Money(currency=total_discount.currency, amount=discount_amount))
+            remaining_discount -= discount_amount
+        
+        last_discount = min(remaining_discount, entry_prices[-1].get_amount(total_discount.currency))
+        last_discount = round(last_discount, 2)
+        discounts.append(Money(currency=total_discount.currency, amount=last_discount))
+        
+        return discounts
+
+    
+    async def invoice_by_order(self, cart_entries: list[CartEntry], order: Order, operation_time: datetime.datetime) -> str | list[str]:
+        price_details = order.price_details
+        
+        services = []
+        client_data = Client()
+        
+        discounts = (price_details.bonuses_applied or Money(currency=price_details.products_price.currency, amount=0.0)) + (price_details.promocode_discount or Money(currency=price_details.products_price.currency, amount=0.0))
+        entry_discounts = self.distribute_discounts(cart_entries, discounts)
+        
+        entries_list = [
+            [
+                entry.frozen_product.name_for_tax,
+                (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity - entry_discounts[i],
+                entry.quantity
+            ] 
+            for i, entry in enumerate(cart_entries)
+        ]
+
+        for name, price, quantity in entries_list:
+            if price > 0.001: services.append(Service(name=name, amount=price, quantity=quantity))
+            
+        if len(services) == 0: return None
+        if len(services) > 6:
+            chunks = [services[i:i + 6] for i in range(0, len(services), 6)]
+            receipts = []
+            for services_chunk in chunks:
+                
+                receipts.append(await self.client.create_invoice(
+                    operation_time=operation_time,
+                    svs=services_chunk,
+                    client=client_data,
+                    payment_type="WIRE",
+                    return_receipt_url=True
+                ))
+            return receipts
+            
+        return await self.client.create_invoice(
+            operation_time=operation_time,
+            svs=services,
+            client=client_data,
+            payment_type="WIRE",
+            return_receipt_url=True
+        )
+        
 
 class AsyncCurrencyConverter:
     """Асинхронный конвертер валют с кэшированием и обновлением курсов.

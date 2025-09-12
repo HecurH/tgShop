@@ -253,6 +253,11 @@ class EnumTranslates(Translatable):
             "en": "Waiting for payment confirmation"
         }
         
+        accepted = {
+            "ru": "Принят в работу",
+            "en": "Accepted"
+        }
+        
         assembled_waiting_for_send = {
             "ru": "Собран, ожидает отправки",
             "en": "Assembled, waiting to be shipped"
@@ -741,6 +746,16 @@ class NotificatorTranslates(Translatable):
         order_price_confirmed = {
             "ru": "Стоимость вашего заказа была подтверждена. Вы можете продолжить формирование заказа в меню Заказы.",
             "en": "Your order price has been confirmed. You can continue forming your order in the Orders menu."
+        }
+        
+        order_state_changed = {
+            "ru": "Статус вашего заказа {order_puid} изменился на \"{order_state}\".",
+            "en": "The status of your order {order_puid} has changed to \"{order_state}\"."
+        }
+        
+        order_payment_accepted = {
+            "ru": "Мы получили оплату по заказу {order_puid}. Вы будете получать уведомления о изменении его статуса",
+            "en": "We have received payment for your order {order_puid}. You will receive notifications about changes in its status"
         }
 
 class ReplyButtonsTranslates(Translatable):

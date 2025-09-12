@@ -1,7 +1,8 @@
 from abc import abstractmethod, ABC
 import asyncio
-from typing import Optional
-from aiogram.types import ReplyMarkupUnion
+import datetime
+from typing import Literal, Optional
+from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile
 from schemas.db_models import Customer, Order, DeliveryInfo
 from ui.keyboards import AdminKBs, UncategorizedKBs
 
@@ -14,21 +15,82 @@ class Notificator(ABC):
     @abstractmethod
     async def send_notification(self, **_): ...
     
+import asyncio
+from typing import Optional
+
 class TelegramNotificator(Notificator):
     def __init__(self, chat_id: Optional[str] = None):
         self._chat_id = chat_id
 
-    async def send_notification(self, ctx: Context, message: str, reply_markup: Optional[ReplyMarkupUnion] = None, **_):
+    async def send_notification(
+        self,
+        ctx: Context,
+        message: str,
+        reply_markup: Optional[ReplyMarkupUnion] = None,
+        media: Optional[InputFile | list[InputFile]] = None,
+        media_type: Literal["photo", "video"] = "photo",
+        **_
+    ):
         cus = await ctx.db.customers.find_one_by({"user_id": self._chat_id})
         if cus and cus.kicked:
             raise Exception("Пользователь заблокировал бота!")
-        
-        if len(message) <= 4096:
-            await ctx.message.bot.send_message(chat_id=self._chat_id, text=message, reply_markup=reply_markup)
-        else:
-            for part in message.split("\n\n"):
-                await self.send_notification(ctx, part, reply_markup=reply_markup)
+
+        parts = self._split_message(message, limit=4096)
+
+        for i, part in enumerate(parts):
+            is_first = i == 0
+            is_last = i == len(parts) - 1
+            
+            if is_first and media:
+                if isinstance(media, list):
+                    await ctx.message.bot.send_media_group(chat_id=self._chat_id,
+                                                           media=media)
+                    await ctx.message.bot.send_message(chat_id=self._chat_id,
+                                                       text=part,
+                                                       reply_markup=reply_markup if is_last else None)
+                elif media_type == "photo":
+                    await ctx.message.bot.send_photo(chat_id=self._chat_id, 
+                                                     photo=media, 
+                                                     caption=part, 
+                                                     reply_markup=reply_markup if is_last else None)
+                elif media_type == "video":
+                    await ctx.message.bot.send_video(chat_id=self._chat_id, 
+                                                     video=media, 
+                                                     caption=part, 
+                                                     reply_markup=reply_markup if is_last else None)
+            else:
+                await ctx.message.bot.send_message(
+                    chat_id=self._chat_id,
+                    text=part,
+                    reply_markup=reply_markup if is_last else None)
+            if not is_last:
                 await asyncio.sleep(0.3)
+
+    def _split_message(self, text: str, limit: int) -> list[str]:
+        if len(text) <= limit:
+            return [text]
+
+        parts = []
+        buffer = text
+
+        while len(buffer) > limit:
+            # ищем лучший разрез
+            cut = (
+                buffer.rfind("\n\n", 0, limit)
+                or buffer.rfind("\n", 0, limit)
+                or buffer.rfind(" ", 0, limit)
+            )
+            if cut == -1 or cut < limit // 2:  # не нашли нормального места
+                cut = limit
+
+            parts.append(buffer[:cut].strip())
+            buffer = buffer[cut:].lstrip()
+
+        if buffer:
+            parts.append(buffer)
+
+        return parts
+
         
 
 
@@ -65,11 +127,11 @@ class AdminChatNotificator(TelegramNotificator):
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
-        text += "Содержимое заказа:\n"
+        text += "\nСодержимое заказа:\n"
         
         entries = await ctx.db.cart_entries.get_entries_by_order(order)
         text += "\n".join(await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries)))
-        text += f"\n\n<code>/confirm_manual_payment {order.id}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
+        text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.now(datetime.timezone.utc)}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
 
         await self.send_notification(ctx, text)
         
@@ -98,6 +160,19 @@ class UserTelegramNotificator(TelegramNotificator):
     async def order_price_confirmed(self, customer: Customer, ctx: Context):
         super().__init__(chat_id=customer.user_id)
         await self.send_notification(ctx, NotificatorTranslates.Order.translate("order_price_confirmed", customer.lang))
+        
+    async def send_order_state_changed(self, customer: Customer, order: Order, ctx: Context):
+        super().__init__(chat_id=customer.user_id)
+        await self.send_notification(ctx, NotificatorTranslates.Order.translate("order_state_changed", customer.lang).format(order_puid=f"#{order.puid}", order_state=order.state.get_localized_name(ctx.lang)))
+    
+    async def send_order_payment_accepted(self, customer: Customer, order: Order, receipt_url: Optional[str | list[str]] = None, ctx: Context = None):
+        super().__init__(chat_id=customer.user_id)
+        media = ([URLInputFile(url) for url in receipt_url] if isinstance(receipt_url, list) else URLInputFile(receipt_url)) if receipt_url else None
+        
+        await self.send_notification(ctx, 
+                                     NotificatorTranslates.Order.translate("order_payment_accepted", customer.lang).format(order_puid=f"#{order.puid}"),
+                                     media=media)
+        
         
 class NotificatorHub:
     def __init__(self, logs_channel_id, admin_chat_id):

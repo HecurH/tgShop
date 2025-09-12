@@ -77,6 +77,7 @@ async def call_state_handler(state: State,
 class AdminStates(StatesGroup):
     PriceConfirmationWaiting = State()
     PriceConfirmationCancel = State()
+    AskGenerateReceipt = State()
 
 @state_handlers.register(AdminStates.PriceConfirmationWaiting)
 async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):
@@ -87,6 +88,10 @@ async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[Cart
 async def handle_price_confirmation_cancel(ctx: Context, customer: Customer, **_):
     await ctx.message.answer(f"Если хотите отменить доставку с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
                              reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    
+@state_handlers.register(AdminStates.AskGenerateReceipt)
+async def handle_ask_generate_receipt(ctx: Context, **_):
+    await ctx.message.answer("Cгенерировать ему чек?", reply_markup=UncategorizedKBs.yes_no(ctx))
     
 
 class NewUserStates(StatesGroup):

@@ -548,6 +548,8 @@ class ProductConfiguration(AppBaseModel):
 class Product(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
+    name_for_tax: str
+    
     category: str
 
     short_description: LocalizedString
