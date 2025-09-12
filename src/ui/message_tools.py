@@ -8,7 +8,31 @@ async def clear_keyboard_effect(message: Message) -> None:
     """Костыльно удаляет клавиатуру."""
     msg = await message.answer("||BOO||", reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     await msg.delete()
-    
+
+def split_message(text: str, limit: int) -> list[str]:
+        if len(text) <= limit:
+            return [text]
+
+        parts = []
+        buffer = text
+
+        while len(buffer) > limit:
+            # ищем лучший разрез
+            cut = (
+                buffer.rfind("\n\n", 0, limit)
+                or buffer.rfind("\n", 0, limit)
+                or buffer.rfind(" ", 0, limit)
+            )
+            if cut == -1 or cut < limit // 2:  # не нашли нормального места
+                cut = limit
+
+            parts.append(buffer[:cut].strip())
+            buffer = buffer[cut:].lstrip()
+
+        if buffer:
+            parts.append(buffer)
+
+        return parts
 
 async def send_media_response(
     message: Message,

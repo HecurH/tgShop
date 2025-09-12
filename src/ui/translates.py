@@ -279,6 +279,11 @@ class UncategorizedTranslates(Translatable):
         "en": "Oops! I'm sorry, I need to start over..."
     }
     
+    input_message_too_long = {
+        "ru": "Ваше сообщение слишком длинное! Попробуйте сократить его до 1024 символов.",
+        "en": "Your message is too long! Try shortening it to 1024 characters."
+    }
+    
     ok_dont_changing = {
         "ru": "Окей, оставим как есть 👌",
         "en": "Okay, let's leave it as is 👌"

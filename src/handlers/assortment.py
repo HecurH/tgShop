@@ -300,16 +300,19 @@ async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.message(Assortment.ChoiceEditValue)
 async def advanced_edit_value(message: Message, ctx: Context) -> None:
+    text = ctx.parse_user_input()
+    if not text: return
+    
     product: Product = await Product.from_fsm_context(ctx, "product")
     changing_option = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
     chosen = changing_option.get_chosen() # ССЫЛКА на объект, не надо дополнительно переприсваивать дочерних тварей
 
     if chosen.existing_presets:
-        if not (message.text.isdigit() and 
-                1 <= int(message.text) <= chosen.existing_presets_quantity):
+        if not (text.isdigit() and 
+                1 <= int(text) <= chosen.existing_presets_quantity):
             await message.delete()
             return
-        chosen.existing_presets_chosen = int(message.text)
+        chosen.existing_presets_chosen = int(text)
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option
@@ -321,10 +324,10 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
                                  product=product,
                                  option=changing_option)
     elif chosen.is_custom_input:
-        if message.text.isdigit():
+        if text.isdigit():
             await message.delete()
             return
-        chosen.custom_input_text = message.text
+        chosen.custom_input_text = text
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option

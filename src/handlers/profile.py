@@ -226,10 +226,13 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
 
 @router.message(Profile.Delivery.Editables.Requirement)
 async def editable_requirement_handler(_, ctx: Context) -> None:
+    text = ctx.parse_user_input()
+    if text is None: return
+    
     first_setup = ctx.customer.delivery_info is None
     delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
 
-    if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
+    if text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         if first_setup:
             await call_state_handler(Profile.Delivery.Editables.RequirementsLists, ctx, delivery_info=delivery_info)
         else:        
@@ -240,11 +243,11 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
     requirement_index = await ctx.fsm.get_value("requirement_index")
 
     requirement: DeliveryRequirement = delivery_info.service.selected_option.requirements[requirement_index]
-    if ctx.message.text.isdigit():
+    if text.isdigit():
         await call_state_handler(Profile.Delivery.Editables.Requirement, ctx, delivery_info=delivery_info, requirement_index=requirement_index)
         return
     
-    requirement.value.update(ctx.message.text)
+    requirement.value.update(text)
     
     if len(delivery_info.service.selected_option.requirements)-1 == requirement_index:
         await ctx.fsm.update_data(requirement_index=None)

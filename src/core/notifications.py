@@ -8,7 +8,7 @@ from schemas.db_models import Customer, Order, DeliveryInfo
 from ui.keyboards import AdminKBs, UncategorizedKBs
 
 from core.helper_classes import Context
-from ui.message_tools import build_list
+from ui.message_tools import build_list, split_message
 from ui.texts import form_entry_description, gen_product_configurable_info_text
 from ui.translates import NotificatorTranslates
 
@@ -36,7 +36,7 @@ class TelegramNotificator(Notificator):
         if cus and cus.kicked:
             raise Exception("Пользователь заблокировал бота!")
 
-        parts = self._split_message(message, limit=4096)
+        parts = split_message(message, limit=4096)
 
         for i, part in enumerate(parts):
             is_first = i == 0
@@ -73,34 +73,7 @@ class TelegramNotificator(Notificator):
             if not is_last:
                 await asyncio.sleep(0.3)
 
-    def _split_message(self, text: str, limit: int) -> list[str]:
-        if len(text) <= limit:
-            return [text]
-
-        parts = []
-        buffer = text
-
-        while len(buffer) > limit:
-            # ищем лучший разрез
-            cut = (
-                buffer.rfind("\n\n", 0, limit)
-                or buffer.rfind("\n", 0, limit)
-                or buffer.rfind(" ", 0, limit)
-            )
-            if cut == -1 or cut < limit // 2:  # не нашли нормального места
-                cut = limit
-
-            parts.append(buffer[:cut].strip())
-            buffer = buffer[cut:].lstrip()
-
-        if buffer:
-            parts.append(buffer)
-
-        return parts
-
         
-
-
 class TelegramChannelLogsNotificator(TelegramNotificator):
     def __init__(self, channel_id: str):
         super().__init__(chat_id=channel_id)
@@ -140,7 +113,7 @@ class AdminChatNotificator(TelegramNotificator):
         text += "\n".join(await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries)))
         text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
 
-        await self.send_notification(ctx, text)
+        await self.send_notification(ctx, text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         
     async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
         
