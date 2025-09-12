@@ -89,7 +89,7 @@ class TaxSystem:
     def __init__(self, config_path: str = "src/configs/"):
         self.client = AsyncMoyNalog(config_path)
         
-    def distribute_discounts(self, cart_entries: list[CartEntry], total_discount: "Money") -> list["Money"]:
+    def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
         from schemas.types import LocalizedMoney, Money
         entry_prices = [
             (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity
