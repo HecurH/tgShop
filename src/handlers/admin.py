@@ -71,7 +71,7 @@ async def ask_generate_receipt_handler(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
 
-    order = Order.from_fsm_context(ctx, "order")
+    order = await Order.from_fsm_context(ctx, "order")
     customer = await ctx.db.customers.find_one_by_id(order.customer_id)
     cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
     
