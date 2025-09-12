@@ -14,6 +14,7 @@ from cryptography.hazmat.backends import default_backend
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from aiogram.methods import SendMessage
 import aiohttp
 
 from MoyNalogAPI import AsyncMoyNalog
@@ -31,6 +32,86 @@ if TYPE_CHECKING:
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
+class MessageWrapper(Message | CallbackQuery):
+    
+    async def answer(self, text, *args, **kwargs) -> SendMessage:
+        parts = split_message(text, 4096)
+        if len(parts) == 1:
+            return await super().answer(text, *args, **kwargs)
+        
+        result_messages = []
+        for i, part in enumerate(parts):
+            is_last = i == len(parts) - 1
+            
+            if 'reply_markup' in kwargs and not is_last:
+                temp_kwargs = kwargs.copy()
+                temp_kwargs.pop('reply_markup', None)
+                result = await super().answer(part, *args, **temp_kwargs)
+            else:
+                result = await super().answer(part, *args, **kwargs)
+            if not is_last:
+                await asyncio.sleep(0.3)
+            
+            result_messages.append(result)
+        
+        return result_messages[-1] if result_messages else None
+    
+    async def answer_photo(self, *args, caption = None, **kwargs):
+        if caption is None:
+            return await super().answer_photo(*args, **kwargs)
+            
+        parts = split_message(caption, 4096)
+        if len(parts) == 1:
+            return await super().answer_photo(*args, caption=caption, **kwargs)
+        
+        result_messages = []
+        for i, part in enumerate(parts):
+            is_first = i == 0
+            is_last = i == len(parts) - 1
+            if is_first:
+                temp_kwargs = kwargs.copy()
+                temp_kwargs.pop('reply_markup', None)
+                result = await super().answer_photo(*args, caption=part, **temp_kwargs)
+            elif is_last:
+                result = await super().answer(part, reply_markup=kwargs.get('reply_markup', None))
+            else:
+                result = await super().answer(part)
+                
+            if not is_last:
+                await asyncio.sleep(0.3)
+            
+            result_messages.append(result)
+        
+        return result_messages[-1] if result_messages else None
+    
+    async def answer_video(self, *args, caption = None, **kwargs):
+        if caption is None:
+            return await super().answer_video(*args, **kwargs)
+            
+        parts = split_message(caption, 4096)
+        if len(parts) == 1:
+            return await super().answer_video(*args, caption=caption, **kwargs)
+        
+        result_messages = []
+        for i, part in enumerate(parts):
+            is_first = i == 0
+            is_last = i == len(parts) - 1
+            if is_first:
+                temp_kwargs = kwargs.copy()
+                temp_kwargs.pop('reply_markup', None)
+                result = await super().answer_video(*args, caption=part, **temp_kwargs)
+            elif is_last:
+                result = await super().answer(part, reply_markup=kwargs.get('reply_markup', None))
+            else:
+                result = await super().answer(part)
+                
+            if not is_last:
+                await asyncio.sleep(0.3)
+            
+            result_messages.append(result)
+        
+        return result_messages[-1] if result_messages else None
+
 @dataclass
 class Context:
     event: Union[Message, CallbackQuery]
@@ -45,95 +126,8 @@ class Context:
     @property
     def message(self) -> Message:
         attr = getattr(self.event, "message", self.event)
+        return MessageWrapper(attr)
         
-        original_answer = attr.answer
-        original_answer_photo = attr.answer_photo
-        original_answer_video = attr.answer_video
-        
-        async def own_answer(text, *args, **kwargs):
-            parts = split_message(text, 4096)
-            if len(parts) == 1:
-                return await original_answer(text, *args, **kwargs)
-            
-            result_messages = []
-            for i, part in enumerate(parts):
-                is_first = i == 0
-                is_last = i == len(parts) - 1
-                
-                if 'reply_markup' in kwargs and not is_last:
-                    temp_kwargs = kwargs.copy()
-                    temp_kwargs.pop('reply_markup', None)
-                    result = await original_answer(part, *args, **temp_kwargs)
-                else:
-                    result = await original_answer(part, *args, **kwargs)
-                if not is_last:
-                    await asyncio.sleep(0.3)
-                
-                result_messages.append(result)
-            
-            return result_messages[-1] if result_messages else None
-        
-        async def own_answer_photo(*args, caption=None, **kwargs):
-            if caption is None:
-                return await original_answer_photo(*args, **kwargs)
-                
-            parts = split_message(caption, 4096)
-            if len(parts) == 1:
-                return await original_answer_photo(*args, caption=caption, **kwargs)
-            
-            result_messages = []
-            for i, part in enumerate(parts):
-                is_first = i == 0
-                is_last = i == len(parts) - 1
-                if is_first:
-                    temp_kwargs = kwargs.copy()
-                    temp_kwargs.pop('reply_markup', None)
-                    result = await original_answer_photo(caption=part, *args, **temp_kwargs)
-                elif is_last:
-                    result = await original_answer(part, reply_markup=kwargs.get('reply_markup', None))
-                else:
-                    result = await original_answer(part)
-                    
-                if not is_last:
-                    await asyncio.sleep(0.3)
-                
-                result_messages.append(result)
-            
-            return result_messages[-1] if result_messages else None
-        
-        async def own_answer_video(*args, caption=None, **kwargs):
-            if caption is None:
-                return await original_answer_video(*args, **kwargs)
-                
-            parts = split_message(caption, 4096)
-            if len(parts) == 1:
-                return await original_answer_video(*args, caption=caption, **kwargs)
-            
-            result_messages = []
-            for i, part in enumerate(parts):
-                is_first = i == 0
-                is_last = i == len(parts) - 1
-                if is_first:
-                    temp_kwargs = kwargs.copy()
-                    temp_kwargs.pop('reply_markup', None)
-                    result = await original_answer_video(caption=part, *args, **temp_kwargs)
-                elif is_last:
-                    result = await original_answer(part, reply_markup=kwargs.get('reply_markup', None))
-                else:
-                    result = await original_answer(part)
-                    
-                if not is_last:
-                    await asyncio.sleep(0.3)
-                
-                result_messages.append(result)
-            
-            return result_messages[-1] if result_messages else None
-        
-        attr.answer = own_answer
-        attr.answer_photo = own_answer_photo
-        attr.answer_video = own_answer_video
-        
-        return attr
     
     async def parse_user_input(self, text: Optional[str] = None):
         if text is None: text = self.message.text
