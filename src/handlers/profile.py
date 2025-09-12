@@ -226,7 +226,7 @@ async def editable_requirements_lists_handler(_, ctx: Context) -> None:
 
 @router.message(Profile.Delivery.Editables.Requirement)
 async def editable_requirement_handler(_, ctx: Context) -> None:
-    text = ctx.parse_user_input()
+    text = await ctx.parse_user_input()
     if text is None: return
     
     first_setup = ctx.customer.delivery_info is None

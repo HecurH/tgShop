@@ -300,7 +300,7 @@ async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.message(Assortment.ChoiceEditValue)
 async def advanced_edit_value(message: Message, ctx: Context) -> None:
-    text = ctx.parse_user_input()
+    text = await ctx.parse_user_input()
     if not text: return
     
     product: Product = await Product.from_fsm_context(ctx, "product")
