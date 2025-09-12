@@ -67,11 +67,15 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
 @router.message(AdminStates.AskGenerateReceipt)
 async def ask_generate_receipt_handler(_, ctx: Context):
     text = ctx.message.text
+    if text not in [ctx.t.UncategorizedTranslates.yes, ctx.t.UncategorizedTranslates.no]:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+        return
+
+    order = Order.from_fsm_context(ctx, "order")
+    customer = await ctx.db.customers.find_one_by_id(order.customer_id)
+    cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
+    
     if text == ctx.t.UncategorizedTranslates.yes:
-        order = Order.from_fsm_context(ctx, "order")
-        customer = await ctx.db.customers.find_one_by_id(order.customer_id)
-        cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
-        
         try:
             receipts = await ctx.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
         except Exception as e:
@@ -79,17 +83,11 @@ async def ask_generate_receipt_handler(_, ctx: Context):
             return
 
         await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts, ctx)
-        await ctx.db.orders.save(order)
-        
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
     elif text == ctx.t.UncategorizedTranslates.no:
         await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, ctx=ctx)
-        await ctx.db.orders.save(order)
         
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
-        return
-    else:
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+    await ctx.db.orders.save(order)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
     
     
 
