@@ -200,7 +200,7 @@ class CartTextGen:
         price_details = order.price_details
         payment_method = order.payment_method
             
-        entries = await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
+        entries = await ctx.db.cart_entries.get_entries_by_order(order) if order.state == OrderStateKey.waiting_for_forming else await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
         cart_entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
         cart_entries_description = build_list(cart_entries_description, before="▫️")
         

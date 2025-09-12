@@ -54,6 +54,7 @@ async def order_view_handler(_, ctx: Context) -> None:
         
         await order.save_in_fsm(ctx, "order")
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
+        return
     
     
     attribute = ctx.t.ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
