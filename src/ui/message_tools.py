@@ -10,56 +10,66 @@ async def clear_keyboard_effect(message: Message) -> None:
     msg = await message.answer("||BOO||", reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     await msg.delete()
 
-VOID_TAGS = {
-    "area", "base", "br", "col", "embed", "hr", "img", "input",
-    "link", "meta", "param", "source", "track", "wbr"
-}
+# Регекс: теперь разрешаем дефисы/двоеточия в имени тега (например tg-spoiler)
+_tag_re = re.compile(
+    r'<!--.*?-->|<\s*(/)?\s*([A-Za-z0-9][A-Za-z0-9\-\:]*)\b([^>]*)>',
+    re.DOTALL
+)
 
-_tag_re = re.compile(r'<!--.*?-->|<\s*(/)?\s*([a-zA-Z0-9]+)([^>]*)>',
-                     re.DOTALL)
-
+def _is_self_closing(full_tag: str) -> bool:
+    return full_tag.rstrip().endswith("/>")
 
 def _open_tags_stack(text: str):
-    """
-    Пройти по тексту слева направо и вернуть стек открытых тегов.
-    Каждый элемент стека — кортеж (tag_name, raw_opening_tag).
-    Комментарии и void/self-closing теги игнорируются.
-    """
     stack = []
     for m in _tag_re.finditer(text):
         full = m.group(0)
-        closing_slash = m.group(1)  # '/' если это закрывающий
-        tag_name = (m.group(2) or "").lower()
-        rest = m.group(3) or ""
-
-        # пропускаем комментарии
         if full.startswith("<!--"):
             continue
-
-        # определим, self-closing ли тег
-        is_self_closing = False
-        if full.rstrip().endswith("/>"):
-            is_self_closing = True
-        if tag_name in VOID_TAGS:
-            is_self_closing = True
-
-        if closing_slash:
-            # закрывающий: pop ближайший открытый с таким именем
+        closing = bool(m.group(1))
+        tag_name = (m.group(2) or "").lower()
+        if closing:
+            # pop nearest matching
             for i in range(len(stack) - 1, -1, -1):
                 if stack[i][0] == tag_name:
                     stack.pop(i)
                     break
-            # иначе игнорируем (некорректный закрывающий)
         else:
-            if not is_self_closing:
-                # сохраняем raw открывающий тег (как есть, с атрибутами)
+            if not _is_self_closing(full):
                 stack.append((tag_name, full))
-            # если self-closing — ничего не делаем
     return stack
 
+def _sanitize_unexpected_closing_tags(text: str) -> str:
+    out = []
+    pos = 0
+    stack = []
+
+    for m in _tag_re.finditer(text):
+        start, end = m.span()
+        out.append(text[pos:start])
+        full = m.group(0)
+        if full.startswith("<!--"):
+            out.append(full)
+        else:
+            closing = bool(m.group(1))
+            tag_name = (m.group(2) or "").lower()
+            if closing:
+                if stack and stack[-1] == tag_name:
+                    stack.pop()
+                    out.append(full)
+                else:
+                    # если нет соответствующего открывающего — экранируем
+                    escaped = full.replace("<", "&lt;").replace(">", "&gt;")
+                    out.append(escaped)
+            else:
+                if not _is_self_closing(full):
+                    stack.append(tag_name)
+                out.append(full)
+        pos = end
+
+    out.append(text[pos:])
+    return "".join(out)
 
 def split_message(text: str, limit: int) -> List[str]:
-    print(text)
     if len(text) <= limit:
         return [text]
 
@@ -67,54 +77,42 @@ def split_message(text: str, limit: int) -> List[str]:
     buffer = text
 
     while len(buffer) > limit:
-        # ищем лучший разрез
         cut = (
             buffer.rfind("\n\n", 0, limit)
             or buffer.rfind("\n", 0, limit)
             or buffer.rfind(" ", 0, limit)
         )
-        if cut == -1 or cut < limit // 2:  # не нашли нормального места
+        if cut == -1 or cut < limit // 2:
             cut = limit
 
-        # если попали внутрь тега — сдвинуть рез до ближайшего '>' (чтобы не разрезать <...>)
+        # если попали внутрь тега — сдвинуть рез до ближайшего '>'
         last_lt = buffer.rfind("<", 0, cut)
         last_gt = buffer.rfind(">", 0, cut)
         if last_lt > last_gt:
-            # значит внутри тега
             next_gt = buffer.find(">", cut)
             if next_gt != -1:
                 cut = next_gt + 1
-            else:
-                # нет закрывающей '>' — безопаснее отрезать до cut (попадание внутрь хз-что).
-                # но затем мы попытаемся корректно закрыть/переоткрыть теги ниже.
-                pass
 
         head = buffer[:cut]
         tail = buffer[cut:]
 
-        # определить какие теги остаются открытыми в head
-        stack = _open_tags_stack(head)  # список (name, raw_open_tag)
-
-        # сформировать суффикс закрывающих тегов для текущей части
+        stack = _open_tags_stack(head)
         if stack:
             closing_suffix = "".join(f"</{name}>" for name, _ in reversed(stack))
-            # сформировать префикс (переоткрывающие теги) для следующей части
-            # используем raw открывающие теги, чтобы сохранить атрибуты
             reopening_prefix = "".join(raw for _, raw in stack)
         else:
             closing_suffix = ""
             reopening_prefix = ""
 
         part_text = head.rstrip() + closing_suffix
-        parts.append(part_text)
+        safe_part = _sanitize_unexpected_closing_tags(part_text)
+        parts.append(safe_part)
 
-        # новый буфер — переоткрыть теги + оставшаяся часть
-        buffer = (reopening_prefix + tail.lstrip())
+        buffer = reopening_prefix + tail.lstrip()
 
     if buffer:
-        parts.append(buffer)
+        parts.append(_sanitize_unexpected_closing_tags(buffer))
 
-    print(parts)
     return parts
 
 async def send_media_response(
