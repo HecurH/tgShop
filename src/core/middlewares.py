@@ -17,13 +17,14 @@ class ContextMiddleware(BaseMiddleware):
         self.db = DatabaseService()
         self.notificator_hub = NotificatorHub(logs_channel_id=getenv("TG_LOGS_CHANNEL_ID"), 
                                               admin_chat_id=getenv("TG_ADMIN_CHAT_ID"))
-        self.tax_system = TaxSystem()
+        self.tax_system: TaxSystem = None
 
         self.initialized = False
 
     async def __call__(self, handler, event, data):
         if not self.initialized:
             await self.db.create_indexes()
+            self.tax_system = TaxSystem()
             # await self.db.currency_converter.init_session()
             self.initialized = True
 
