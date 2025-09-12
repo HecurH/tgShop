@@ -10,15 +10,55 @@ async def clear_keyboard_effect(message: Message) -> None:
     msg = await message.answer("||BOO||", reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     await msg.delete()
 
-TAG_PATTERN = re.compile(r"</?([a-zA-Z0-9]+)[^>]*>")
+VOID_TAGS = {
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr"
+}
 
-def split_message(text: str, limit: int) -> list[str]:
+_tag_re = re.compile(r'<!--.*?-->|<\s*(/)?\s*([a-zA-Z0-9]+)([^>]*)>',
+                     re.DOTALL)
+
+
+def _open_tags_stack(text: str):
+    stack = []
+    for m in _tag_re.finditer(text):
+        full = m.group(0)
+        closing_slash = m.group(1)  # '/' если это закрывающий
+        tag_name = (m.group(2) or "").lower()
+        rest = m.group(3) or ""
+
+        # пропускаем комментарии
+        if full.startswith("<!--"):
+            continue
+
+        # определим, self-closing ли тег
+        is_self_closing = False
+        if full.rstrip().endswith("/>"):
+            is_self_closing = True
+        if tag_name in VOID_TAGS:
+            is_self_closing = True
+
+        if closing_slash:
+            # закрывающий: pop ближайший открытый с таким именем
+            for i in range(len(stack) - 1, -1, -1):
+                if stack[i][0] == tag_name:
+                    stack.pop(i)
+                    break
+            # иначе игнорируем (некорректный закрывающий)
+        else:
+            if not is_self_closing:
+                # сохраняем raw открывающий тег (как есть, с атрибутами)
+                stack.append((tag_name, full))
+            # если self-closing — ничего не делаем
+    return stack
+
+
+def split_message(text: str, limit: int) -> List[str]:
     if len(text) <= limit:
         return [text]
 
     parts = []
     buffer = text
-    open_tags = []
 
     while len(buffer) > limit:
         # ищем лучший разрез
@@ -30,26 +70,40 @@ def split_message(text: str, limit: int) -> list[str]:
         if cut == -1 or cut < limit // 2:  # не нашли нормального места
             cut = limit
 
-        chunk = buffer[:cut].strip()
-        buffer = buffer[cut:].lstrip()
+        # если попали внутрь тега — сдвинуть рез до ближайшего '>' (чтобы не разрезать <...>)
+        last_lt = buffer.rfind("<", 0, cut)
+        last_gt = buffer.rfind(">", 0, cut)
+        if last_lt > last_gt:
+            # значит внутри тега
+            next_gt = buffer.find(">", cut)
+            if next_gt != -1:
+                cut = next_gt + 1
+            else:
+                # нет закрывающей '>' — безопаснее отрезать до cut (попадание внутрь хз-что).
+                # но затем мы попытаемся корректно закрыть/переоткрыть теги ниже.
+                pass
 
-        # анализируем теги внутри куска
-        for match in TAG_PATTERN.finditer(chunk):
-            tag = match.group(1)
-            if match.group(0).startswith("</"):  # закрывающий тег
-                if tag in open_tags:
-                    open_tags.remove(tag)
-            else:  # открывающий тег
-                open_tags.insert(0, tag)
+        head = buffer[:cut]
+        tail = buffer[cut:]
 
-        # добавляем закрывающие теги
-        fixed_chunk = chunk + "".join(f"</{t}>" for t in open_tags)
+        # определить какие теги остаются открытыми в head
+        stack = _open_tags_stack(head)  # список (name, raw_open_tag)
 
-        parts.append(fixed_chunk)
+        # сформировать суффикс закрывающих тегов для текущей части
+        if stack:
+            closing_suffix = "".join(f"</{name}>" for name, _ in reversed(stack))
+            # сформировать префикс (переоткрывающие теги) для следующей части
+            # используем raw открывающие теги, чтобы сохранить атрибуты
+            reopening_prefix = "".join(raw for _, raw in stack)
+        else:
+            closing_suffix = ""
+            reopening_prefix = ""
 
-        # открывающие теги нужно вставить в начало следующего буфера
-        if open_tags:
-            buffer = "".join(f"<{t}>" for t in reversed(open_tags)) + buffer
+        part_text = head.rstrip() + closing_suffix
+        parts.append(part_text)
+
+        # новый буфер — переоткрыть теги + оставшаяся часть
+        buffer = (reopening_prefix + tail.lstrip())
 
     if buffer:
         parts.append(buffer)
