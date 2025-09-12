@@ -89,6 +89,21 @@ class TaxSystem:
     def __init__(self, config_path: str = "/src/configs/"):
         self.client = AsyncMoyNalog(config_path)
         
+    async def safe_create_invoice(self, *args, retries: int = 3, timeout: int = 10, **kwargs):
+        last_exc = None
+        for attempt in range(retries):
+            try:
+                return await asyncio.wait_for(
+                    self.client.create_invoice(*args, **kwargs),
+                    timeout=timeout
+                )
+            except (asyncio.TimeoutError, Exception) as e:
+                last_exc = e
+                if attempt < retries - 1:
+                    await asyncio.sleep(2 ** attempt)  # экспоненциальная задержка
+                    continue
+                raise last_exc
+        
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
         from schemas.types import LocalizedMoney, Money
         entry_prices = [
@@ -146,7 +161,7 @@ class TaxSystem:
             receipts = []
             for services_chunk in chunks:
                 
-                receipts.append(await self.client.create_invoice(
+                receipts.append(await self.safe_create_invoice(
                     operation_time=operation_time,
                     svs=services_chunk,
                     client=client_data,
@@ -155,7 +170,7 @@ class TaxSystem:
                 ))
             return receipts
             
-        return await self.client.create_invoice(
+        return await self.safe_create_invoice(
             operation_time=operation_time,
             svs=services,
             client=client_data,

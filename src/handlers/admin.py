@@ -79,7 +79,7 @@ async def ask_generate_receipt_handler(_, ctx: Context):
         try:
             receipts = await ctx.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
         except Exception as e:
-            await call_state_handler(CommonStates.MainMenu, ctx, send_before=(f"Ошибка при генерации чеков: {e}", 1))
+            await call_state_handler(CommonStates.MainMenu, ctx, send_before=(f"Ошибка при генерации чеков: {str(e)}", 1))
             return
 
         await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts, ctx)
