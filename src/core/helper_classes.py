@@ -130,7 +130,7 @@ class TaxSystem:
         
         entries_list = [
             [
-                entry.frozen_product.name_for_tax,
+                f"ТЕСТОВЫЙ {entry.frozen_product.name_for_tax}",
                 (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity - entry_discounts[i],
                 entry.quantity
             ] 
