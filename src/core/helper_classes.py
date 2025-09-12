@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
-class MessageWrapper(Message | CallbackQuery):
+class MessageWrapper(Message, CallbackQuery):
     
     async def answer(self, text, *args, **kwargs) -> SendMessage:
         parts = split_message(text, 4096)
