@@ -26,7 +26,7 @@ from ui.translates import TypedTranslatorHub
 if TYPE_CHECKING:
     from core.db import DatabaseService
     from core.notifications import NotificatorHub
-    from schemas.types import Money, LocalizedMoney
+    from schemas.types import Money
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -34,12 +34,12 @@ CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 class Context:
     event: Union[Message, CallbackQuery]
     fsm: FSMContext
-    db: DatabaseService
+    db: "DatabaseService"
     customer: Customer
     lang: str
     t: TypedTranslatorHub
     tax: "TaxSystem"
-    n: NotificatorHub
+    n: "NotificatorHub"
 
     @property
     def message(self) -> Message:
@@ -89,8 +89,8 @@ class TaxSystem:
     def __init__(self, config_path: str = "src/configs/"):
         self.client = AsyncMoyNalog(config_path)
         
-        
-    def distribute_discounts(self, cart_entries: list[CartEntry], total_discount: Money) -> list[Money]:
+    def distribute_discounts(self, cart_entries: list[CartEntry], total_discount: "Money") -> list["Money"]:
+        from schemas.types import LocalizedMoney, Money
         entry_prices = [
             (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity
             for entry in cart_entries
@@ -118,8 +118,8 @@ class TaxSystem:
         
         return discounts
 
-    
-    async def invoice_by_order(self, cart_entries: list[CartEntry], order: Order, operation_time: datetime) -> str | list[str]:
+    async def invoice_by_order(self, cart_entries: list["CartEntry"], order: "Order", operation_time: datetime) -> str | list[str]:
+        from schemas.types import Money
         price_details = order.price_details
         
         services = []
