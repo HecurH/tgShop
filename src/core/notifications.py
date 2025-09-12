@@ -45,12 +45,11 @@ class TelegramNotificator(Notificator):
             if is_first and media:
                 if isinstance(media, list):
                     album_builder = MediaGroupBuilder()
-                    for med in media:
-                        for t, m in med:
-                            album_builder.add(
-                                type=t,
-                                media=m
-                            )
+                    for t, m in media:
+                        album_builder.add(
+                            type=t,
+                            media=m
+                        )
                     await ctx.message.bot.send_media_group(chat_id=self._chat_id,
                                                            media=album_builder.build())
                     await ctx.message.bot.send_message(chat_id=self._chat_id,
