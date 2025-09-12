@@ -35,7 +35,7 @@ class Context:
     event: Union[Message, CallbackQuery]
     fsm: FSMContext
     db: "DatabaseService"
-    customer: Customer
+    customer: "Customer"
     lang: str
     t: TypedTranslatorHub
     tax: "TaxSystem"
