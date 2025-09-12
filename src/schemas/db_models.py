@@ -59,11 +59,13 @@ class OrderPriceDetails(AppBaseModel):
     customer_paid: bool = False
     payment_time: Optional[datetime.datetime] = None
     
-    def __init__(self, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None):
+    @classmethod
+    def new(cls, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None):
         price_details = OrderPriceDetails(products_price=products_price.get_money(customer.currency),
                                           delivery_price=delivery_info.service.price.get_money(customer.currency) if delivery_info else None
                                           )
         price_details.recalculate_price()
+    
 
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
@@ -135,7 +137,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         
     def new_order(self, customer: "Customer", products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
         delivery_info = customer.delivery_info if save_delivery_info else None
-        price_details = OrderPriceDetails(customer, products_price, delivery_info)
+        price_details = OrderPriceDetails.new(customer, products_price, delivery_info)
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
     

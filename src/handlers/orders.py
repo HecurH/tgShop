@@ -50,7 +50,7 @@ async def order_view_handler(_, ctx: Context) -> None:
     if text == ctx.t.ReplyButtonsTranslates.Orders.continue_forming and order.state == OrderStateKey.waiting_for_forming:
         products_price = await ctx.db.cart_entries.calculate_cart_entries_price_by_order(order)
         order.delivery_info = ctx.customer.delivery_info
-        order.price_details = OrderPriceDetails(ctx.customer, products_price, ctx.customer.delivery_info)
+        order.price_details = OrderPriceDetails.new(ctx.customer, products_price, ctx.customer.delivery_info)
         
         await order.save_in_fsm(ctx, "order")
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
