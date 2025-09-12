@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import F, Router
 from aiogram.filters import CommandObject, Command, CommandStart
 from aiogram.types import Message, BufferedInputFile
+from pydantic import ValidationError
 
 from core.db import *
 
@@ -42,20 +43,29 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
     
-    #формат данных = 0: {'data': {'RUB': {'currency': 'RUB', 'amount': 1000.0}, 'USD': {'currency': 'USD', 'amount': 30.0}}}\n1: {'data': {'RUB': {'currency': 'RUB', 'amount': 1000.0}, 'USD': {'currency': 'USD', 'amount': 30.0}}}
-    text = text.replace("'", '"')
-    text = text.split('\n')
+    #формат данных = 0: [{"color": {"data": {"RUB": {"currency": "RUB", "amount": 0.0}, "USD": {"currency": "USD", "amount": 0.0}}}}]\n1: [{"color": {"data": {"RUB": {"currency": "RUB", "amount": 0.0}, "USD": {"currency": "USD", "amount": 0.0}}}}]
     try:
-        prices = [LocalizedMoney.model_validate_json(entry.split(": ")[-1]) for entry in text]
-    except (json.JSONDecodeError, TypeError) as e:
-        await ctx.message.answer("Неверный формат цен")
+        entries = []
+        for line in text.strip().split('\n'):
+            if not line.strip() or ': ' not in line:
+                continue
+            _, json_part = line.split(': ', 1)
+            entry_data = json.loads(json_part)
+            entries.extend({
+                k: LocalizedMoney.model_validate(v)
+                for item in entry_data
+                for k, v in item.items()
+            } for item in entry_data)
+            
+        if not entries:
+            await ctx.message.answer("Неверный формат данных")
+            return
+            
+    except (ValueError, json.JSONDecodeError, ValidationError):
+        await ctx.message.answer("Ошибка при обработке данных")
         return
-    
-    order = await Order.from_fsm_context(ctx, "order")
-    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
-    for idx, entry in enumerate(entries):
-        entry.configuration.price = prices[idx]
-        entry.configuration.price_confirmed_override = True
+    print(entries)
+        
     
     
     
