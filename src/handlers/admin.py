@@ -64,8 +64,8 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     await order.save_in_fsm(ctx, "order")
     await call_state_handler(AdminStates.AskGenerateReceipt, ctx)
     
-@router.message(AdminStates.PriceConfirmationWaiting)
-async def price_confirmation_waiting_handler(_, ctx: Context):
+@router.message(AdminStates.AskGenerateReceipt)
+async def ask_generate_receipt_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.yes:
         order = Order.from_fsm_context(ctx, "order")
