@@ -351,6 +351,9 @@ class OrdersKBs:
         
         if order.state == OrderStateKey.waiting_for_manual_payment_confirm:
             kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.Infos.any_question)])
+            
+        if order.state == OrderStateKey.waiting_for_forming:
+            kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.continue_forming)])
         
         kb.append([types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)])
         

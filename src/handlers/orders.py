@@ -1,8 +1,9 @@
 from aiogram import Router
 
 from core.helper_classes import Context
-from core.states import CommonStates, Orders, call_state_handler
-from schemas.db_models import Order
+from core.states import Cart, CommonStates, Orders, call_state_handler
+from schemas.db_models import Order, OrderPriceDetails
+from schemas.enums import OrderStateKey
 from ui.translates import ReplyButtonsTranslates
 
 
@@ -45,7 +46,16 @@ async def order_view_handler(_, ctx: Context) -> None:
         await call_state_handler(Orders.Menu, ctx)
         return
     
-    order = await Order.from_fsm_context(ctx, "order")
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    if text == ctx.t.ReplyButtonsTranslates.Orders.continue_forming and order.state == OrderStateKey.waiting_for_forming:
+        products_price = await ctx.db.cart_entries.calculate_cart_entries_price_by_order(order)
+        order.delivery_info = ctx.customer.delivery_info
+        order.price_details = OrderPriceDetails(ctx.customer, products_price, ctx.customer.delivery_info)
+        
+        await order.save_in_fsm(ctx, "order")
+        await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
+    
+    
     attribute = ctx.t.ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
     
     await call_state_handler(Orders.OrderView, ctx, order=order, send_before=(getattr(ctx.t.OrdersTranslates.Infos, attribute), 2) if attribute else None)

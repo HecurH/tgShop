@@ -83,6 +83,10 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         cart_entry.configuration.update_price()
         
     order.state.set_state(OrderStateKey.waiting_for_forming)
+    
+    products_price = await ctx.db.cart_entries.calculate_cart_entries_price_by_order(order)
+    order.price_details = OrderPriceDetails(customer, products_price)
+    
     await ctx.db.cart_entries.save_many(cart_entries)
     await ctx.db.orders.save(order)
     

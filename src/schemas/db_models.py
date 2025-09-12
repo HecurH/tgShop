@@ -58,6 +58,12 @@ class OrderPriceDetails(AppBaseModel):
     
     customer_paid: bool = False
     payment_time: Optional[datetime.datetime] = None
+    
+    def __init__(self, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None):
+        price_details = OrderPriceDetails(products_price=products_price.get_money(customer.currency),
+                                          delivery_price=delivery_info.service.price.get_money(customer.currency) if delivery_info else None
+                                          )
+        price_details.recalculate_price()
 
     def recalculate_price(self):
         products_price_after_promocode = (self.products_price - self.promocode_discount) if self.promocode_discount else self.products_price
@@ -129,12 +135,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         
     def new_order(self, customer: "Customer", products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
         delivery_info = customer.delivery_info if save_delivery_info else None
-        currency = customer.currency
-        
-        price_details = OrderPriceDetails(products_price=products_price.get_money(currency),
-                                          delivery_price=delivery_info.service.price.get_money(currency) if delivery_info else None
-                                          )
-        price_details.recalculate_price()
+        price_details = OrderPriceDetails(customer, products_price, delivery_info)
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
     
@@ -229,6 +230,20 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     
     async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
+        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        product_map: Dict[PydanticObjectId, Product] = {
+            product.id: product for product in products
+        }
+
+        total_price = LocalizedMoney()
+        for entry in entries:
+            if product := product_map.get(entry.product_id):
+                entry_total = (product.price + entry.configuration.price) * entry.quantity
+                total_price += entry_total
+        return total_price
+
+    async def calculate_cart_entries_price_by_order(self, order: Order) -> LocalizedMoney:
+        entries: Iterable[CartEntry] = await self.find_by({"order_id": order.id})
         products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
         product_map: Dict[PydanticObjectId, Product] = {
             product.id: product for product in products

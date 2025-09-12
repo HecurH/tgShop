@@ -719,9 +719,7 @@ class ProfileTranslates(Translatable):
             "ru": "Вы уверены что бла-бла-бла доставка бла-бла ручное подтверждение стоимости?",
             "en": "Are you sure you want to send the delivery to manual confirmation?"
         }
-        
-        
-        
+      
 class NotificatorTranslates(Translatable):
     class Delivery(Translatable):
         delivery_price_confirmed = {
@@ -845,6 +843,11 @@ class ReplyButtonsTranslates(Translatable):
                 "ru": "Есть какой-то вопрос?",
                 "en": "Any question?"
             }
+        
+        continue_forming = {
+            "ru": "Продолжить формирование",
+            "en": "Continue forming"
+        }
             
     
     class Profile(Translatable):
