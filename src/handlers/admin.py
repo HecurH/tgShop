@@ -73,7 +73,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         for key, price in updater_entry.items():
             chosen = cart_entry.configuration.options[key].get_chosen()
             print(chosen)
-            chosen.priсe = price
+            chosen.price = price
         
         cart_entry.configuration.update_price()
         cart_entry.configuration.price_confirmed_override = True
