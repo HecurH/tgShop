@@ -68,7 +68,7 @@ class AdminChatNotificator(TelegramNotificator):
         text += "Содержимое заказа:\n"
         
         entries = await ctx.db.cart_entries.get_entries_by_order(order)
-        text += "\n".join((form_entry_description(entry) for entry in entries))
+        text += "\n".join((form_entry_description(entry, ctx) for entry in entries))
         text += f"\n\n<code>/confirm_manual_payment {order.id}</code>\n\n<code>/admin_msg_to {ctx.customer.user_id}</code>"
 
         await self.send_notification(ctx, text)
