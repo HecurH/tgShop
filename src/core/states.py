@@ -1,7 +1,7 @@
 import asyncio
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardRemove
-from typing import Callable, Dict, Any, Awaitable, Tuple, Union
+from typing import Callable, Dict, Any, Awaitable, Tuple, Union, Iterable, List
 
 from core.helper_classes import Context
 from ui.message_tools import clear_keyboard_effect, send_media_response

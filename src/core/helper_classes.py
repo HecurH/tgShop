@@ -1,10 +1,12 @@
 import asyncio
 import base64
+from datetime import datetime
+import logging
 import time
 import os
 from os import getenv
 from dataclasses import dataclass
-from typing import Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
@@ -16,7 +18,9 @@ import aiohttp
 
 from MoyNalogAPI import AsyncMoyNalog
 from MoyNalogAPI.schemas import Service, Client
+from configs.supported import SUPPORTED_CURRENCIES
 from schemas.db_models import *
+from schemas.types import Money, LocalizedMoney
 from ui.translates import TypedTranslatorHub
 
 if TYPE_CHECKING:
@@ -85,7 +89,7 @@ class TaxSystem:
         self.client = AsyncMoyNalog(config_path)
         
         
-    def distribute_discounts(cart_entries: list[CartEntry], total_discount: Money) -> list[Money]:
+    def distribute_discounts(self, cart_entries: list[CartEntry], total_discount: Money) -> list[Money]:
         entry_prices = [
             (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity
             for entry in cart_entries
@@ -114,7 +118,7 @@ class TaxSystem:
         return discounts
 
     
-    async def invoice_by_order(self, cart_entries: list[CartEntry], order: Order, operation_time: datetime.datetime) -> str | list[str]:
+    async def invoice_by_order(self, cart_entries: list[CartEntry], order: Order, operation_time: datetime) -> str | list[str]:
         price_details = order.price_details
         
         services = []

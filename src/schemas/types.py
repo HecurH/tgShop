@@ -70,7 +70,6 @@ class Money(BaseModel):
     def __str__(self):
         return self.to_text()
 
-
 class LocalizedMoney(BaseModel):
     data: Dict[str, Money] = Field(default_factory=dict)
 
@@ -126,7 +125,6 @@ class LocalizedMoney(BaseModel):
             self.data[cur] = self.data[cur] * factor
         return self
 
-
 class LocalizedString(BaseModel):
     data: dict[str, str]
     
@@ -169,3 +167,5 @@ class Discount(BaseModel):
             return Money(currency=amount.currency, amount=max(discount, 0.0))
         # если тип не распознан — скидка 0
         return Money(currency=amount.currency, amount=0.0)
+
+__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "OrderState", "Discount"]

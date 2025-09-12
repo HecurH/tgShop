@@ -1,6 +1,8 @@
+import logging
 from os import getenv
-from typing import Type, TypeVar, Union
+from typing import Iterable, Optional, Type, TypeVar, Union
 
+from pydantic_mongo import PydanticObjectId
 import pymongo
 from pymongo import AsyncMongoClient
 from pymongo.errors import PyMongoError
