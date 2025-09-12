@@ -20,12 +20,13 @@ from MoyNalogAPI import AsyncMoyNalog
 from MoyNalogAPI.schemas import Service, Client
 from configs.supported import SUPPORTED_CURRENCIES
 from schemas.db_models import *
-from schemas.types import Money, LocalizedMoney
+
 from ui.translates import TypedTranslatorHub
 
 if TYPE_CHECKING:
     from core.db import DatabaseService
     from core.notifications import NotificatorHub
+    from schemas.types import Money, LocalizedMoney
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -33,12 +34,12 @@ CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 class Context:
     event: Union[Message, CallbackQuery]
     fsm: FSMContext
-    db: "DatabaseService"
-    customer: "Customer"
+    db: DatabaseService
+    customer: Customer
     lang: str
     t: TypedTranslatorHub
     tax: "TaxSystem"
-    n: "NotificatorHub"
+    n: NotificatorHub
 
     @property
     def message(self) -> Message:
