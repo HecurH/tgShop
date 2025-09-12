@@ -32,12 +32,14 @@ if TYPE_CHECKING:
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
-class MessageWrapper(Message, CallbackQuery):
-    
+class MessageWrapper:
+    def __init__(self, message: Message):
+        self._message = message
+        
     async def answer(self, text, *args, **kwargs) -> SendMessage:
         parts = split_message(text, 4096)
         if len(parts) == 1:
-            return await super().answer(text, *args, **kwargs)
+            return await self._message.answer(text, *args, **kwargs)
         
         result_messages = []
         for i, part in enumerate(parts):
@@ -46,9 +48,9 @@ class MessageWrapper(Message, CallbackQuery):
             if 'reply_markup' in kwargs and not is_last:
                 temp_kwargs = kwargs.copy()
                 temp_kwargs.pop('reply_markup', None)
-                result = await super().answer(part, *args, **temp_kwargs)
+                result = await self._message.answer(part, *args, **temp_kwargs)
             else:
-                result = await super().answer(part, *args, **kwargs)
+                result = await self._message.answer(part, *args, **kwargs)
             if not is_last:
                 await asyncio.sleep(0.3)
             
@@ -58,11 +60,11 @@ class MessageWrapper(Message, CallbackQuery):
     
     async def answer_photo(self, *args, caption = None, **kwargs):
         if caption is None:
-            return await super().answer_photo(*args, **kwargs)
+            return await self._message.answer_photo(*args, **kwargs)
             
         parts = split_message(caption, 4096)
         if len(parts) == 1:
-            return await super().answer_photo(*args, caption=caption, **kwargs)
+            return await self._message.answer_photo(*args, caption=caption, **kwargs)
         
         result_messages = []
         for i, part in enumerate(parts):
@@ -71,11 +73,11 @@ class MessageWrapper(Message, CallbackQuery):
             if is_first:
                 temp_kwargs = kwargs.copy()
                 temp_kwargs.pop('reply_markup', None)
-                result = await super().answer_photo(*args, caption=part, **temp_kwargs)
+                result = await self._message.answer_photo(*args, caption=part, **temp_kwargs)
             elif is_last:
-                result = await super().answer(part, reply_markup=kwargs.get('reply_markup', None))
+                result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             else:
-                result = await super().answer(part)
+                result = await self._message.answer(part)
                 
             if not is_last:
                 await asyncio.sleep(0.3)
@@ -86,11 +88,11 @@ class MessageWrapper(Message, CallbackQuery):
     
     async def answer_video(self, *args, caption = None, **kwargs):
         if caption is None:
-            return await super().answer_video(*args, **kwargs)
+            return await self._message.answer_video(*args, **kwargs)
             
         parts = split_message(caption, 4096)
         if len(parts) == 1:
-            return await super().answer_video(*args, caption=caption, **kwargs)
+            return await self._message.answer_video(*args, caption=caption, **kwargs)
         
         result_messages = []
         for i, part in enumerate(parts):
@@ -99,11 +101,11 @@ class MessageWrapper(Message, CallbackQuery):
             if is_first:
                 temp_kwargs = kwargs.copy()
                 temp_kwargs.pop('reply_markup', None)
-                result = await super().answer_video(*args, caption=part, **temp_kwargs)
+                result = await self._message.answer_video(*args, caption=part, **temp_kwargs)
             elif is_last:
-                result = await super().answer(part, reply_markup=kwargs.get('reply_markup', None))
+                result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             else:
-                result = await super().answer(part)
+                result = await self._message.answer(part)
                 
             if not is_last:
                 await asyncio.sleep(0.3)
@@ -111,6 +113,9 @@ class MessageWrapper(Message, CallbackQuery):
             result_messages.append(result)
         
         return result_messages[-1] if result_messages else None
+    
+    def __getattr__(self, item):
+        return getattr(self._message, item)
 
 @dataclass
 class Context:
@@ -125,7 +130,7 @@ class Context:
 
     @property
     def message(self) -> Message:
-        attr = getattr(self.event, "message", self.event)
+        attr: Message = getattr(self.event, "message", self.event)
         return MessageWrapper(attr)
         
     
