@@ -64,6 +64,13 @@ class MessageWrapper:
             
         parts = split_message(caption, 4096)
         if len(parts) == 1:
+            if len(caption) > 1024:
+                temp_kwargs = kwargs.copy()
+                temp_kwargs.pop('reply_markup', None)
+                await self._message.answer_photo(*args, **temp_kwargs)
+                
+                return await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
+            
             return await self._message.answer_photo(*args, caption=caption, **kwargs)
         
         result_messages = []
@@ -73,7 +80,8 @@ class MessageWrapper:
             if is_first:
                 temp_kwargs = kwargs.copy()
                 temp_kwargs.pop('reply_markup', None)
-                result = await self._message.answer_photo(*args, caption=part, **temp_kwargs)
+                await self._message.answer_photo(*args, **temp_kwargs)
+                result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             elif is_last:
                 result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             else:
@@ -92,6 +100,13 @@ class MessageWrapper:
             
         parts = split_message(caption, 4096)
         if len(parts) == 1:
+            if len(caption) > 1024:
+                temp_kwargs = kwargs.copy()
+                temp_kwargs.pop('reply_markup', None)
+                await self._message.answer_video(*args, **temp_kwargs)
+                
+                return await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
+            
             return await self._message.answer_video(*args, caption=caption, **kwargs)
         
         result_messages = []
@@ -101,7 +116,9 @@ class MessageWrapper:
             if is_first:
                 temp_kwargs = kwargs.copy()
                 temp_kwargs.pop('reply_markup', None)
-                result = await self._message.answer_video(*args, caption=part, **temp_kwargs)
+                
+                await self._message.answer_video(*args, **temp_kwargs)
+                result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             elif is_last:
                 result = await self._message.answer(part, reply_markup=kwargs.get('reply_markup', None))
             else:
