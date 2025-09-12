@@ -98,7 +98,7 @@ class TaxSystem:
         
         total_price = sum(entry_prices, LocalizedMoney())
         
-        if total_price.amount == 0:
+        if total_price.get_amount(total_discount.currency) == 0:
             return [Money(currency=total_discount.currency, amount=0.0) for _ in cart_entries]
         
         discounts = []
