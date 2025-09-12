@@ -3,6 +3,7 @@ import asyncio
 import datetime
 from typing import Literal, Optional
 from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile
+from aiogram.utils.media_group import MediaGroupBuilder
 from schemas.db_models import Customer, Order, DeliveryInfo
 from ui.keyboards import AdminKBs, UncategorizedKBs
 
@@ -27,7 +28,7 @@ class TelegramNotificator(Notificator):
         ctx: Context,
         message: str,
         reply_markup: Optional[ReplyMarkupUnion] = None,
-        media: Optional[InputFile | list[InputFile]] = None,
+        media: Optional[InputFile | list[tuple[str | InputFile]]] = None,
         media_type: Literal["photo", "video"] = "photo",
         **_
     ):
@@ -43,8 +44,15 @@ class TelegramNotificator(Notificator):
             
             if is_first and media:
                 if isinstance(media, list):
+                    album_builder = MediaGroupBuilder()
+                    for med in media:
+                        for t, m in med:
+                            album_builder.add(
+                                type=t,
+                                media=m
+                            )
                     await ctx.message.bot.send_media_group(chat_id=self._chat_id,
-                                                           media=media)
+                                                           media=album_builder.build())
                     await ctx.message.bot.send_message(chat_id=self._chat_id,
                                                        text=part,
                                                        reply_markup=reply_markup if is_last else None)
@@ -167,7 +175,7 @@ class UserTelegramNotificator(TelegramNotificator):
     
     async def send_order_payment_accepted(self, customer: Customer, order: Order, receipt_url: Optional[str | list[str]] = None, ctx: Context = None):
         super().__init__(chat_id=customer.user_id)
-        media = ([URLInputFile(url) for url in receipt_url] if isinstance(receipt_url, list) else URLInputFile(receipt_url)) if receipt_url else None
+        media = ([("photo", URLInputFile(url)) for url in receipt_url] if isinstance(receipt_url, list) else URLInputFile(receipt_url)) if receipt_url else None
         
         await self.send_notification(ctx, 
                                      NotificatorTranslates.Order.translate("order_payment_accepted", customer.lang).format(order_puid=f"#{order.puid}"),
