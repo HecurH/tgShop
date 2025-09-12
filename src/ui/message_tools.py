@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional, Literal
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
@@ -9,30 +10,51 @@ async def clear_keyboard_effect(message: Message) -> None:
     msg = await message.answer("||BOO||", reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     await msg.delete()
 
+TAG_PATTERN = re.compile(r"</?([a-zA-Z0-9]+)[^>]*>")
+
 def split_message(text: str, limit: int) -> list[str]:
-        if len(text) <= limit:
-            return [text]
+    if len(text) <= limit:
+        return [text]
 
-        parts = []
-        buffer = text
+    parts = []
+    buffer = text
+    open_tags = []
 
-        while len(buffer) > limit:
-            # ищем лучший разрез
-            cut = (
-                buffer.rfind("\n\n", 0, limit)
-                or buffer.rfind("\n", 0, limit)
-                or buffer.rfind(" ", 0, limit)
-            )
-            if cut == -1 or cut < limit // 2:  # не нашли нормального места
-                cut = limit
+    while len(buffer) > limit:
+        # ищем лучший разрез
+        cut = (
+            buffer.rfind("\n\n", 0, limit)
+            or buffer.rfind("\n", 0, limit)
+            or buffer.rfind(" ", 0, limit)
+        )
+        if cut == -1 or cut < limit // 2:  # не нашли нормального места
+            cut = limit
 
-            parts.append(buffer[:cut].strip())
-            buffer = buffer[cut:].lstrip()
+        chunk = buffer[:cut].strip()
+        buffer = buffer[cut:].lstrip()
 
-        if buffer:
-            parts.append(buffer)
+        # анализируем теги внутри куска
+        for match in TAG_PATTERN.finditer(chunk):
+            tag = match.group(1)
+            if match.group(0).startswith("</"):  # закрывающий тег
+                if tag in open_tags:
+                    open_tags.remove(tag)
+            else:  # открывающий тег
+                open_tags.insert(0, tag)
 
-        return parts
+        # добавляем закрывающие теги
+        fixed_chunk = chunk + "".join(f"</{t}>" for t in open_tags)
+
+        parts.append(fixed_chunk)
+
+        # открывающие теги нужно вставить в начало следующего буфера
+        if open_tags:
+            buffer = "".join(f"<{t}>" for t in reversed(open_tags)) + buffer
+
+    if buffer:
+        parts.append(buffer)
+
+    return parts
 
 async def send_media_response(
     message: Message,
