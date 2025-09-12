@@ -60,7 +60,7 @@ class OrderPriceDetails(AppBaseModel):
     payment_time: Optional[datetime.datetime] = None
     
     @classmethod
-    def new(cls, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None) -> OrderPriceDetails:
+    def new(cls, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None) -> "OrderPriceDetails":
         price_details = OrderPriceDetails(products_price=products_price.get_money(customer.currency),
                                           delivery_price=delivery_info.service.price.get_money(customer.currency) if delivery_info else None
                                           )
