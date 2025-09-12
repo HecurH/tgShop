@@ -10,7 +10,6 @@ async def clear_keyboard_effect(message: Message) -> None:
     msg = await message.answer("||BOO||", reply_markup=ReplyKeyboardRemove(), parse_mode="MarkdownV2")
     await msg.delete()
 
-# Регекс: теперь разрешаем дефисы/двоеточия в имени тега (например tg-spoiler)
 _tag_re = re.compile(
     r'<!--.*?-->|<\s*(/)?\s*([A-Za-z0-9][A-Za-z0-9\-\:]*)\b([^>]*)>',
     re.DOTALL

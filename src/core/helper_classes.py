@@ -37,7 +37,7 @@ class MessageWrapper:
         self._message = message
         
     async def answer(self, text, *args, **kwargs):
-        parts = split_message(text, 2048)
+        parts = split_message(text, 4096)
         if len(parts) == 1:
             return await self._message.answer(text, *args, **kwargs)
         
@@ -62,7 +62,7 @@ class MessageWrapper:
         if caption is None:
             return await self._message.answer_photo(*args, **kwargs)
             
-        parts = split_message(caption, 2048)
+        parts = split_message(caption, 4096)
         if len(parts) == 1:
             if len(caption) > 1024:
                 temp_kwargs = kwargs.copy()
@@ -98,7 +98,7 @@ class MessageWrapper:
         if caption is None:
             return await self._message.answer_video(*args, **kwargs)
             
-        parts = split_message(caption, 2048)
+        parts = split_message(caption, 4096)
         if len(parts) == 1:
             if len(caption) > 1024:
                 temp_kwargs = kwargs.copy()
