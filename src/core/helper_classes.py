@@ -86,7 +86,7 @@ class Cryptography:
 
 # класс для учета налогов в системе
 class TaxSystem:
-    def __init__(self, config_path: str = "src/configs/"):
+    def __init__(self, config_path: str = "/src/configs/"):
         self.client = AsyncMoyNalog(config_path)
         
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
