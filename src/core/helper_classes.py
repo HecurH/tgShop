@@ -131,7 +131,7 @@ class TaxSystem:
         entries_list = [
             [
                 f"ТЕСТОВЫЙ {entry.frozen_product.name_for_tax}",
-                (entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.base_price.get_amount(discounts.currency)) * entry.quantity - entry_discounts[i],
+                (entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.base_price.get_amount(discounts.currency)) * entry.quantity - entry_discounts[i].amount,
                 entry.quantity
             ] 
             for i, entry in enumerate(cart_entries)
