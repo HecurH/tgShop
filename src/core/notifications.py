@@ -4,7 +4,7 @@ import datetime
 import logging
 from typing import Any, List, Optional, Tuple, Union
 from aiogram import Bot
-from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile
+from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
 from schemas.db_models import Customer, Order, DeliveryInfo
@@ -44,7 +44,11 @@ class TelegramNotificator:
         while True:
             job = await self._queue.get()
             try:
-                await self._send_notification_internal(**job)
+                job_type = job.get("type", "notification")
+                if job_type == "forward":
+                    await self._send_forward_internal(**job)
+                else:
+                    await self._send_notification_internal(**job)
             except Exception as e:
                 self.logger.exception("Failed sending notification from queue: %s", e)
             finally:
@@ -76,6 +80,26 @@ class TelegramNotificator:
             return
 
         await self._send_notification_internal(**job)
+        
+    async def send_forwarded_notification(self,
+                                          message: Union[Message, List[Message]],
+                                          chat_id: Optional[int] = None,
+                                          as_copy: bool = True,
+                                          use_queue: Optional[bool] = None,
+                                          **kwargs: Any):
+        target = chat_id or self.default_chat_id
+        if not target:
+            raise ValueError("No chat_id provided and no default configured")
+
+        # нормализуем в список
+        msgs = message if isinstance(message, list) else [message]
+
+        job = dict(type="forward", messages=msgs, chat_id=target, as_copy=as_copy, kwargs=kwargs)
+        if (use_queue if use_queue is not None else self.config.use_queue) and self._queue is not None:
+            await self._queue.put(job)
+            return
+
+        await self._send_forward_internal(**job)
 
     async def _send_notification_internal(self, message, chat_id, reply_markup, media, media_type, kwargs):
         attempt = 0
@@ -99,6 +123,30 @@ class TelegramNotificator:
                 await asyncio.sleep(self.config.base_backoff * (2 ** (attempt - 1)))
             except Exception:
                 self.logger.exception("Unexpected exception sending notification")
+                raise
+            
+    async def _send_forward_internal(self, messages: List[Message], chat_id: int, as_copy: bool, kwargs: dict):
+        attempt = 0
+        while True:
+            try:
+                await self._forward(messages=messages, chat_id=chat_id, as_copy=as_copy)
+                self.logger.debug("Forwarded %s messages to chat_id=%s", len(messages), chat_id)
+                return
+            except TelegramRetryAfter as e:
+                attempt += 1
+                wait = max(self.config.base_backoff * (2 ** (attempt - 1)), getattr(e, "retry_after", 0))
+                self.logger.warning("RetryAfter for forward to chat %s, sleeping %s s (attempt %s)", chat_id, wait, attempt)
+                await asyncio.sleep(wait)
+                if attempt >= self.config.retry_attempts:
+                    raise
+            except (TelegramAPIError, TelegramBadRequest) as e:
+                attempt += 1
+                self.logger.exception("Telegram API error while forwarding to %s (attempt %s)", chat_id, attempt)
+                if attempt >= self.config.retry_attempts:
+                    raise
+                await asyncio.sleep(self.config.base_backoff * (2 ** (attempt - 1)))
+            except Exception:
+                self.logger.exception("Unexpected exception forwarding notification")
                 raise
 
     async def _send(self, chat_id: int, message: str, reply_markup, media, media_type: str):
@@ -129,6 +177,26 @@ class TelegramNotificator:
                                            reply_markup=reply_markup if is_last else None,
                                            disable_web_page_preview=True)
             if not is_last:
+                await asyncio.sleep(self.config.between_messages_delay)
+                
+    async def _forward(self, messages: List[Message], chat_id: int, as_copy: bool):
+        for i, msg in enumerate(messages):
+            if not hasattr(msg, "chat") or not hasattr(msg, "message_id"):
+                self.logger.warning("Skipping non-Message element in forward list: %r", msg)
+                continue
+
+            from_chat_id = msg.chat.id
+            message_id = msg.message_id
+
+            if as_copy:
+                # копия — от имени бота
+                await self.bot.copy_message(chat_id=chat_id, from_chat_id=from_chat_id, message_id=message_id)
+            else:
+                # обычная пересылка — сохраняется оригинальный отправитель
+                await self.bot.forward_message(chat_id=chat_id, from_chat_id=from_chat_id, message_id=message_id)
+
+            # небольшая пауза между сообщениями, чтобы сохранить порядок/альбомы
+            if i != len(messages) - 1:
                 await asyncio.sleep(self.config.between_messages_delay)
 
 class TelegramChannelLogsNotificator:
@@ -183,6 +251,13 @@ class AdminChatNotificator:
 class UserTelegramNotificator:
     def __init__(self, notificator: TelegramNotificator):
         self.notificator = notificator
+        
+    async def forward_admin_message(self, customer: Customer, message: Message):
+        await self.notificator.send_forwarded_notification(message,
+                                                           chat_id=customer.user_id)
+        
+        await self.notificator.send_notification(NotificatorTranslates.User.translate("admin_message", customer.lang).format(username=message.from_user.username),
+                                                 chat_id=customer.user_id)
     
     #-----------
     async def send_delivery_price_confirmed(self, customer: Customer):

@@ -43,6 +43,9 @@ async def admin_message_sending_handler(_, ctx: Context):
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
     
     
+    await ctx.n.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Сообщение отправлено.", 1))
+    
 
 @router.message(Command("confirm_manual_payment"))
 async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):

@@ -731,6 +731,13 @@ class ProfileTranslates(Translatable):
         }
       
 class NotificatorTranslates(Translatable):
+    
+    class User:
+        admin_message = {
+            "ru": "Сообщение выше было направлено от Администратора. Если хотите на него ответить, напишите @{username}",
+            "en": "The message above was sent from the Administrator. If you want to reply to it, write @{username}"
+        }
+    
     class Delivery(Translatable):
         delivery_price_confirmed = {
             "ru": "Стоимость вашей доставки подтверждена. Теперь вы можете оформлять заказы.",

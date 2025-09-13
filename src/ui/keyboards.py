@@ -56,6 +56,7 @@ class CommonKBs:
         )
 
 class AdminKBs:
+    
     class Orders:
         @staticmethod
         async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:
@@ -644,6 +645,8 @@ class UncategorizedKBs:
             resize_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
+        
+    
 
     @staticmethod
     async def go_to_bot(ctx: Context) -> types.InlineKeyboardMarkup:
