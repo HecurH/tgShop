@@ -762,6 +762,16 @@ class NotificatorTranslates(Translatable):
             "ru": "Мы получили оплату по заказу {order_puid}. Вы будете получать уведомления о изменении его статуса",
             "en": "We have received payment for your order {order_puid}. You will receive notifications about changes in its status"
         }
+        
+        order_unformed = {
+            "ru": "Ваш заказ {order_puid} был расфомирован.",
+            "en": "Your order {order_puid} was unformed."
+        }
+
+        order_unformed_with_reason = {
+            "ru": "Ваш заказ {order_puid} был расфомирован.\nПричина: {reason}",
+            "en": "Your order {order_puid} was unformed.\nReason: {reason}"
+        }
 
 class ReplyButtonsTranslates(Translatable):
     choose_an_item = {

@@ -1,5 +1,5 @@
 from os import getenv
-from typing import Any
+from typing import Any, Optional
 import time
 from aiogram import BaseMiddleware
 from aiogram.types import ReplyKeyboardRemove
@@ -14,19 +14,23 @@ from ui.translates import TranslatorHub
 
 class ContextMiddleware(BaseMiddleware):
     def __init__(self):
+        super().__init__()
         self.db = DatabaseService()
-        self.notificator_hub = NotificatorHub(logs_channel_id=getenv("TG_LOGS_CHANNEL_ID"), 
-                                              admin_chat_id=getenv("TG_ADMIN_CHAT_ID"))
-        self.tax_system: TaxSystem = None
-
+        self.tax_system: Optional[NotificatorHub] = None
         self.initialized = False
+        self._notificator_hub: Optional[NotificatorHub] = None
 
     async def __call__(self, handler, event, data):
         if not self.initialized:
             await self.db.create_indexes()
             self.tax_system = TaxSystem()
-            # await self.db.currency_converter.init_session()
             self.initialized = True
+        
+        if self._notificator_hub is None and "bot" in data:
+            bot = data["bot"]
+            self._notificator_hub = NotificatorHub(bot=bot,
+                                                   logs_channel_id=int(getenv("TG_LOGS_CHANNEL_ID")) if getenv("TG_LOGS_CHANNEL_ID") else None,
+                                                   admin_chat_id=int(getenv("TG_ADMIN_CHAT_ID")) if getenv("TG_ADMIN_CHAT_ID") else None)
 
         user_id = data["event_from_user"].id
 
@@ -46,7 +50,7 @@ class ContextMiddleware(BaseMiddleware):
                               data["lang"],
                               TranslatorHub.get_for_lang(data["lang"]),
                               self.tax_system,
-                              self.notificator_hub)
+                              self._notificator_hub)
         state = await data.get("state").get_state()
         if not customer and not state == NewUserStates.LangChoosing and state != None:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)

@@ -56,15 +56,15 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     order.state.set_state(OrderStateKey.accepted)
     
     if not order.payment_method.can_register_receipts:
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, ctx=ctx)
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order)
         await ctx.db.orders.save(order)
         await ctx.message.answer("Заказ подтвержден")
         return
     
     await order.save_in_fsm(ctx, "order")
-    await call_state_handler(AdminStates.AskGenerateReceipt, ctx)
+    await call_state_handler(AdminStates.Order.AskGenerateReceipt, ctx)
     
-@router.message(AdminStates.AskGenerateReceipt)
+@router.message(AdminStates.Order.AskGenerateReceipt)
 async def ask_generate_receipt_handler(_, ctx: Context):
     text = ctx.message.text
     if text not in [ctx.t.UncategorizedTranslates.yes, ctx.t.UncategorizedTranslates.no]:
@@ -82,16 +82,52 @@ async def ask_generate_receipt_handler(_, ctx: Context):
             await call_state_handler(CommonStates.MainMenu, ctx, send_before=(f"Ошибка при генерации чеков: {str(e)}", 1))
             return
 
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts, ctx)
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts)
     elif text == ctx.t.UncategorizedTranslates.no:
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, ctx=ctx)
+        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order)
         
     await ctx.db.orders.save(order)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
     
+@router.message(Command("unform_order"))
+async def unform_order_handler(_, ctx: Context, command: CommandObject):
+    order_id: str = command.args
+    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    customer = await ctx.db.customers.find_one_by_id(order.customer_id) if order else None
+    if not order:
+        await ctx.message.answer("Заказ не найден")
+        return
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
     
+    if order.state != OrderStateKey.waiting_for_manual_payment_confirm:
+        await ctx.message.answer("Заказ не в ожидании подтверждения оплаты")
+        return
+    
+    
+    await order.save_in_fsm(ctx, "order")
+    await customer.save_in_fsm(ctx, "customer")
+    await call_state_handler(AdminStates.Order.UnformAskForComment, ctx, customer=customer)
 
-@router.message(Command("admin_confirm_order_price"))
+@router.message(AdminStates.Order.UnformAskForComment)
+async def unform_ask_for_comment_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
+        return
+
+    order = await Order.from_fsm_context(ctx, "order")
+    customer = await Customer.from_fsm_context(ctx, "customer")
+    
+    
+    if text == "0":
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer)
+    else:
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
+    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
+
+@router.message(Command("confirm_order_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
     order_id: str = command.args
     order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
@@ -105,9 +141,9 @@ async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
         return
     
     await order.save_in_fsm(ctx, "order")
-    await call_state_handler(AdminStates.PriceConfirmationWaiting, ctx, entries=entries)
+    await call_state_handler(AdminStates.Order.PriceConfirmationWaiting, ctx, entries=entries)
     
-@router.message(AdminStates.PriceConfirmationWaiting)
+@router.message(AdminStates.Order.PriceConfirmationWaiting)
 async def price_confirmation_waiting_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
@@ -161,7 +197,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
     await ctx.db.cart_entries.save_many(cart_entries)
     await ctx.db.orders.save(order)
     
-    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer, ctx)
+    await ctx.n.UserTelegramNotificator.send_order_price_confirmed(customer)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Цена подтверждена.", 1))
     
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
@@ -221,7 +257,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     customer.waiting_for_manual_delivery_info_confirmation = False
     await ctx.db.customers.save(customer)
     
-    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer, ctx)
+    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer)
     
     await ctx.message.answer("Цена установлена!")
 
@@ -240,27 +276,24 @@ async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command:
         return
     
     await customer.save_in_fsm(ctx, "customer")
-    await call_state_handler(AdminStates.PriceConfirmationCancel, ctx, customer=customer)
+    await call_state_handler(AdminStates.Delivery.PriceConfirmationCancel, ctx, customer=customer)
     
-@router.message(AdminStates.PriceConfirmationCancel)
+@router.message(AdminStates.Delivery.PriceConfirmationCancel)
 async def price_confirmation_cancel_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
-    if not customer:
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Пользователь не найден.", 1))
-        return
     
     customer.waiting_for_manual_delivery_info_confirmation = False
     await ctx.db.customers.save(customer)
     await ctx.fsm.update_data(customer=None)
     
     if text == "0":
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer, ctx)
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer)
     else:
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, ctx, text)
+        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
         
 

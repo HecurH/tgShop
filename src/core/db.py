@@ -160,7 +160,9 @@ class DatabaseService:
         if model == Promocode:
             return self.promocodes
         raise ValueError(f"No collection for model {model.__name__}")
-
+    
+    async def close(self):
+        await self.client.close()
 
     def _handle_error(self, error: PyMongoError):
         self.logger.error(f"Database error: {error}")

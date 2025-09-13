@@ -75,25 +75,35 @@ async def call_state_handler(state: State,
     
     
 class AdminStates(StatesGroup):
-    PriceConfirmationWaiting = State()
-    PriceConfirmationCancel = State()
-    AskGenerateReceipt = State()
+    class Order(StatesGroup):
+        AskGenerateReceipt = State()
+        PriceConfirmationWaiting = State()
+        
+        UnformAskForComment = State()
+    
+    class Delivery(StatesGroup):
+        PriceConfirmationCancel = State()
+        
 
-@state_handlers.register(AdminStates.PriceConfirmationWaiting)
+@state_handlers.register(AdminStates.Order.AskGenerateReceipt)
+async def handle_ask_generate_receipt(ctx: Context, **_):
+    await ctx.message.answer("Cгенерировать ему чек?", reply_markup=UncategorizedKBs.yes_no(ctx))
+    
+@state_handlers.register(AdminStates.Order.PriceConfirmationWaiting)
 async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):
     text = AdminTextGen.price_confirmation_text(list(entries), ctx)
     await ctx.message.answer(text, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Order.UnformAskForComment)
+async def handle_unform_ask_for_comment(ctx: Context, customer: Customer, **_):
+    await ctx.message.answer(f"Если хотите отменить заказ с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
+                             reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
-@state_handlers.register(AdminStates.PriceConfirmationCancel)
+@state_handlers.register(AdminStates.Delivery.PriceConfirmationCancel)
 async def handle_price_confirmation_cancel(ctx: Context, customer: Customer, **_):
     await ctx.message.answer(f"Если хотите отменить доставку с комментарием, введите его следующим сообщением. (Язык пользователя - {customer.lang})\nХотите без комментария, отправьте 0",
                              reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
-@state_handlers.register(AdminStates.AskGenerateReceipt)
-async def handle_ask_generate_receipt(ctx: Context, **_):
-    await ctx.message.answer("Cгенерировать ему чек?", reply_markup=UncategorizedKBs.yes_no(ctx))
-    
-
 class NewUserStates(StatesGroup):
     LangChoosing = State()
     CurrencyChoosing = State()
