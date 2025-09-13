@@ -44,7 +44,7 @@ class TelegramNotificator:
         while True:
             job = await self._queue.get()
             try:
-                job_type = job.get("type", "notification")
+                job_type = job.pop("type", "notification")
                 if job_type == "forward":
                     await self._send_forward_internal(**job)
                 else:
