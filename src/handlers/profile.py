@@ -165,7 +165,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
-    foreign = bool(await ctx.fsm.get_value("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
+    is_foreign = bool(await ctx.fsm.get_value("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
@@ -177,7 +177,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
         return
 
 
-    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(foreign)
+    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(is_foreign)
     service_name = ctx.message.text.rsplit(" ", 1)[0]
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     
@@ -199,11 +199,12 @@ async def editable_service_handler(_, ctx: Context) -> None:
 async def editable_requirements_lists_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    is_foreign = bool(await ctx.fsm.get_value("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
 
         if first_setup:      
-            await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
+            await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info, is_foreign_services=is_foreign)
         else:  
             await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
             await call_state_handler(Profile.Delivery.Menu, ctx)
