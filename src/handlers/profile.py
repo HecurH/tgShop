@@ -160,7 +160,6 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     await delivery_info.save_in_fsm(ctx, "delivery_info")
     await ctx.fsm.update_data(is_foreign=is_foreign)
     
-    print(is_foreign)
     await call_state_handler(Profile.Delivery.Editables.Service, ctx, is_foreign_services=is_foreign)
     
 @router.message(Profile.Delivery.Editables.Service)

@@ -422,6 +422,7 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
 async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
+    print(is_foreign_services)
     services = await ctx.db.delivery_services.get_all(is_foreign_services)
     
     await ctx.message.answer(
