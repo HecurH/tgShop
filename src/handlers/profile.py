@@ -165,7 +165,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
-    foreign = bool(await ctx.fsm.get_data("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
+    foreign = bool(await ctx.fsm.get_value("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
