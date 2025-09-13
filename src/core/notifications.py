@@ -15,10 +15,6 @@ from ui.message_tools import build_list, split_message
 from ui.texts import form_entry_description, gen_product_configurable_info_text
 from ui.translates import NotificatorTranslates
 
-
-
-
-
 MediaItem = Tuple[str, Union[InputFile, URLInputFile]]
 
 @dataclass
@@ -86,6 +82,7 @@ class TelegramNotificator:
         while True:
             try:
                 await self._send(chat_id, message, reply_markup, media, media_type)
+                self.logger.debug("Sent message to chat_id=%s", chat_id)
                 return
             except TelegramRetryAfter as e:
                 attempt += 1

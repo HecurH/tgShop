@@ -92,7 +92,7 @@ async def about_command_handler(_, ctx: Context) -> None:
     ).as_kwargs(), reply_markup=CommonKBs.main_menu(ctx))
 
     await ctx.fsm.set_state(CommonStates.MainMenu)
-
+    
 @router.error()
 async def global_error_handler(event: ErrorEvent):
     with contextlib.suppress(Exception):
