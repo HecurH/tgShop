@@ -16,7 +16,7 @@ class ContextMiddleware(BaseMiddleware):
     def __init__(self):
         super().__init__()
         self.db = DatabaseService()
-        self.tax_system: Optional[NotificatorHub] = None
+        self.tax_system: Optional[TaxSystem] = None
         self.initialized = False
         self._notificator_hub: Optional[NotificatorHub] = None
 
@@ -62,6 +62,7 @@ class ContextMiddleware(BaseMiddleware):
         if self._notificator_hub:
             await self._notificator_hub.stop()
         await self.db.close()
+        await self.tax_system.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)

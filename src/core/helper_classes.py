@@ -292,6 +292,9 @@ class TaxSystem:
             payment_type="WIRE",
             return_receipt_url=True
         )
+    
+    async def close(self):
+        await self.client.close()
 
 class AsyncCurrencyConverter:
     """Асинхронный конвертер валют с кэшированием и обновлением курсов.

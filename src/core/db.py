@@ -163,6 +163,7 @@ class DatabaseService:
     
     async def close(self):
         await self.client.close()
+        await self.currency_converter.close()
 
     def _handle_error(self, error: PyMongoError):
         self.logger.error(f"Database error: {error}")
