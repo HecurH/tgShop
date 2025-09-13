@@ -732,7 +732,7 @@ class ProfileTranslates(Translatable):
       
 class NotificatorTranslates(Translatable):
     
-    class User:
+    class User(Translatable):
         admin_message = {
             "ru": "Сообщение выше было направлено от Администратора. Если хотите на него ответить, напишите @{username}",
             "en": "The message above was sent from the Administrator. If you want to reply to it, write @{username}"

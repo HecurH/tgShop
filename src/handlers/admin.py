@@ -41,6 +41,9 @@ async def msg_to_handler(_, ctx: Context, command: CommandObject):
 @router.message(AdminStates.Customers.AdminMessageSending)
 async def admin_message_sending_handler(_, ctx: Context):
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
+    if ctx.message.text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено", 1))
+        return
     
     
     await ctx.n.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
