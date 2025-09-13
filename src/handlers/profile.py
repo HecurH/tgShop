@@ -160,6 +160,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     await delivery_info.save_in_fsm(ctx, "delivery_info")
     await ctx.fsm.update_data(is_foreign=is_foreign)
     
+    print(is_foreign)
     await call_state_handler(Profile.Delivery.Editables.Service, ctx, is_foreign_services=is_foreign)
     
 @router.message(Profile.Delivery.Editables.Service)
@@ -168,7 +169,6 @@ async def editable_service_handler(_, ctx: Context) -> None:
     delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
     fsm_foreign = await ctx.fsm.get_value("is_foreign")
-    print(fsm_foreign)
     is_foreign = bool(fsm_foreign) if fsm_foreign is not None else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
