@@ -59,13 +59,16 @@ async def delivery_command_handler(_, ctx: Context) -> None:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     
+    if not delivery_info:
+        await call_state_handler(Profile.Delivery.Menu, ctx)
+        return
     
     if text.split()[0] == ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.foreign:
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     elif text == delivery_info.service.name.get(ctx.lang):
         await delivery_info.save_in_fsm(ctx, "delivery_info")
-        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
+        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info, is_foreign_services=delivery_info.service.is_foreign)
         return
     elif text == delivery_info.service.selected_option.name.get(ctx.lang):
         await delivery_info.save_in_fsm(ctx, "delivery_info")
