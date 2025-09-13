@@ -35,7 +35,8 @@ dp = Dispatcher(storage=PyMongoStorage(AsyncMongoClient(MONGO_URI,
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
-dp.update.middleware.register(middlewares.ContextMiddleware())
+context_middleware = middlewares.ContextMiddleware()
+dp.update.middleware.register(context_middleware)
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"
@@ -110,7 +111,6 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
     bot = Bot(token=BOT_TOKEN,
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
@@ -122,8 +122,15 @@ async def main() -> None:
                        orders.router,
                        profile.router,
                        bottom.router)
+    
+    bot.data["context_middleware"] = context_middleware
+    
+    @dp.shutdown()
+    async def on_shutdown(bot: Bot):
+        mw: middlewares.ContextMiddleware | None = bot.data.get("context_middleware")
+        if mw:
+            await mw.stop()
 
-    # And the run events dispatching
     await dp.start_polling(bot)
 
 

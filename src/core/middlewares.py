@@ -57,6 +57,11 @@ class ContextMiddleware(BaseMiddleware):
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
         return await handler(event, data)
+    
+    async def stop(self):
+        if self._notificator_hub:
+            await self._notificator_hub.stop()
+        await self.db.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
