@@ -403,7 +403,7 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     )
     
 @state_handlers.register(Profile.Delivery.Editables.Service)
-async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool = False, **_):
+async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
     services = await ctx.db.delivery_services.get_all(is_foreign_services)

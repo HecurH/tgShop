@@ -182,7 +182,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     
     if service is None:
-        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info)
+        await call_state_handler(Profile.Delivery.Editables.Service, ctx, delivery_info=delivery_info, is_foreign_services=is_foreign)
         return
 
     if not first_setup and delivery_info.service.name == service.name:
