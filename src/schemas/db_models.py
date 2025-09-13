@@ -734,8 +734,8 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     class Meta:
         collection_name = 'delivery_services'
     
-    async def get_all(self, is_foreign: Optional[bool] = None) -> Iterable[DeliveryService]:
-        return await self.find_by({"is_foreign": is_foreign} if is_foreign else {})
+    async def get_all(self, is_foreign: bool) -> Iterable[DeliveryService]:
+        return await self.find_by({"is_foreign": is_foreign})
 
 class DeliveryInfo(AppBaseModel):
     ### TODO: 

@@ -424,6 +424,8 @@ async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool,
     
     print(is_foreign_services)
     services = await ctx.db.delivery_services.get_all(is_foreign_services)
+    print(services)
+    
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.service_text,
