@@ -156,6 +156,7 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     delivery_info = ctx.customer.delivery_info or DeliveryInfo()
     
     await delivery_info.save_in_fsm(ctx, "delivery_info")
+    await ctx.fsm.update_data(is_foreign=is_foreign)
     
     await call_state_handler(Profile.Delivery.Editables.Service, ctx, is_foreign_services=is_foreign)
     
@@ -163,6 +164,8 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
 async def editable_service_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
     delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
+    
+    foreign = bool(await ctx.fsm.get_data("is_foreign")) if first_setup else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
         await ctx.fsm.update_data(requirement_index=None, delivery_info=None)
@@ -174,7 +177,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
         return
 
 
-    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all()
+    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(foreign)
     service_name = ctx.message.text.rsplit(" ", 1)[0]
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     

@@ -200,7 +200,6 @@ class Cryptography:
         unpadded_data = unpadder.update(decrypted_data) + unpadder.finalize()
         return unpadded_data.decode()
 
-# класс для учета налогов в системе
 class TaxSystem:
     def __init__(self, config_path: str = "/src/configs/"):
         self.client = AsyncMoyNalog(config_path)
@@ -293,7 +292,6 @@ class TaxSystem:
             payment_type="WIRE",
             return_receipt_url=True
         )
-        
 
 class AsyncCurrencyConverter:
     """Асинхронный конвертер валют с кэшированием и обновлением курсов.
