@@ -75,6 +75,9 @@ async def call_state_handler(state: State,
     
     
 class AdminStates(StatesGroup):
+    class Customers(StatesGroup):
+        AdminMessageSending = State()
+    
     class Order(StatesGroup):
         AskGenerateReceipt = State()
         PriceConfirmationWaiting = State()
@@ -83,7 +86,10 @@ class AdminStates(StatesGroup):
     
     class Delivery(StatesGroup):
         PriceConfirmationCancel = State()
-        
+
+@state_handlers.register(AdminStates.Customers.AdminMessageSending)
+async def handle_admin_message_sending(ctx: Context, **_):
+    await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
 @state_handlers.register(AdminStates.Order.AskGenerateReceipt)
 async def handle_ask_generate_receipt(ctx: Context, **_):

@@ -34,7 +34,7 @@ class ContextMiddleware(BaseMiddleware):
 
         user_id = data["event_from_user"].id
 
-        customer = await self.db.customers.get_customer_by_user_id(user_id)
+        customer = await self.db.customers.find_customer_by_user_id(user_id)
 
         ### remove when redo funcs that depends                              |
         data["lang"] = customer.lang if customer and customer.lang else "?"# |

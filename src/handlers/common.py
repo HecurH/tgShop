@@ -21,7 +21,7 @@ router = Router(name="common")
 async def command_start_handler(_, ctx: Context, command: CommandObject) -> None:
     await ctx.fsm.clear()
 
-    user = await ctx.db.customers.get_customer_by_user_id(ctx.message.from_user.id)
+    user = await ctx.db.customers.find_customer_by_user_id(ctx.message.from_user.id)
     if not user:
         inviter = await ctx.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
         

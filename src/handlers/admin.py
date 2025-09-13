@@ -23,6 +23,26 @@ middleware = RoleCheckMiddleware("admin")
 router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
+@router.message(Command("msg_to"))
+async def msg_to_handler(_, ctx: Context, command: CommandObject):
+    user_id = int(command.args) if command.args.isdigit() else None
+    if not user_id:
+        await ctx.message.answer("Неправильный формат команды")
+        return
+    
+    customer = await ctx.db.customers.find_customer_by_user_id(user_id)
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+
+    await customer.save_in_fsm(ctx, "customer")
+    await call_state_handler(AdminStates.Customers.AdminMessageSending, ctx, customer=customer)
+
+@router.message(AdminStates.Customers.AdminMessageSending)
+async def admin_message_sending_handler(_, ctx: Context):
+    customer: Customer = await Customer.from_fsm_context(ctx, "customer")
+    
+    
 
 @router.message(Command("confirm_manual_payment"))
 async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):
@@ -117,14 +137,21 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
 
-    order = await Order.from_fsm_context(ctx, "order")
+    order: Order = await Order.from_fsm_context(ctx, "order")
     customer = await Customer.from_fsm_context(ctx, "customer")
     
-    
     if text == "0":
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer)
+        await ctx.n.UserTelegramNotificator.send_order_unformed(customer, order)
     else:
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
+        await ctx.n.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
+    cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
+    await ctx.db.orders.delete(order)
+    for entry in cart_entries:
+        entry.order_id = None
+        entry.frozen_product = None
+    
+    await ctx.db.cart_entries.save_many(cart_entries)
+        
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
 
 @router.message(Command("confirm_order_price"))
