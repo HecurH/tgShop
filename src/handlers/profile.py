@@ -145,7 +145,6 @@ async def editable_is_foreign_handler(_, ctx: Context) -> None:
     elif ctx.message.text == ctx.t.ProfileTranslates.Delivery.foreign_choice_rus:
         is_foreign = False
     else:
-        
         await call_state_handler(Profile.Delivery.Editables.IsForeign, ctx)
         return
     
@@ -169,6 +168,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
     delivery_info = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
     fsm_foreign = await ctx.fsm.get_value("is_foreign")
+    print(fsm_foreign)
     is_foreign = bool(fsm_foreign) if fsm_foreign is not None else ctx.customer.delivery_info.service.is_foreign
 
     if ctx.message.text in [ctx.t.UncategorizedTranslates.back, ctx.t.UncategorizedTranslates.cancel]:
