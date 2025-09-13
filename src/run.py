@@ -123,11 +123,11 @@ async def main() -> None:
                        profile.router,
                        bottom.router)
     
-    bot.data["context_middleware"] = context_middleware
+    dp.workflow_data["context_middleware"] = context_middleware
     
     @dp.shutdown()
-    async def on_shutdown(bot: Bot):
-        mw: middlewares.ContextMiddleware | None = bot.data.get("context_middleware")
+    async def on_shutdown(dispatcher: Dispatcher):
+        mw: middlewares.ContextMiddleware | None = dispatcher.workflow_data.get("context_middleware")
         if mw:
             await mw.stop()
 
