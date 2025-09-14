@@ -138,7 +138,7 @@ class MessageWrapper:
 class ServiceHub:
     db: "DatabaseService"
     tax: "TaxSystem"
-    notificator: "NotificatorHub"
+    notificators: "NotificatorHub"
     # placeholders: PlaceholderManager
 
 @dataclass

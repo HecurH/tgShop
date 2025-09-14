@@ -23,7 +23,7 @@ class ContextMiddleware(BaseMiddleware):
             self.services = ServiceHub(
                 db=DatabaseService(),
                 tax=TaxSystem(),
-                notificator=NotificatorHub(bot=data["bot"],
+                notificators=NotificatorHub(bot=data["bot"],
                                            logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
                                            admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None)
             )
@@ -34,13 +34,13 @@ class ContextMiddleware(BaseMiddleware):
 
         user_id = data["event_from_user"].id
 
-        customer = await self.db.customers.find_customer_by_user_id(user_id)
+        customer = await self.services.db.customers.find_customer_by_user_id(user_id)
 
         ### remove when redo funcs that depends                              |
         data["lang"] = customer.lang if customer and customer.lang else "?"# |
         ###                                                                  |
         data["middleware"] = self #                                          |
-        data["db"] = self.db #                                               |
+        data["db"] = self.services.db #                                               |
         ### remove when redo funcs that depends                              |
 
         data["ctx"] = Context(event.message or event.callback_query,
@@ -57,10 +57,10 @@ class ContextMiddleware(BaseMiddleware):
         return await handler(event, data)
     
     async def stop(self):
-        if self._notificator_hub:
-            await self._notificator_hub.stop()
-        await self.db.close()
-        await self.tax_system.close()
+        if self.services.notificators:
+            await self.services.notificators.stop()
+        await self.services.db.close()
+        await self.services.tax_system.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
