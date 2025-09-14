@@ -1,6 +1,6 @@
 import logging
 from types import SimpleNamespace
-from typing import ClassVar, Type
+from typing import ClassVar, Optional, Type
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.services.placeholders import PlaceholderManager
@@ -42,16 +42,16 @@ class TranslationField:
 
         if isinstance(value, dict):
             def pluralizer(count: int):
-                return pm.process(owner.translate(self._attribute_name, lang, count=count), lang)
+                return owner.translate(self._attribute_name, lang, count=count, pm=pm)
             return pluralizer
         else:
-            return pm.process(owner.translate(self._attribute_name, lang), lang)
+            return owner.translate(self._attribute_name, lang, pm=pm)
     
-    def translate(self, lang: str, count: int = None) -> str:
+    def translate(self, lang: str, pm: PlaceholderManager = None, count: int = None) -> str:
         if self._owner_class is None:
             raise RuntimeError("TranslationField has no owner_class yet")
 
-        return self._owner_class.translate(self._attribute_name, lang, count=count)
+        return self._owner_class.translate(self._attribute_name, lang, count=count, pm=pm)
     
     def values(self):
         return self.translations.values()
@@ -108,33 +108,46 @@ class Translatable(metaclass=TranslationMeta):
         else: return "one" if count == 1 else "other"
 
     @classmethod
-    def translate(cls, attribute: str, lang: str, default_lang: str = 'en', count: int = None) -> str:
+    def translate(
+        cls, 
+        attribute: str, 
+        lang: str, 
+        default_lang: str = 'en', 
+        count: int = None, 
+        pm: Optional[PlaceholderManager] = None
+    ) -> str:
         logger = logging.getLogger(__name__)
         translations = cls._translations.get(attribute, {})
 
-        value = translations.get(lang) or translations.get(default_lang)
-        if value is None:
+        raw_value = translations.get(lang) or translations.get(default_lang)
+        if raw_value is None:
             if translations:
-                fallback_lang, value = next(iter(translations.items()))
+                fallback_lang, raw_value = next(iter(translations.items()))
                 logger.warning(f"No '{lang}' or '{default_lang}' translation for '{attribute}', falling back to '{fallback_lang}'.")
             else:
                 logger.warning(f"No translations found for '{attribute}'.")
                 return "<untranslated>"
 
-        if isinstance(value, str) or count is None:
-            return value
-        form = cls._get_plural_form(lang, count)
-        if form not in value:
-            available_forms = ", ".join(value.keys())
-            logger.warning(
-                f"Plural form '{form}' not found for '{attribute}' in '{lang}'. "
-                f"Available forms: {available_forms}. "
-                f"Please update translations to include this plural form."
-            )
-            # возвращаем плейсхолдер, чтобы было видно в ui
-            return f"<missing plural '{form}' for '{attribute}' in '{lang}'>"
-
-        return value[form]
+        final_string = ""
+        if isinstance(raw_value, str) or count is None:
+            final_string = raw_value
+        else:
+            form = cls._get_plural_form(lang, count)
+            if form not in raw_value:
+                available_forms = ", ".join(raw_value.keys())
+                logger.warning(
+                    f"Plural form '{form}' not found for '{attribute}' in '{lang}'. "
+                    f"Available forms: {available_forms}. "
+                    f"Please update translations to include this plural form."
+                )
+                final_string = f"<missing plural '{form}' for '{attribute}' in '{lang}'>"
+            else:
+                final_string = raw_value[form]
+        
+        if pm:
+            return pm.process(final_string, lang)
+        
+        return final_string
 
     
     @classmethod
@@ -202,7 +215,7 @@ class TranslatorHub:
         if lang not in cls._cache:
             if lang not in SUPPORTED_LANGUAGES_TEXT.values():
                 logging.getLogger(__name__).warning(f"Can't get TranslatorHub for {lang} language.")
-                return cls.get_for_lang('en')
+                return cls.get_for_lang('en', pm)
             cls._cache[lang] = TranslatorHub(lang=lang, pm=pm)
         return cls._cache[lang]
  

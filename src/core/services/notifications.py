@@ -255,43 +255,43 @@ class UserTelegramNotificator:
         await self.notificator.send_forwarded_notification(message,
                                                            chat_id=customer.user_id)
         
-        await self.notificator.send_notification(NotificatorTranslates.User.translate("admin_message", customer.lang).format(username=message.from_user.username),
+        await self.notificator.send_notification(NotificatorTranslates.User.admin_message.translate(customer.lang).format(username=message.from_user.username),
                                                  chat_id=customer.user_id)
     
     #-----------
     async def send_delivery_price_confirmed(self, customer: Customer):
-        await self.notificator.send_notification(NotificatorTranslates.Delivery.translate("delivery_price_confirmed", customer.lang),
+        await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_confirmed.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_delivery_price_rejected(self, customer: Customer):
-        await self.notificator.send_notification(NotificatorTranslates.Delivery.translate("delivery_price_rejected", customer.lang),
+        await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_rejected.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_delivery_price_rejected_with_reason(self, customer: Customer, reason: str):
-        await self.notificator.send_notification(NotificatorTranslates.Delivery.translate("delivery_price_rejected_with_reason", customer.lang).format(reason=reason),
+        await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_rejected_with_reason.translate(customer.lang).format(reason=reason),
                                                  chat_id=customer.user_id)
     #-----------
     async def send_order_price_confirmed(self, customer: Customer):
-        await self.notificator.send_notification(NotificatorTranslates.Order.translate("order_price_confirmed", customer.lang),
+        await self.notificator.send_notification(NotificatorTranslates.Order.order_price_confirmed.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_order_state_changed(self, customer: Customer, order: Order):
-        await self.notificator.send_notification(NotificatorTranslates.Order.translate("order_state_changed", customer.lang).format(order_puid=f"#{order.puid}", order_state=order.state.get_localized_name(customer.lang)),
+        await self.notificator.send_notification(NotificatorTranslates.Order.order_state_changed.translate(customer.lang).format(order_puid=f"#{order.puid}", order_state=order.state.get_localized_name(customer.lang)),
                                                  chat_id=customer.user_id)
     
     async def send_order_payment_accepted(self, customer: Customer, order: Order, receipt_url: Optional[str | list[str]] = None):
         media = ([("photo", URLInputFile(url)) for url in receipt_url] if isinstance(receipt_url, list) else URLInputFile(receipt_url)) if receipt_url else None
         
-        await self.notificator.send_notification(NotificatorTranslates.Order.translate("order_payment_accepted", customer.lang).format(order_puid=f"#{order.puid}"),
+        await self.notificator.send_notification(NotificatorTranslates.Order.order_payment_accepted.translate(customer.lang).format(order_puid=f"#{order.puid}"),
                                                  chat_id=customer.user_id,
                                                  media=media)
         
     async def send_order_unformed(self, customer: Customer, order: Order):
-        await self.notificator.send_notification(NotificatorTranslates.Order.translate("order_unformed", customer.lang).format(order_puid=f"#{order.puid}"),
+        await self.notificator.send_notification(NotificatorTranslates.Order.order_unformed.translate(customer.lang).format(order_puid=f"#{order.puid}"),
                                                  chat_id=customer.user_id)
     
     async def send_order_unformed_with_reason(self, customer: Customer, order: Order, reason: str):
-        await self.notificator.send_notification(NotificatorTranslates.Order.translate("order_unformed_with_reason", customer.lang).format(order_puid=f"#{order.puid}", reason=reason),
+        await self.notificator.send_notification(NotificatorTranslates.Order.order_unformed_with_reason.translate(customer.lang).format(order_puid=f"#{order.puid}", reason=reason),
                                                  chat_id=customer.user_id)
     
     #-----------

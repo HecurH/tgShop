@@ -46,6 +46,8 @@ class AppBaseModel(BaseModel, Generic[TModel]):
         await ctx.fsm.update_data({key: self.model_dump()})
         
 class Placeholder(AppBaseModel):
+    id: Optional[PydanticObjectId] = None
+    
     key: str
     value: LocalizedString
     
