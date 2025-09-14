@@ -134,7 +134,7 @@ class LocalizedString(BaseModel):
     def raw(self, lang: str) -> str: return self.data.get(lang) or self.data.get("en")
     
     def get(self, lang_or_context: str | Context, pm: "PlaceholderManager" = None) -> str:
-        if isinstance(lang_or_context, Context): return lang_or_context.services.placeholders.process(self.raw(lang_or_context.lang))
+        if isinstance(lang_or_context, Context): return lang_or_context.services.placeholders.process(self.raw(lang_or_context.lang), lang_or_context.lang)
         
         raw = self.raw(lang_or_context)
         if pm is not None:
