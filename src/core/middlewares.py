@@ -61,7 +61,7 @@ class ContextMiddleware(BaseMiddleware):
         if self.services.notificators:
             await self.services.notificators.stop()
         await self.services.db.close()
-        await self.services.tax_system.close()
+        await self.services.tax.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
