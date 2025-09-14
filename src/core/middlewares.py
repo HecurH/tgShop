@@ -25,7 +25,7 @@ class ContextMiddleware(BaseMiddleware):
                 tax=TaxSystem(),
                 notificator=NotificatorHub(bot=data["bot"],
                                            logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
-                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None
+                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None)
             )
             
             await self.services.db.create_indexes()
