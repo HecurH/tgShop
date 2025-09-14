@@ -5,9 +5,10 @@ from aiogram import BaseMiddleware
 from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
-from core.db import DatabaseService
-from core.helper_classes import Context, ServiceHub, TaxSystem
-from core.notifications import NotificatorHub
+from core.services.db import DatabaseService
+from core.helper_classes import Context, ServiceHub
+from core.services.notifications import NotificatorHub
+from core.services.tax import TaxSystem
 from core.states import NewUserStates
 from ui.translates import TranslatorHub
 

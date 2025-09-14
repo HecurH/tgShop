@@ -15,7 +15,7 @@ from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
 
 if TYPE_CHECKING:
-    from core.db import DatabaseService
+    from core.services.db import DatabaseService
 
 T = TypeVar("T")
 TModel = TypeVar("TModel", bound="AppBaseModel[Any]")

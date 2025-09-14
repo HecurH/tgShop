@@ -9,7 +9,7 @@ from aiogram.types import Message, BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
-from core.db import *
+from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware

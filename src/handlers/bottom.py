@@ -4,7 +4,7 @@ from aiogram import Router
 from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
 from core.helper_classes import Context
-from core.db import *
+from core.services.db import *
 from core.middlewares import ContextMiddleware
 from handlers.common import command_start_handler
 
