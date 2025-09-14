@@ -56,10 +56,10 @@ class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
         collection_name = 'placeholders'
         
     async def get_by_key(self, key: str) -> Optional[Placeholder]:
-        return await self.find_one({'key': key})
+        return await self.find_one_by({'key': key})
     
     async def get_all(self) -> List[Placeholder]:
-        return list(await self.find({}))
+        return list(await self.find_by({}))
 
         
 class OrderPriceDetails(AppBaseModel):
