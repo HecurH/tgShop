@@ -9,7 +9,8 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.supported import SUPPORTED_CURRENCIES
-from core.helper_classes import AsyncCurrencyConverter, Context
+from core.services.currency_converter import AsyncCurrencyConverter
+from core.helper_classes import Context
 from schemas.enums import OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
