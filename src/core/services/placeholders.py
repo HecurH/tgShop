@@ -18,7 +18,7 @@ class PlaceholderManager:
         self.repo = repo
         self._cache: dict[str, Placeholder] = {}
         
-        asyncio.create_task(self._background_refresh)
+        asyncio.create_task(self._background_refresh())
     
     async def update_placeholders(self):
         placeholders = await self.repo.get_all()
