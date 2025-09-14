@@ -21,11 +21,11 @@ router = Router(name="common")
 async def command_start_handler(_, ctx: Context, command: CommandObject) -> None:
     await ctx.fsm.clear()
 
-    user = await ctx.db.customers.find_customer_by_user_id(ctx.message.from_user.id)
+    user = await ctx.services.db.customers.find_customer_by_user_id(ctx.message.from_user.id)
     if not user:
-        inviter = await ctx.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
+        inviter = await ctx.services.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
         
-        ctx.customer = await ctx.db.customers.new_customer(
+        ctx.customer = await ctx.services.db.customers.new_customer(
             user_id=ctx.message.from_user.id,
             inviter=inviter,
             lang="?",
@@ -40,7 +40,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             ctx.lang = lang
             ctx.t = TranslatorHub.get_for_lang(lang)
 
-            await ctx.db.customers.save(ctx.customer)
+            await ctx.services.db.customers.save(ctx.customer)
             await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
             return
         
@@ -62,7 +62,7 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
     ctx.customer.lang = callback.data
     ctx.lang = callback.data
 
-    await ctx.db.update(ctx.customer)
+    await ctx.services.db.update(ctx.customer)
 
     await callback.message.delete()
 
@@ -72,9 +72,9 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
-    await ctx.customer.change_selected_currency(callback.data, ctx.db.currency_converter)
+    await ctx.customer.change_selected_currency(callback.data, ctx.services.db.currency_converter)
 
-    await ctx.db.update(ctx.customer)
+    await ctx.services.db.update(ctx.customer)
 
     await callback.message.delete()
 

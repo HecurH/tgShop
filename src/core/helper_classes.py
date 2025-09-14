@@ -135,15 +135,21 @@ class MessageWrapper:
         return getattr(self._message, item)
 
 @dataclass
+class ServiceHub:
+    db: "DatabaseService"
+    tax: "TaxSystem"
+    notificator: "NotificatorHub"
+    # placeholders: PlaceholderManager
+
+@dataclass
 class Context:
     event: Union[Message, CallbackQuery]
     fsm: FSMContext
-    db: "DatabaseService"
     customer: "Customer"
     lang: str
     t: TypedTranslatorHub
-    tax: "TaxSystem"
-    n: "NotificatorHub"
+    
+    services: ServiceHub
 
     @property
     def message(self) -> Message:

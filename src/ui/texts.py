@@ -203,11 +203,11 @@ class CartTextGen:
 
     @staticmethod
     async def generate_order_forming_caption(order: Order, ctx: Context):
-        promocode: Optional[Promocode] = await ctx.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
+        promocode: Optional[Promocode] = await ctx.services.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
         price_details = order.price_details
         payment_method = order.payment_method
             
-        entries = await ctx.db.cart_entries.get_entries_by_order(order) if order.state == OrderStateKey.waiting_for_forming else await ctx.db.cart_entries.get_customer_cart_entries(ctx.customer)
+        entries = await ctx.services.db.cart_entries.get_entries_by_order(order) if order.state == OrderStateKey.waiting_for_forming else await ctx.services.db.cart_entries.get_customer_cart_entries(ctx.customer)
         cart_entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
         cart_entries_description = build_list(cart_entries_description, before="▫️")
         
@@ -282,7 +282,7 @@ class OrdersTextGen:
     async def generate_order_viewing_caption(order: Order, ctx: Context):
         order_viewing_menu = ctx.t.OrdersTranslates.order_viewing_menu
         
-        entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
         entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
         entries_description = build_list(entries_description, before="▫️")
         
@@ -298,7 +298,7 @@ class OrdersTextGen:
         else:
             price_info = ctx.t.OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
             
-        promocode = await ctx.db.promocodes.get_by_code(order.promocode) if order.promocode else None
+        promocode = await ctx.services.db.promocodes.get_by_code(order.promocode) if order.promocode else None
         promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
                                                                                            discount=order.price_details.promocode_discount.to_text(),
                                                                                            description=promocode.description.get(ctx.lang)) if promocode else None

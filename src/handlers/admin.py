@@ -30,7 +30,7 @@ async def msg_to_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Неправильный формат команды")
         return
     
-    customer = await ctx.db.customers.find_customer_by_user_id(user_id)
+    customer = await ctx.services.db.customers.find_customer_by_user_id(user_id)
     if not customer:
         await ctx.message.answer("Пользователь не найден")
         return
@@ -46,7 +46,7 @@ async def admin_message_sending_handler(_, ctx: Context):
         return
     
     
-    await ctx.n.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
+    await ctx.services.notificators.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Сообщение отправлено.", 1))
     
 
@@ -64,8 +64,8 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
         await ctx.message.answer(f"Неправильный формат времени: {e}")
         return
     
-    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
-    customer = await ctx.db.customers.find_one_by_id(order.customer_id) if order else None
+    order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id) if order else None
     if not order:
         await ctx.message.answer("Заказ не найден")
         return
@@ -82,8 +82,8 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     order.state.set_state(OrderStateKey.accepted)
     
     if not order.payment_method.can_register_receipts:
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order)
-        await ctx.db.orders.save(order)
+        await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
+        await ctx.services.db.orders.save(order)
         await ctx.message.answer("Заказ подтвержден")
         return
     
@@ -98,28 +98,28 @@ async def ask_generate_receipt_handler(_, ctx: Context):
         return
 
     order = await Order.from_fsm_context(ctx, "order")
-    customer = await ctx.db.customers.find_one_by_id(order.customer_id)
-    cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
+    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
+    cart_entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
     
     if text == ctx.t.UncategorizedTranslates.yes:
         try:
-            receipts = await ctx.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
+            receipts = await ctx.services.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
         except Exception as e:
             await call_state_handler(CommonStates.MainMenu, ctx, send_before=(f"Ошибка при генерации чеков: {str(e)}", 1))
             return
 
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts)
+        await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts)
     elif text == ctx.t.UncategorizedTranslates.no:
-        await ctx.n.UserTelegramNotificator.send_order_payment_accepted(customer, order)
+        await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
         
-    await ctx.db.orders.save(order)
+    await ctx.services.db.orders.save(order)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
     
 @router.message(Command("unform_order"))
 async def unform_order_handler(_, ctx: Context, command: CommandObject):
     order_id: str = command.args
-    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
-    customer = await ctx.db.customers.find_one_by_id(order.customer_id) if order else None
+    order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id) if order else None
     if not order:
         await ctx.message.answer("Заказ не найден")
         return
@@ -147,28 +147,28 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
     customer = await Customer.from_fsm_context(ctx, "customer")
     
     if text == "0":
-        await ctx.n.UserTelegramNotificator.send_order_unformed(customer, order)
+        await ctx.services.notificators.UserTelegramNotificator.send_order_unformed(customer, order)
     else:
-        await ctx.n.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
-    cart_entries = await ctx.db.cart_entries.get_entries_by_order(order)
-    await ctx.db.orders.delete(order)
+        await ctx.services.notificators.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
+    cart_entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
+    await ctx.services.db.orders.delete(order)
     for entry in cart_entries:
         entry.order_id = None
         entry.frozen_product = None
     
-    await ctx.db.cart_entries.save_many(cart_entries)
+    await ctx.services.db.cart_entries.save_many(cart_entries)
         
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
 
 @router.message(Command("confirm_order_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
     order_id: str = command.args
-    order = await ctx.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
+    order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
     if not order:
         await ctx.message.answer("Заказ не найден")
         return
     
-    entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
+    entries = list(await ctx.services.db.cart_entries.get_price_confirmation_entries(order))
     if order.state != OrderStateKey.waiting_for_price_confirmation or not entries:
         await ctx.message.answer("Заказ не в ожидании подтверждения цены")
         return
@@ -206,12 +206,12 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         return
     
     order: Order = await Order.from_fsm_context(ctx, "order")
-    customer = await ctx.db.customers.find_one_by_id(order.customer_id)
+    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
     if not customer:
         await ctx.message.answer("Пользователь не найден")
         return
     
-    cart_entries = list(await ctx.db.cart_entries.get_price_confirmation_entries(order))
+    cart_entries = list(await ctx.services.db.cart_entries.get_price_confirmation_entries(order))
     
     for idx, cart_entry in enumerate(cart_entries):
         updater_entry = entries[idx]
@@ -224,13 +224,13 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         
     order.state.set_state(OrderStateKey.waiting_for_forming)
     
-    products_price = await ctx.db.cart_entries.calculate_cart_entries_price_by_order(order)
+    products_price = await ctx.services.db.cart_entries.calculate_cart_entries_price_by_order(order)
     order.price_details = OrderPriceDetails.new(customer, products_price)
     
-    await ctx.db.cart_entries.save_many(cart_entries)
-    await ctx.db.orders.save(order)
+    await ctx.services.db.cart_entries.save_many(cart_entries)
+    await ctx.services.db.orders.save(order)
     
-    await ctx.n.UserTelegramNotificator.send_order_price_confirmed(customer)
+    await ctx.services.notificators.UserTelegramNotificator.send_order_price_confirmed(customer)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Цена подтверждена.", 1))
     
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
@@ -268,8 +268,8 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         await ctx.message.answer("Неверный формат цены")
         return
     
-    customer = await ctx.db.customers.find_one_by({"user_id": user_id})
-    delivery_service = await ctx.db.delivery_services.find_one_by_id(PydanticObjectId(delivery_service_id)) if delivery_service_id else None
+    customer = await ctx.services.db.customers.find_one_by({"user_id": user_id})
+    delivery_service = await ctx.services.db.delivery_services.find_one_by_id(PydanticObjectId(delivery_service_id)) if delivery_service_id else None
     
     if not customer or not delivery_service:
         await ctx.message.answer("Пользователь или сервис доставки не найдены")
@@ -288,9 +288,9 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     customer.delivery_info = DeliveryInfo()
     customer.delivery_info.service = delivery_service
     customer.waiting_for_manual_delivery_info_confirmation = False
-    await ctx.db.customers.save(customer)
+    await ctx.services.db.customers.save(customer)
     
-    await ctx.n.UserTelegramNotificator.send_delivery_price_confirmed(customer)
+    await ctx.services.notificators.UserTelegramNotificator.send_delivery_price_confirmed(customer)
     
     await ctx.message.answer("Цена установлена!")
 
@@ -298,7 +298,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
 async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
     args = command.args
     user_id = int(args) if args and args.isdigit() else None
-    customer = await ctx.db.customers.find_one_by({"user_id": user_id}) if user_id else None
+    customer = await ctx.services.db.customers.find_one_by({"user_id": user_id}) if user_id else None
 
     if not customer:
         await ctx.message.answer("Пользователь не найден")
@@ -320,13 +320,13 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
     
     customer.waiting_for_manual_delivery_info_confirmation = False
-    await ctx.db.customers.save(customer)
+    await ctx.services.db.customers.save(customer)
     await ctx.fsm.update_data(customer=None)
     
     if text == "0":
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected(customer)
+        await ctx.services.notificators.UserTelegramNotificator.send_delivery_price_rejected(customer)
     else:
-        await ctx.n.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
+        await ctx.services.notificators.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
         
 
@@ -360,21 +360,21 @@ async def cats_handler(_, ctx: Context) -> None:
                 "ru": "Дилдо",
                 "en": "Dildos"
             }))
-    await ctx.db.categories.save(cat)
+    await ctx.services.db.categories.save(cat)
     cat = Category(
         name="masturbators",
         localized_name=LocalizedString(data={
                 "ru": "Мастурбаторы",
                 "en": "Masturbators"
             }))
-    await ctx.db.categories.save(cat)
+    await ctx.services.db.categories.save(cat)
     cat = Category(
         name="anal_plugs",
         localized_name=LocalizedString(data={
                 "ru": "Анальные пробки",
                 "en": "Anal plugs"
             }))
-    await ctx.db.categories.save(cat)
+    await ctx.services.db.categories.save(cat)
 
     cat = Category(
         name="other",
@@ -382,7 +382,7 @@ async def cats_handler(_, ctx: Context) -> None:
                 "ru": "Другое",
                 "en": "Other"
             }))
-    await ctx.db.categories.save(cat)
+    await ctx.services.db.categories.save(cat)
 
 
 @router.message(Command("add_product"))
@@ -600,7 +600,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
         configuration=configuration
     )
 
-    await ctx.db.products.save(product)
+    await ctx.services.db.products.save(product)
 
 
 @router.message(Command("add_addit"))
@@ -622,7 +622,7 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
     
 @router.message(Command("delete_acc"))
 async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
-    await ctx.db.customers.delete(ctx.customer)
+    await ctx.services.db.customers.delete(ctx.customer)
     
 @router.message(Command("add_delivery_services"))
 async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
@@ -965,7 +965,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
     # await ctx.db.delivery_services.save(service)
     # await ctx.db.delivery_services.save(cdek)
     # await ctx.db.delivery_services.save(boxberry)
-    await ctx.db.delivery_services.save(universal_international)
+    await ctx.services.db.delivery_services.save(universal_international)
     # await ctx.db.delivery_services.save(ya_delivery)
     # await ctx.db.delivery_services.save(ozon_delivery)
 

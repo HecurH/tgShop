@@ -101,7 +101,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         
         ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
-        await ctx.db.update(ctx.customer)
+        await ctx.services.db.update(ctx.customer)
         
         text = ProfileTranslates.Settings.lang_changed.translate(ctx.lang) # тк тут ctx.t уже В-С-Е
         
@@ -123,7 +123,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
             return
         
         ctx.customer.currency = currency
-        await ctx.db.update(ctx.customer)
+        await ctx.services.db.update(ctx.customer)
         
         text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
         await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
@@ -180,7 +180,7 @@ async def editable_service_handler(_, ctx: Context) -> None:
         return
 
 
-    services: Iterable[DeliveryService] = await ctx.db.delivery_services.get_all(is_foreign)
+    services: Iterable[DeliveryService] = await ctx.services.db.delivery_services.get_all(is_foreign)
     service_name = ctx.message.text.rsplit(" ", 1)[0]
     service = next((ser for ser in services if ser.name.get(ctx.lang) == service_name), None)
     
@@ -268,7 +268,7 @@ async def editable_requirement_handler(_, ctx: Context) -> None:
         
         
         ctx.customer.delivery_info = delivery_info
-        await ctx.db.customers.save(ctx.customer)
+        await ctx.services.db.customers.save(ctx.customer)
         
         if await ctx.fsm.get_value("back_to_cart_after_delivery"):
             await ctx.fsm.update_data(back_to_cart_after_delivery=None)
@@ -293,11 +293,11 @@ async def editable_send_to_manual_confirmation_handler(_, ctx: Context) -> None:
     
     delivery_info: DeliveryInfo = await DeliveryInfo.from_fsm_context(ctx, "delivery_info")
     
-    await ctx.n.AdminChatNotificator.send_delivery_manual_price_confirmation(delivery_info, ctx)
+    await ctx.services.notificators.AdminChatNotificator.send_delivery_manual_price_confirmation(delivery_info, ctx)
     
     ctx.customer.delivery_info = None
     ctx.customer.waiting_for_manual_delivery_info_confirmation = True
-    await ctx.db.customers.save(ctx.customer)
+    await ctx.services.db.customers.save(ctx.customer)
     
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.ProfileTranslates.delivery_info_price_sent_to_confirmation, 1))
     
@@ -309,6 +309,6 @@ async def delete_confimation_handler(_, ctx: Context) -> None:
     
     ctx.customer.delivery_info = None
     
-    await ctx.db.customers.save(ctx.customer)
+    await ctx.services.db.customers.save(ctx.customer)
     
     await call_state_handler(Profile.Delivery.Menu, ctx)

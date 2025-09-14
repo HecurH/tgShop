@@ -241,7 +241,7 @@ class CartKBs:
             types.KeyboardButton(text=f"{current}/{amount}")
         ]
         
-        requires_price_confirmation = await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
+        requires_price_confirmation = await ctx.services.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
         
         kb = [
             [

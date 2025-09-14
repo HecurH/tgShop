@@ -23,7 +23,7 @@ async def cart_viewer_handler(_, ctx: Context):
                                 ctx)
         return
     
-    amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
+    amount = await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer)
     current = await ctx.fsm.get_value("current") or 1
     
     if text == '❌':
@@ -42,7 +42,7 @@ async def cart_viewer_handler(_, ctx: Context):
                                 ctx,
                                 current=new_order)
     elif text in ['➖', '➕']:
-        entry: CartEntry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        entry: CartEntry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
         if entry:
             if text == '➖':
                 if entry.quantity == 1:
@@ -51,7 +51,7 @@ async def cart_viewer_handler(_, ctx: Context):
                 entry.quantity = entry.quantity - 1
             elif text == '➕':
                 entry.quantity = min(entry.quantity + 1, 99)
-            await ctx.db.cart_entries.save(entry)
+            await ctx.services.db.cart_entries.save(entry)
 
         await call_state_handler(Cart.Menu,
                                 ctx,
@@ -64,11 +64,11 @@ async def cart_viewer_handler(_, ctx: Context):
                                      send_before=(ctx.t.CartTranslates.delivery_not_configured, 1))
             return
         
-        products_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+        products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         
         
-        requires_price_confirmation = await ctx.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
-        order = ctx.db.orders.new_order(ctx.customer, products_price, save_delivery_info=not requires_price_confirmation)
+        requires_price_confirmation = await ctx.services.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
+        order = ctx.services.db.orders.new_order(ctx.customer, products_price, save_delivery_info=not requires_price_confirmation)
         await order.save_in_fsm(ctx, "order")
         
         if requires_price_confirmation:
@@ -94,8 +94,8 @@ async def entry_remove_confirm_handler(_, ctx: Context):
         return
     
     if ctx.message.text == ctx.t.UncategorizedTranslates.yes:
-        entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
-        await ctx.db.cart_entries.delete(entry)
+        entry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        await ctx.services.db.cart_entries.delete(entry)
     
     current = max(1, current - 1)
     await ctx.fsm.update_data(current=current)
@@ -114,9 +114,9 @@ async def cart_price_confirmation_handler(_, ctx: Context):
     order: Order = await Order.from_fsm_context(ctx, "order")
     order.state.set_state(OrderStateKey.waiting_for_price_confirmation)
     
-    await ctx.db.orders.save(order)
-    await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
-    await ctx.n.AdminChatNotificator.send_price_confirmation(order, ctx)
+    await ctx.services.db.orders.save(order)
+    await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+    await ctx.services.notificators.AdminChatNotificator.send_price_confirmation(order, ctx)
     
     await ctx.fsm.update_data(order=None)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.price_confirmation_sent, 1))
@@ -175,13 +175,13 @@ async def order_configuration_promocode_handler(_, ctx: Context):
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         return
     
-    promocode: Promocode = await ctx.db.promocodes.get_by_code(text)
+    promocode: Promocode = await ctx.services.db.promocodes.get_by_code(text)
     if not promocode:
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
-    check_result: PromocodeCheckResult = await promocode.check_promocode(await ctx.db.orders.count_customer_orders(ctx.customer))
+    check_result: PromocodeCheckResult = await promocode.check_promocode(await ctx.services.db.orders.count_customer_orders(ctx.customer))
     
     if check_result != PromocodeCheckResult.ok:
         check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
@@ -232,10 +232,10 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
         entries_assigned = order.state == OrderStateKey.waiting_for_forming
         order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
         
-        await ctx.db.orders.save(order)
-        if not entries_assigned: await ctx.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+        await ctx.services.db.orders.save(order)
+        if not entries_assigned: await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
         
-        await ctx.n.AdminChatNotificator.send_payment_confirmation(order, ctx)
+        await ctx.services.notificators.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
         await ctx.fsm.update_data(order=None)
         

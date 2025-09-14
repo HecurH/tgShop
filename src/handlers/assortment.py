@@ -24,7 +24,7 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
         return
 
     category = next(
-        (category.name for category in await ctx.db.categories.get_all()
+        (category.name for category in await ctx.services.db.categories.get_all()
          if category.localized_name.get(ctx.lang) == message.text),
         None  # значение по умолчанию, если ничего не найдено
     )
@@ -51,7 +51,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
     
     current = await ctx.fsm.get_value("current") or 1
     category = await ctx.fsm.get_value("category")
-    amount = await ctx.db.products.count_in_category(category)
+    amount = await ctx.services.db.products.count_in_category(category)
     
     if text in ["⬅️", "➡️"]:
         if text == '⬅️':
@@ -71,7 +71,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
         
         await ctx.fsm.update_data(product=None)
         
-        product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
+        product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
         await call_state_handler(Assortment.ViewingProductDetails,
                                 ctx,
                                 product=product)
@@ -88,7 +88,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     text = ctx.message.text
     
     if text == ctx.t.UncategorizedTranslates.back:
-        if current > await ctx.db.products.count_in_category(category): 
+        if current > await ctx.services.db.products.count_in_category(category): 
             await ctx.fsm.update_data(current=1)
             current = 1
         
@@ -98,7 +98,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
                                 current=current)
         return
         
-    product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
+    product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
     if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
         await product.save_in_fsm(ctx, "product")
         await call_state_handler(Assortment.FormingOrderEntry,
@@ -120,13 +120,13 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                 product=product)
     elif text == ctx.t.UncategorizedTranslates.finish:
         
-        await ctx.db.cart_entries.add_to_cart(product, ctx.customer)
+        await ctx.services.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
                                 ctx,
                                 send_before=(ctx.t.AssortmentTranslates.add_to_cart_finished, 1))
         
     elif text == "+":
-        allowed_additionals = await ctx.db.additionals.get(product)
+        allowed_additionals = await ctx.services.db.additionals.get(product)
         await call_state_handler(Assortment.AdditionalsEditing,
                                 ctx,
                                 product=product,
@@ -153,8 +153,8 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
     changing_option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
 
     if message.text == ctx.t.UncategorizedTranslates.back:
-        base_product: Product = await ctx.db.products.find_one_by_id(product.id)
-        product.configuration.update(base_product.configuration, await ctx.db.additionals.get(product))
+        base_product: Product = await ctx.services.db.products.find_one_by_id(product.id)
+        product.configuration.update(base_product.configuration, await ctx.services.db.additionals.get(product))
 
         await product.save_in_fsm(ctx, "product")
         
@@ -231,7 +231,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
-        key = option.get_key_by_label(switches.label.data.get(ctx.lang), ctx.lang)
+        key = option.get_key_by_label(switches.label.get(ctx.lang), ctx.lang)
         option.choices[key] = switches
         
         product.configuration.update_price()
@@ -256,10 +256,10 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
 
         return
 
-    allowed_additionals = await ctx.db.additionals.get(product)
+    allowed_additionals = await ctx.services.db.additionals.get(product)
     if text:
         text = ctx.message.text.replace(" ✅", "")
-        additional = ctx.db.additionals.get_by_name(text, allowed_additionals, ctx.lang)
+        additional = ctx.services.db.additionals.get_by_name(text, allowed_additionals, ctx.lang)
         if not additional:
             await call_state_handler(Assortment.AdditionalsEditing,
                                     ctx, 

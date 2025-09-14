@@ -12,7 +12,7 @@ router = Router(name="orders")
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.orders.values()) if message.text else False)
 async def profile_entrance_handler(_, ctx: Context) -> None:
-    if await ctx.db.orders.count_customer_orders(ctx.customer) == 0:
+    if await ctx.services.db.orders.count_customer_orders(ctx.customer) == 0:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.OrdersTranslates.no_orders, 1))
         return
     
@@ -30,7 +30,7 @@ async def orders_menu_handler(_, ctx: Context) -> None:
         return
     
     normalized_order_id = text[1:] if text.startswith("#") else text
-    order = await ctx.db.orders.get_by_puid(normalized_order_id, ctx.customer)
+    order = await ctx.services.db.orders.get_by_puid(normalized_order_id, ctx.customer)
     if not order:
         await call_state_handler(Orders.Menu, ctx)
         return
@@ -48,7 +48,7 @@ async def order_view_handler(_, ctx: Context) -> None:
     
     order: Order = await Order.from_fsm_context(ctx, "order")
     if text == ctx.t.ReplyButtonsTranslates.Orders.continue_forming and order.state == OrderStateKey.waiting_for_forming:
-        products_price = await ctx.db.cart_entries.calculate_cart_entries_price_by_order(order)
+        products_price = await ctx.services.db.cart_entries.calculate_cart_entries_price_by_order(order)
         order.delivery_info = ctx.customer.delivery_info
         order.price_details = OrderPriceDetails.new(ctx.customer, products_price, ctx.customer.delivery_info)
         

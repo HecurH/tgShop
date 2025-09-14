@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
 from core.db import DatabaseService
-from core.helper_classes import Context, TaxSystem
+from core.helper_classes import Context, ServiceHub, TaxSystem
 from core.notifications import NotificatorHub
 from core.states import NewUserStates
 from ui.translates import TranslatorHub
@@ -15,22 +15,22 @@ from ui.translates import TranslatorHub
 class ContextMiddleware(BaseMiddleware):
     def __init__(self):
         super().__init__()
-        self.db = DatabaseService()
-        self.tax_system: Optional[TaxSystem] = None
         self.initialized = False
-        self._notificator_hub: Optional[NotificatorHub] = None
+        self.services: Optional[ServiceHub] = None
 
     async def __call__(self, handler, event, data):
-        if not self.initialized:
-            await self.db.create_indexes()
-            self.tax_system = TaxSystem()
+        if not self.initialized and "bot" in data:
+            self.services = ServiceHub(
+                db=DatabaseService(),
+                tax=TaxSystem(),
+                notificator=NotificatorHub(bot=data["bot"],
+                                           logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
+                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None
+            )
+            
+            await self.services.db.create_indexes()
+            
             self.initialized = True
-        
-        if self._notificator_hub is None and "bot" in data:
-            bot = data["bot"]
-            self._notificator_hub = NotificatorHub(bot=bot,
-                                                   logs_channel_id=int(getenv("TG_LOGS_CHANNEL_ID")) if getenv("TG_LOGS_CHANNEL_ID") else None,
-                                                   admin_chat_id=int(getenv("TG_ADMIN_CHAT_ID")) if getenv("TG_ADMIN_CHAT_ID") else None)
 
         user_id = data["event_from_user"].id
 
@@ -45,12 +45,10 @@ class ContextMiddleware(BaseMiddleware):
 
         data["ctx"] = Context(event.message or event.callback_query,
                               data.get("state"),
-                              self.db,
                               customer,
                               data["lang"],
                               TranslatorHub.get_for_lang(data["lang"]),
-                              self.tax_system,
-                              self._notificator_hub)
+                              self.services)
         state = await data.get("state").get_state()
         if not customer and not state == NewUserStates.LangChoosing and state != None:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)

@@ -145,7 +145,7 @@ class Assortment(StatesGroup):
 
 @state_handlers.register(Assortment.Menu)
 async def assortment_menu_handler(ctx: Context, **_):
-    categories = await ctx.db.categories.get_all()
+    categories = await ctx.services.db.categories.get_all()
     if not categories:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before="Err: There's no categories!")
         return
@@ -157,7 +157,7 @@ async def viewing_assortment_handler(ctx: Context,
                                      category: str,
                                      current: int,
                                      **_):
-    amount = await ctx.db.products.count_in_category(category)
+    amount = await ctx.services.db.products.count_in_category(category)
 
     if amount == 0:
         await ctx.message.answer(ctx.t.AssortmentTranslates.no_products_in_category)
@@ -166,7 +166,7 @@ async def viewing_assortment_handler(ctx: Context,
         return
     
     # product: Product = await ctx.db.products.find_one_by({'order_no': current, "category": category})
-    product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
+    product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 
@@ -208,7 +208,7 @@ async def forming_order_entry_handler(ctx: Context,
 
     if ctx.is_query: await clear_keyboard_effect(ctx.message)
     
-    additionals = await ctx.db.additionals.get(product)
+    additionals = await ctx.services.db.additionals.get(product)
 
     # if edit: await ctx.message.delete()
     await send_media_response(ctx.message,
@@ -292,7 +292,7 @@ class Cart(StatesGroup):
 
 @state_handlers.register(Cart.Menu)
 async def cart_menu_handler(ctx: Context, current: int = 1, **_):
-    amount = await ctx.db.cart_entries.count_customer_cart_entries(ctx.customer)
+    amount = await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
     if amount == 0:
         await ctx.message.answer(ctx.t.CartTranslates.no_products_in_cart)
@@ -301,9 +301,9 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
         return
     if current > amount: current = 1
     
-    entry = await ctx.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
-    product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
-    total_price = await ctx.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+    entry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+    product: Product = await ctx.services.db.products.find_one_by_id(entry.product_id)
+    total_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     
     caption = CartTextGen.generate_cart_viewing_caption(entry,
                                             product,
@@ -351,7 +351,7 @@ class Orders(StatesGroup):
     
 @state_handlers.register(Orders.Menu)
 async def orders_menu_handler(ctx: Context, **_):
-    orders = await ctx.db.orders.get_customer_orders(ctx.customer)
+    orders = await ctx.services.db.orders.get_customer_orders(ctx.customer)
 
     await ctx.message.answer(await OrdersTextGen.generate_orders_menu_text(orders, ctx),
                              reply_markup=UncategorizedKBs.reply_back(ctx))
@@ -422,7 +422,7 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
 async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
-    services = await ctx.db.delivery_services.get_all(is_foreign_services)
+    services = await ctx.services.db.delivery_services.get_all(is_foreign_services)
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.service_text,
@@ -449,7 +449,7 @@ async def delivery_edit_requirement_handler(ctx: Context, delivery_info: Deliver
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
-        ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx.lang), description=requirement.description.data.get(ctx.lang)),
+        ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx.lang), description=requirement.description.get(ctx.lang)),
         reply_markup=ProfileKBs.Delivery.Editables.requirement(
             first_setup, ctx
         )

@@ -509,28 +509,28 @@ class ProductConfiguration(AppBaseModel):
         if not option:
             return result
         # Добавляем имя опции
-        result.append(option.name.data.get(lang))
+        result.append(option.name.get(lang))
         # Получаем выбор
         choice = option.choices.get(opt_keys[1]) if len(opt_keys) > 1 else option.choices.get(last_key)
         if not choice:
             return result
         # Добавляем имя выбора
         if hasattr(choice, "label"):
-            result.append(choice.label.data.get(lang))
+            result.append(choice.label.get(lang))
         # Если есть переключатель (switch)
         if len(opt_keys) > 2 and hasattr(choice, "switches"):
             if switch := next(
                 (
                     sw
                     for sw in choice.switches
-                    if sw.name.data.get(
-                        "ru", next(iter(sw.name.data.values()), "")
+                    if sw.name.get(
+                        "ru", next(iter(sw.name.values()), "")
                     )
                     == last_key
                 ),
                 None,
             ):
-                result.append(switch.name.data.get(lang))
+                result.append(switch.name.get(lang))
         return result
         
     def calculate_additionals_price(self):

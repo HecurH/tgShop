@@ -39,7 +39,6 @@ class TelegramNotificator:
             for _ in range(config.queue_workers):
                 self._workers.append(asyncio.create_task(self._worker_loop()))
 
-    # ---------------- queue worker & lifecycle ----------------
     async def _worker_loop(self):
         while True:
             job = await self._queue.get()
@@ -216,8 +215,8 @@ class AdminChatNotificator:
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> собрал корзину и отправил ее на подтверждение.\nБазовая стоимость без наценки за сложность: {order.price_details.products_price.to_text()}\n\n<b>Содержимое заказа:</b>\n"
         ctx.lang = "ru"
 
-        entries = await ctx.db.cart_entries.get_entries_by_order(order)
-        products = await ctx.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
+        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
         products_dict = {product.id: product for product in products}
 
         for idx, entry in enumerate(entries):
@@ -234,7 +233,7 @@ class AdminChatNotificator:
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
         text += "\nСодержимое заказа:\n"
         
-        entries = await ctx.db.cart_entries.get_entries_by_order(order)
+        entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
         text += "\n".join(await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries)))
         text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
 
