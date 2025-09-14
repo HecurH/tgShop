@@ -11,7 +11,7 @@ from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.supported import SUPPORTED_CURRENCIES
 from core.services.currency_converter import AsyncCurrencyConverter
 from core.helper_classes import Context
-from schemas.enums import OrderStateKey, PromocodeCheckResult
+from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
 
@@ -692,9 +692,17 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
 
 class Inviter(AppBaseModel):
     id: Optional[PydanticObjectId] = None
-    inviter_code: str
+    
+    customer_id: PydanticObjectId
+    inviter_type: InviterType = InviterType.customer
+    
+    invited_customers: int = 0
+    invited_customers_first_orders: int = 0
+    
+    async def gen_link(self, ctx: Context) -> str:
+        me = await ctx.message.bot.get_me()
+        return f"tg://resolve?domain={me.username}&start=inviter_{str(self.id)}"
 
-    name: str
 
 class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:

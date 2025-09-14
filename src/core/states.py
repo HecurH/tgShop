@@ -367,6 +367,8 @@ class Profile(StatesGroup):
         Menu = State()
         ChangeLanguage = State()
         ChangeCurrency = State()
+    class Refferals(StatesGroup):
+        Menu = State()
     class Delivery(StatesGroup):
         Menu = State()
         DeleteConfimation = State()
@@ -389,13 +391,6 @@ async def settings_menu_handler(ctx: Context, **_):
         reply_markup=ProfileKBs.Settings.menu(ctx)
     )
 
-@state_handlers.register(Profile.Delivery.Menu)
-async def delivery_menu_handler(ctx: Context, **_):
-    await ctx.message.answer(
-        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
-        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx)
-    )
-    
 @state_handlers.register(Profile.Settings.ChangeLanguage)
 async def settings_change_lang_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_lang,
@@ -406,6 +401,20 @@ async def settings_change_currency_handler(ctx: Context, **_):
     currency_name = getattr(ctx.t.UncategorizedTranslates.Currencies, ctx.customer.currency)
     await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_currency.format(currency=currency_name),
                              reply_markup=ProfileKBs.Settings.currency_choose(ctx))
+
+@state_handlers.register(Profile.Refferals.Menu)
+async def refferals_menu_handler(ctx: Context, **_):
+    await ctx.message.answer(
+        ProfileTextGen.refferals_menu_text(ctx),
+        reply_markup=ProfileKBs.Refferals.menu(ctx)
+    )
+
+@state_handlers.register(Profile.Delivery.Menu)
+async def delivery_menu_handler(ctx: Context, **_):
+    await ctx.message.answer(
+        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
+        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx)
+    )
 
 @state_handlers.register(Profile.Delivery.Editables.IsForeign)
 async def delivery_edit_is_foreign_handler(ctx: Context, **_):

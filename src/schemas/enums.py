@@ -4,6 +4,10 @@ class DiscountType(str, Enum):
     fixed = "fixed"      # фиксированная сумма
     percent = "percent"  # процент от суммы
 
+class InviterType(str, Enum):
+    customer = "user"
+    channel = "channel"
+
 class PromocodeCheckResult(str, Enum):
     ok = "ok"
     only_newbies = "only_newbies"

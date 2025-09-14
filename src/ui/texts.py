@@ -174,6 +174,10 @@ class ProfileTextGen:
         return ctx.t.ProfileTranslates.Settings.menu
     
     @staticmethod
+    def refferals_menu_text(ctx: Context):
+        ...
+    
+    @staticmethod
     def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):
         if not delivery_info:
             return ctx.t.ProfileTranslates.Delivery.menu_not_configured

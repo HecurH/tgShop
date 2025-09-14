@@ -21,6 +21,7 @@ async def profile_command_handler(_, ctx: Context) -> None:
     actions = {
         ctx.t.UncategorizedTranslates.back: CommonStates.MainMenu,
         ctx.t.ReplyButtonsTranslates.Profile.settings: Profile.Settings.Menu,
+        ctx.t.ReplyButtonsTranslates.Profile.referrals: Profile.Referrals.Menu,
         ctx.t.ReplyButtonsTranslates.Profile.delivery: Profile.Delivery.Menu
     }
     next_state = actions.get(ctx.message.text)
@@ -41,7 +42,51 @@ async def profile_command_handler(_, ctx: Context) -> None:
         await call_state_handler(next_state, ctx)
     else:
         await call_state_handler(Profile.Settings.Menu, ctx)
+ 
+@router.message(Profile.Settings.ChangeLanguage)
+async def profile_change_lang_handler(_, ctx: Context) -> None:
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Profile.Settings.Menu, ctx)
+        return
+    
+    if ctx.message.text in SUPPORTED_LANGUAGES_TEXT.keys():
+        iso_code = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
+        if ctx.lang == iso_code:
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
+            return
         
+        ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
+        ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
+        await ctx.services.db.update(ctx.customer)
+        
+        text = ProfileTranslates.Settings.lang_changed.translate(ctx.lang) # тк тут ctx.t уже В-С-Е
+        
+        await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
+        return
+    
+    await call_state_handler(Profile.Settings.ChangeLanguage, ctx)
+    
+@router.message(Profile.Settings.ChangeCurrency)
+async def profile_change_lang_handler(_, ctx: Context) -> None:
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Profile.Settings.Menu, ctx)
+        return
+    
+    if ctx.message.text in UncategorizedTranslates.Currencies.get_all_attributes(ctx.lang):
+        currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
+        if ctx.customer.currency == currency:
+            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
+            return
+        
+        ctx.customer.currency = currency
+        await ctx.services.db.update(ctx.customer)
+        
+        text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
+        await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
+        return
+    
+    await call_state_handler(Profile.Settings.ChangeCurrency, ctx)
+       
 @router.message(Profile.Delivery.Menu)
 async def delivery_command_handler(_, ctx: Context) -> None:
     text = ctx.message.text
@@ -87,50 +132,6 @@ async def delivery_command_handler(_, ctx: Context) -> None:
     
     await call_state_handler(Profile.Delivery.Menu, ctx)
     
-@router.message(Profile.Settings.ChangeLanguage)
-async def profile_change_lang_handler(_, ctx: Context) -> None:
-    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(Profile.Settings.Menu, ctx)
-        return
-    
-    if ctx.message.text in SUPPORTED_LANGUAGES_TEXT.keys():
-        iso_code = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
-        if ctx.lang == iso_code:
-            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
-            return
-        
-        ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
-        ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
-        await ctx.services.db.update(ctx.customer)
-        
-        text = ProfileTranslates.Settings.lang_changed.translate(ctx.lang) # тк тут ctx.t уже В-С-Е
-        
-        await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
-        return
-    
-    await call_state_handler(Profile.Settings.ChangeLanguage, ctx)
-    
-@router.message(Profile.Settings.ChangeCurrency)
-async def profile_change_lang_handler(_, ctx: Context) -> None:
-    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(Profile.Settings.Menu, ctx)
-        return
-    
-    if ctx.message.text in UncategorizedTranslates.Currencies.get_all_attributes(ctx.lang):
-        currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
-        if ctx.customer.currency == currency:
-            await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
-            return
-        
-        ctx.customer.currency = currency
-        await ctx.services.db.update(ctx.customer)
-        
-        text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
-        await call_state_handler(Profile.Settings.Menu, ctx, send_before=(text, 1))
-        return
-    
-    await call_state_handler(Profile.Settings.ChangeCurrency, ctx)
-
 @router.message(Profile.Delivery.Editables.IsForeign)
 async def editable_is_foreign_handler(_, ctx: Context) -> None:
     first_setup = ctx.customer.delivery_info is None
