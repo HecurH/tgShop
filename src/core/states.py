@@ -224,7 +224,7 @@ async def entry_option_select_handler(ctx: Context,
                                       option: ConfigurationOption = None,
                                       **_):
     chosen = option.get_chosen()
-    text = AssortmentTextGen.generate_choice_text(option, ctx.lang)
+    text = AssortmentTextGen.generate_choice_text(option, ctx)
     kb = AssortmentKBs.generate_choice_kb(product, option, ctx)
 
     await send_media_response(ctx.message, chosen.photo_id or chosen.video_id, text, kb,
@@ -449,7 +449,7 @@ async def delivery_edit_requirement_handler(ctx: Context, delivery_info: Deliver
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
-        ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx.lang), description=requirement.description.get(ctx.lang)),
+        ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx), description=requirement.description.get(ctx)),
         reply_markup=ProfileKBs.Delivery.Editables.requirement(
             first_setup, ctx
         )

@@ -98,7 +98,7 @@ class Order(AppBaseModel):
     state: OrderState = OrderState(key=OrderStateKey.forming)
     delivery_info: Optional["DeliveryInfo"] = None # при запросе удаления перс данных, обычно не должен быть пуст
 
-    promocode: Optional[PydanticObjectId] = None
+    promocode_id: Optional[PydanticObjectId] = None
 
     price_details: OrderPriceDetails
     payment_method_key: Optional[str] = None # key for SUPPORTED_PAYMENT_METHODS
@@ -666,10 +666,10 @@ class Promocode(AppBaseModel):
         if self.expire_date and self.expire_date.tzinfo is None:
             self.expire_date = self.expire_date.replace(tzinfo=datetime.timezone.utc)
 
-    async def check_promocode(self, customer_orders_amount: int) -> PromocodeCheckResult:
+    def check_promocode(self, customer_orders_amount: Optional[int] = None) -> PromocodeCheckResult:
         if self.expire_date and self.expire_date < datetime.datetime.now(datetime.timezone.utc):
             return PromocodeCheckResult.expired
-        elif self.only_newbies and customer_orders_amount > 0:
+        elif self.only_newbies and customer_orders_amount and customer_orders_amount > 0:
             return PromocodeCheckResult.only_newbies
         elif self.max_usages != -1 and self.max_usages <= self.already_used:
             return PromocodeCheckResult.max_usages_reached
@@ -682,6 +682,13 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
         
     async def get_by_code(self, code: str) -> Optional[Promocode]:
         return await self.find_one_by({"code": code})
+    
+    async def update_usage(self, promocode_id: PydanticObjectId, upd: int = 1):
+        promocode = await self.find_one_by_id(promocode_id)
+        if not promocode or promocode.max_usages == -1: return
+
+        promocode.already_used += upd
+        await self.save(promocode)
 
 class Inviter(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -828,10 +835,6 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
 
-    def __init__(self, database: "DatabaseService"):
-        super().__init__(database)
-        self.logger = logging.getLogger(__name__)
-
     async def new_customer(self, user_id, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
         customer = Customer(
                 user_id=user_id,
@@ -846,6 +849,40 @@ class CustomersRepository(AppAbstractRepository[Customer]):
 
     async def find_customer_by_user_id(self, user_id: int) -> Optional[Customer]:
         return await self.find_one_by({"user_id": user_id})
+    
+    async def add_bonus_money(self, customer: Customer, money: Money):
+        if money.amount <= 0.0001: return
+        
+        if money.currency != self.currency:
+            try:
+                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, self.currency)
+            except Exception as e:
+                logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
+                raise RuntimeError(
+                    "Сервис конвертации валют временно недоступен. Попробуйте позже."
+                ) from e
+            money = Money(currency=self.currency, amount=amount)
+
+        money.amount = round(money.amount, 2)
+        customer.bonus_wallet += money
+        await self.save(customer)
+        
+    async def remove_bonus_money(self, customer: Customer, money: Money):
+        if money.amount <= 0.0001: return
+
+        if money.currency != self.currency:
+            try:
+                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, self.currency)
+            except Exception as e:
+                logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
+                raise RuntimeError(
+                    "Сервис конвертации валют временно недоступен. Попробуйте позже."
+                ) from e
+            money = Money(currency=self.currency, amount=amount)
+            
+        money.amount = round(money.amount, 2)
+        customer.bonus_wallet -= money
+        await self.save(customer)
 
 class Category(AppBaseModel):
     id: Optional[PydanticObjectId] = None

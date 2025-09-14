@@ -157,6 +157,10 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
         entry.frozen_product = None
     
     await ctx.services.db.cart_entries.save_many(cart_entries)
+    
+    await ctx.services.db.customers.add_bonus_money(customer, order.price_details.bonuses_applied)
+    if order.promocode_id:
+        await ctx.services.db.promocodes.update_usage(order.promocode_id, -1)
         
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
 

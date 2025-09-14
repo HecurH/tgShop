@@ -26,7 +26,7 @@ def gen_product_configurable_info_text(
         conf_choice = option.get_chosen()
         # price = option.calculate_price()
         
-        label = conf_choice.label.get(ctx.lang)
+        label = conf_choice.label.get(ctx)
         
         presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets and conf_choice.existing_presets_chosen else ""
         
@@ -37,7 +37,7 @@ def gen_product_configurable_info_text(
         custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input and conf_choice.custom_input_text else ""
         
         value = f"{label}{presets}{price_info}{custom}"
-        selected_options = f"{option.name.get(ctx.lang)}: {value}"
+        selected_options = f"{option.name.get(ctx)}: {value}"
         
         for choice in option.choices.values():
             if not isinstance(choice, ConfigurationSwitches):
@@ -48,7 +48,7 @@ def gen_product_configurable_info_text(
                 continue
             
             def switch_text(switch):
-                name = switch.name.get(ctx.lang)
+                name = switch.name.get(ctx)
                 return f"{name} {gen_price_info(switch.price)}"
             
             switches_text = "\n"
@@ -64,7 +64,7 @@ def gen_product_configurable_info_text(
         selected_options += f"\n\n➕ {ctx.t.AssortmentTranslates.additionals}{add_price}:\n"
         
         def gen_additional_text(additional):
-            name = additional.name.get(ctx.lang)
+            name = additional.name.get(ctx)
             price = additional.price
             price_text = price.to_text(currency)
             price_info = f"+{price_text}" if price.get_amount(currency) > 0 else price.to_text(currency)
@@ -81,7 +81,7 @@ async def form_entry_description(entry, ctx):
     price_text = price.to_text(ctx.customer.currency)
     price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
     
-    return f"{product.name.get(ctx.lang)}{quantity_text} — {price_text}"
+    return f"{product.name.get(ctx)}{quantity_text} — {price_text}"
 
 
 class AdminTextGen:
@@ -97,41 +97,41 @@ class AdminTextGen:
 class AssortmentTextGen:
     @staticmethod
     def generate_viewing_entry_caption(product: Product, ctx: Context):
-        return f"{product.name.get(ctx.lang)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx.lang)}"
+        return f"{product.name.get(ctx)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx)}"
     
     @staticmethod
     def generate_product_detailed_caption(product: Product, ctx: Context):
-        return f"{product.name.get(ctx.lang)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.long_description.get(ctx.lang)}"
+        return f"{product.name.get(ctx)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.long_description.get(ctx)}"
 
     @staticmethod
-    def generate_choice_text(option: ConfigurationOption, lang: str):
+    def generate_choice_text(option: ConfigurationOption, ctx: Context):
         chosen = option.get_chosen()
 
-        description = chosen.description.get(lang)
+        description = chosen.description.get(ctx)
 
         if chosen.existing_presets: description = description.format(chosen=str(chosen.existing_presets_chosen))
         if chosen.is_custom_input and chosen.custom_input_text:
             description = f"<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>{description}"
 
-        return f"{description}\n{option.text.get(lang)}"
+        return f"{description}\n{option.text.get(ctx)}"
 
     @staticmethod
     def generate_switches_text(conf_switches: ConfigurationSwitches, ctx: Context):
         switches = conf_switches.switches
         if not switches:
             return (
-                f"{conf_switches.description.get(ctx.lang)}\n\n"
+                f"{conf_switches.description.get(ctx)}\n\n"
                 + ctx.t.AssortmentTranslates.switches_enter
             )
-        switches_info = "\n".join([f"{switch.name.get(ctx.lang)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
+        switches_info = "\n".join([f"{switch.name.get(ctx)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
         return (
-            f"{conf_switches.description.get(ctx.lang)}\n\n{switches_info}\n\n"
+            f"{conf_switches.description.get(ctx)}\n\n{switches_info}\n\n"
             + ctx.t.AssortmentTranslates.switches_enter
         )
         
     @staticmethod
     def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], ctx: Context):
-        additionals_info = "\n".join([f"{additional.name.get(ctx.lang)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(ctx.lang)}\n" for additional in available])
+        additionals_info = "\n".join([f"{additional.name.get(ctx)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(ctx)}\n" for additional in available])
         return f"\n{additionals_info}\n\n{ctx.t.AssortmentTranslates.switches_enter}"
 
     @staticmethod
@@ -140,7 +140,7 @@ class AssortmentTextGen:
 
     @staticmethod
     def generate_custom_input_text(chosen: ConfigurationChoice, ctx: Context):
-        content = chosen.description.get(ctx.lang)
+        content = chosen.description.get(ctx)
         content = (
             f"{content}\n\n<blockquote expandable>{html.quote(chosen.custom_input_text)}</blockquote>"
             if chosen.custom_input_text
@@ -162,7 +162,7 @@ class AssortmentTextGen:
         else:
             price_text = f"\n\n{ctx.t.AssortmentTranslates.total} {total_price.to_text(currency)}"
 
-        return f"{product.name.get(ctx.lang)}\n\n{section}\n{price_text}"
+        return f"{product.name.get(ctx)}\n\n{section}\n{price_text}"
     
     @staticmethod
     def gen_blocked_choice_path_text(choice: ConfigurationChoice, configuration: ProductConfiguration, lang):
@@ -181,8 +181,8 @@ class ProfileTextGen:
         
         requirements = service.selected_option.requirements
         
-        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx.lang)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
-        return ctx.t.ProfileTranslates.Delivery.menu.format(delivery_service=service.name.get(ctx.lang), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx.lang), requirements=requirements_info_text)
+        requirements_info_text = "\n".join([f"  {requirement.name.get(ctx)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
+        return ctx.t.ProfileTranslates.Delivery.menu.format(delivery_service=service.name.get(ctx), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx), requirements=requirements_info_text)
 
 class CartTextGen:
     @staticmethod
@@ -194,7 +194,7 @@ class CartTextGen:
         
         price_text = f"{configuration_price_text} * {entry.quantity} = {total_price}" if entry.quantity != 1 else configuration_price_text
         
-        return ctx.t.CartTranslates.cart_view_menu.format(name=product.name.get(ctx.lang), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
+        return ctx.t.CartTranslates.cart_view_menu.format(name=product.name.get(ctx), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
 
     @staticmethod
     async def generate_cart_price_confirmation_caption(order: Order, ctx: Context):
@@ -203,7 +203,7 @@ class CartTextGen:
 
     @staticmethod
     async def generate_order_forming_caption(order: Order, ctx: Context):
-        promocode: Optional[Promocode] = await ctx.services.db.promocodes.find_one_by_id(order.promocode) if order.promocode else None
+        promocode: Optional[Promocode] = await ctx.services.db.promocodes.find_one_by_id(order.promocode_id) if order.promocode_id else None
         price_details = order.price_details
         payment_method = order.payment_method
             
@@ -215,17 +215,17 @@ class CartTextGen:
         if promocode:
             promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
                                                                                            discount=order.price_details.promocode_discount.to_text(),
-                                                                                           description=promocode.description.get(ctx.lang))
+                                                                                           description=promocode.description.get(ctx))
         else:
             promocode_info = ctx.t.CartTranslates.OrderConfiguration.no_promocode_applied
             
         bonus_money_info = f"{price_details.bonuses_applied.to_text()}" if price_details.bonuses_applied else ctx.t.CartTranslates.OrderConfiguration.not_using_bonus_money
         
-        payment_method_info = payment_method.name.get(ctx.lang) if payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected
+        payment_method_info = payment_method.name.get(ctx) if payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected
         
         delivery_info = ctx.customer.delivery_info
-        delivery_service = f"{delivery_info.service.name.get(ctx.lang)} — {price_details.delivery_price.to_text()}"
-        delivery_requirements_info = build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+        delivery_service = f"{delivery_info.service.name.get(ctx)} — {price_details.delivery_price.to_text()}"
+        delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
                                                 padding=2)
         
         total = price_details.total_price.to_text()
@@ -244,7 +244,7 @@ class CartTextGen:
     def generate_payment_method_setting_caption(order: Order, ctx: Context):
         choose_payment_method = ctx.t.CartTranslates.OrderConfiguration.choose_payment_method
         methods_info = "\n\n".join(
-            f"<b>{method.name.get(ctx.lang)}</b>{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx.lang)}"
+            f"<b>{method.name.get(ctx)}</b>{' (✅)' if name == order.payment_method_key else ''}:\n    {method.description.get(ctx)}"
             for name, method in SUPPORTED_PAYMENT_METHODS.get_enabled(ctx.customer.currency).items()
         )
         return choose_payment_method.format(methods_info=methods_info)
@@ -255,8 +255,8 @@ class CartTextGen:
 
         if payment_method.manual and payment_method:
             payment_confirmation_manual = ctx.t.CartTranslates.OrderConfiguration.payment_confirmation_manual
-            return payment_confirmation_manual.format(payment_method_name=payment_method.name.get(ctx.lang),
-                                                      payment_method_details=payment_method.payment_details.get(ctx.lang))
+            return payment_confirmation_manual.format(payment_method_name=payment_method.name.get(ctx),
+                                                      payment_method_details=payment_method.payment_details.get(ctx))
         else:
             return # TODO
 
@@ -289,8 +289,8 @@ class OrdersTextGen:
         delivery_info = order.delivery_info
         delivery_description = ""
         if delivery_info:
-            delivery_description = f"{delivery_info.service.name.get(ctx.lang)} — {order.price_details.delivery_price.to_text()}\n"
-            delivery_description += build_list([f"{requirement.name.get(ctx.lang)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+            delivery_description = f"{delivery_info.service.name.get(ctx)} — {order.price_details.delivery_price.to_text()}\n"
+            delivery_description += build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
                                                     padding=2)
         
         if order.state == OrderStateKey.waiting_for_price_confirmation:
@@ -298,10 +298,10 @@ class OrdersTextGen:
         else:
             price_info = ctx.t.OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
             
-        promocode = await ctx.services.db.promocodes.get_by_code(order.promocode) if order.promocode else None
+        promocode = await ctx.services.db.promocodes.get_by_code(order.promocode_id) if order.promocode_id else None
         promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
                                                                                            discount=order.price_details.promocode_discount.to_text(),
-                                                                                           description=promocode.description.get(ctx.lang)) if promocode else None
+                                                                                           description=promocode.description.get(ctx)) if promocode else None
         
         bonus_money_info = f"{order.price_details.bonuses_applied.to_text()}" if order.price_details.bonuses_applied else None
         
@@ -310,7 +310,7 @@ class OrdersTextGen:
                                             order_entries_description=entries_description,
                                             order_status=order.state.get_localized_name(ctx.lang),
                                             delivery_info=ctx.t.OrdersTranslates.delivery_info.format(info=delivery_description) if delivery_info else "",
-                                            payment_method=ctx.t.OrdersTranslates.payment_method.format(info=order.payment_method.name.get(ctx.lang)) if order.payment_method else "",
+                                            payment_method=ctx.t.OrdersTranslates.payment_method.format(info=order.payment_method.name.get(ctx)) if order.payment_method else "",
                                             promocode_info=ctx.t.OrdersTranslates.promocode_info.format(info=promocode_info) if promocode else "",
                                             bonus_money_info=ctx.t.OrdersTranslates.bonus_money_info.format(info=bonus_money_info) if bonus_money_info else "",
                                             products_price=order.price_details.products_price.to_text(),

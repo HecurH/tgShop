@@ -181,7 +181,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
-    check_result: PromocodeCheckResult = await promocode.check_promocode(await ctx.services.db.orders.count_customer_orders(ctx.customer))
+    check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.services.db.orders.count_customer_orders(ctx.customer))
     
     if check_result != PromocodeCheckResult.ok:
         check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
@@ -213,7 +213,7 @@ async def order_configuration_payment_method_handler(_, ctx: Context):
     order.payment_method_key = key
     await order.save_in_fsm(ctx, "order")
     
-    text = ctx.t.CartTranslates.OrderConfiguration.payment_method_selected.format(name=method.name.get(ctx.lang))
+    text = ctx.t.CartTranslates.OrderConfiguration.payment_method_selected.format(name=method.name.get(ctx))
     await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, send_before=(text, 1))
     
 @router.message(Cart.OrderConfiguration.PaymentConfirmation)
@@ -230,9 +230,28 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
 
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
         entries_assigned = order.state == OrderStateKey.waiting_for_forming
+        
         order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
+        if order.promocode_id:
+            promocode = await ctx.services.db.promocodes.find_one_by_id(order.promocode_id)
+            if not promocode:
+                order.promocode_id = None
+            else:
+                check_result = await promocode.check_promocode()
+                if check_result != PromocodeCheckResult.ok:
+                    check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
+                    check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
+                    
+                    await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order, 
+                                            send_before=(check_result_text, 1))
+                    return
+                    
+                await ctx.services.db.promocodes.update_usage(order.promocode_id, 1)
+        if order.price_details.bonuses_applied:
+            await ctx.services.db.customers.remove_bonus_money(ctx.customer, order.price_details.bonuses_applied)
         
         await ctx.services.db.orders.save(order)
+        
         if not entries_assigned: await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
         
         await ctx.services.notificators.AdminChatNotificator.send_payment_confirmation(order, ctx)

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Dict, Optional
 from configs.supported import SUPPORTED_CURRENCIES
-from core.helper_classes import Cryptography
+from core.helper_classes import Context, Cryptography
 
 from pydantic import BaseModel, Field
 
@@ -131,8 +131,16 @@ class LocalizedMoney(BaseModel):
 class LocalizedString(BaseModel):
     data: dict[str, str]
     
-    def get(self, lang: str, pm: "PlaceholderManager" = None) -> str:
-        return self.data.get(lang) or self.data.get("en")
+    def raw(self, lang: str) -> str: return self.data.get(lang) or self.data.get("en")
+    
+    def get(self, lang_or_context: str | Context, pm: "PlaceholderManager" = None) -> str:
+        if isinstance(lang_or_context, Context): return lang_or_context.services.placeholders.process(self.raw(lang_or_context.lang))
+        
+        raw = self.raw(lang_or_context)
+        if pm is not None:
+            return pm.process(raw)
+        return raw
+    
 
 class OrderState(BaseModel):
     key: OrderStateKey
