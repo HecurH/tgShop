@@ -3,144 +3,107 @@ import aiohttp
 
 import asyncio
 import logging
-import time
 
 
 class AsyncCurrencyConverter:
-    """Асинхронный конвертер валют с кэшированием и обновлением курсов.
-
-    Класс предоставляет методы для конвертации сумм между поддерживаемыми валютами с использованием актуальных курсов.
-    Управляет собственной сессией aiohttp и кэширует курсы для минимизации количества запросов к API.
+    """
+    Асинхронный конвертер валют с фоновым обновлением кэша.
+    Инициализирует ресурсы и запускает фоновую задачу при создании экземпляра.
     """
 
     BASE_API = "https://api.exchangerate-api.com/v4/latest/"
     REFRESH_TIME = 1800  # 30 минут
 
     def __init__(self):
-        self._session = None  # Одна сессия для всех запросов
-        self._cache: dict = {}  # {валюта: курсы}
-        self._last_update: float = 0
-        self._lock = asyncio.Lock()  # Одна блокировка для всего кэша
         self._logger = logging.getLogger(__name__)
-
-        # self.init_session()
-
-    def init_session(self):
-        if self._session is None:
-            self._session = aiohttp.ClientSession()
-            self._logger.debug("CurrencyConverter aiohttp session created.")
+        
+        self._session = aiohttp.ClientSession()
+        self._refresh_task = asyncio.create_task(self._background_refresh_task())
+        
+        self._cache: dict = {}
+        self._initial_update_done = asyncio.Event()
+        self._logger.info("Converter initialized, session and background task created.")
 
     async def close(self):
-        if self._session is not None:
-            await self._session.close()
-            self._session = None
-            self._logger.debug("CurrencyConverter aiohttp session closed.")
-
-    async def update_all_rates(self):
-        """Обновляет кэшированные курсы для всех поддерживаемых валют.
-
-        Метод получает актуальные курсы валют с внешнего API и сохраняет их в кэше для последующего использования.
-
-        Raises:
-            RuntimeError: Если возникает ошибка при получении или обработке данных от API.
-            Exception: Для неожиданных ошибок во время обновления курсов.
-        """
-        self.init_session()
-
-        all_rates = {}
-        for currency in SUPPORTED_CURRENCIES.keys():
-            url = f"{self.BASE_API}{currency}"
+        self._logger.info("Closing converter resources...")
+        if self._refresh_task:
+            self._refresh_task.cancel()
             try:
-                async with self._session.get(url, timeout=10) as response:
-                    if response.status != 200:
-                        self._logger.error(f"API error: HTTP {response.status} for {currency}")
-                        raise RuntimeError(f"API error: HTTP {response.status}")
-                    try:
-                        data = await response.json()
-                    except Exception as e:
-                        self._logger.error(f"JSON decode error for {currency}: {e}")
-                        raise RuntimeError(f"JSON decode error for {currency}: {e}") from e
-                    if "rates" not in data:
-                        self._logger.error(f"No 'rates' in API response for {currency}: {data}")
-                        raise RuntimeError(f"No 'rates' in API response for {currency}")
-                    all_rates[currency] = data["rates"]
-            except asyncio.TimeoutError as exc:
-                self._logger.error(f"Timeout while fetching rates for {currency}")
-                raise RuntimeError(f"Timeout while fetching rates for {currency}") from exc
-            except aiohttp.ClientError as e:
-                self._logger.error(f"Network error while fetching rates for {currency}: {e}")
-                raise RuntimeError(
-                    f"Network error while fetching rates for {currency}: {e}"
-                ) from e
-            except Exception as e:
-                self._logger.error(f"Unexpected error while fetching rates for {currency}: {e}")
-                raise
+                await self._refresh_task
+            except asyncio.CancelledError:
+                pass  # Ожидаемое исключение при отмене задачи
+            self._logger.info("Background refresh task cancelled.")
 
-        self._cache = all_rates
-        self._last_update = time.time()
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._logger.info("aiohttp session closed.")
 
-        self._logger.debug("Currency rates updated.")
-
-    async def _get_all_rates(self) -> dict:
-        """Получить курсы валют для всех поддерживаемых валют."""
-        now = time.time()
-        all_rates = self._cache
-
-        if now - self._last_update < self.REFRESH_TIME and all_rates:
-            return all_rates
-
-        async with self._lock:
-            # Повторная проверка кэша после ожидания блокировки
-            all_rates = self._cache
-            if time.time() - self._last_update < self.REFRESH_TIME and all_rates:
-                return all_rates
-
+    async def _background_refresh_task(self):
+        """Бесконечный цикл для периодического обновления кэша в фоне."""
+        self._logger.info("Background refresh task started.")
+        while True:
             try:
                 await self.update_all_rates()
+                self._initial_update_done.set()
+                self._logger.debug(f"Rates updated. Next update in {self.REFRESH_TIME} seconds.")
             except Exception as e:
-                self._logger.error(f"Failed to update currency rates: {e}")
-                # Можно пробросить ошибку дальше, либо вернуть старый кэш, если он есть
-                if self._cache:
-                    self._logger.warning("Returning cached rates due to update failure.")
-                    return self._cache
-                raise
+                self._logger.error(f"Failed to update currency rates in background: {e}")
+                if not self._initial_update_done.is_set() and not self._cache:
+                    self._logger.critical("Initial cache update failed. Converter is non-operational.")
+            
+            await asyncio.sleep(self.REFRESH_TIME)
 
-            return self._cache
+    async def update_all_rates(self):
+        """Обновляет кэшированные курсы для всех поддерживаемых валют."""
+        tasks = [self._fetch_rate(currency) for currency in SUPPORTED_CURRENCIES.keys()]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        all_rates = {}
+        for currency, result in zip(SUPPORTED_CURRENCIES.keys(), results):
+            if isinstance(result, Exception):
+                raise result 
+            all_rates[currency] = result
+        
+        self._cache = all_rates
+        self._logger.debug("Currency rates cache has been successfully updated.")
+
+    async def _fetch_rate(self, currency: str) -> dict:
+        """Вспомогательный метод для получения курса одной валюты."""
+        url = f"{self.BASE_API}{currency}"
+        try:
+            async with self._session.get(url, timeout=10) as response:
+                response.raise_for_status()
+                data = await response.json()
+                if "rates" not in data:
+                    raise ValueError(f"No 'rates' in API response for {currency}")
+                return data["rates"]
+        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as e:
+            self._logger.error(f"Error fetching rates for {currency}: {e}")
+            raise RuntimeError(f"Could not fetch rates for {currency}") from e
+
+    async def _get_all_rates(self) -> dict:
+        """Возвращает кэш, дождавшись его первого заполнения."""
+        await self._initial_update_done.wait()
+        return self._cache
 
     async def convert(self, amount: float, from_currency: str, to_currency: str) -> float:
-        """Преобразует сумму из одной валюты в другую с использованием актуальных курсов.
+        """Преобразует сумму из одной валюты в другую."""
+        if amount < 0:
+            raise ValueError("Amount must be non-negative")
 
-        Метод получает актуальные курсы и выполняет конвертацию между поддерживаемыми валютами.
+        from_currency = from_currency.upper()
+        to_currency = to_currency.upper()
 
-        Args:
-            amount: Сумма для конвертации. Должна быть неотрицательной.
-            from_currency: Код валюты, из которой конвертируется сумма (например, 'USD').
-            to_currency: Код валюты, в которую конвертируется сумма (например, 'RUB').
+        all_rates = await self._get_all_rates()
+        if not all_rates:
+             raise RuntimeError("Currency rates are not available. Check background task errors.")
 
-        Returns:
-            Конвертированная сумма в виде числа с плавающей точкой.
+        rates_from = all_rates.get(from_currency)
+        if rates_from is None:
+            raise ValueError(f"Currency {from_currency} is not supported")
 
-        Raises:
-            ValueError: Если сумма отрицательная или одна из валют не поддерживается.
-            Exception: Для неожиданных ошибок во время конвертации.
-        """
-        try:
-            if amount < 0:
-                raise ValueError("Amount must be non-negative")
-
-            from_currency = from_currency.upper()
-            to_currency = to_currency.upper()
-
-            all_rates = await self._get_all_rates()
-            if from_currency not in all_rates:
-                self._logger.error(f"Currency {from_currency} not supported")
-                raise ValueError(f"Currency {from_currency} not supported")
-            rates = all_rates[from_currency]
-            if to_currency not in rates:
-                self._logger.error(f"Currency {to_currency} not supported")
-                raise ValueError(f"Currency {to_currency} not supported")
-
-            return amount * rates[to_currency]
-        except Exception as e:
-            self._logger.error(f"Error in convert: {e}")
-            raise
+        rate_to = rates_from.get(to_currency)
+        if rate_to is None:
+            raise ValueError(f"Currency {to_currency} is not supported")
+            
+        return amount * rate_to
