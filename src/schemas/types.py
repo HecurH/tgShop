@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Cryptography
 
@@ -9,6 +9,9 @@ from binascii import Error as BinasciiError
 
 from schemas.enums import *
 from ui.translates import EnumTranslates
+
+if TYPE_CHECKING:
+    from core.services.placeholders import PlaceholderManager
 
 
 class SecureValue(BaseModel):
@@ -128,7 +131,7 @@ class LocalizedMoney(BaseModel):
 class LocalizedString(BaseModel):
     data: dict[str, str]
     
-    def get(self, lang: str) -> str:
+    def get(self, lang: str, pm: "PlaceholderManager" = None) -> str:
         return self.data.get(lang) or self.data.get("en")
 
 class OrderState(BaseModel):

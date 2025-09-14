@@ -44,7 +44,22 @@ class AppBaseModel(BaseModel, Generic[TModel]):
     async def save_in_fsm(self, ctx: Context, key: str):
         """Сохранение в контекст по ключу"""
         await ctx.fsm.update_data({key: self.model_dump()})
+        
+class Placeholder(AppBaseModel):
+    key: str
+    value: LocalizedString
+    
+class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
+    class Meta:
+        collection_name = 'placeholders'
+        
+    async def get_by_key(self, key: str) -> Optional[Placeholder]:
+        return await self.find_one({'key': key})
+    
+    async def get_all(self) -> List[Placeholder]:
+        return list(await self.find({}))
 
+        
 class OrderPriceDetails(AppBaseModel):
     products_price: Money  # сумма товаров без скидок и доставки
     promocode_discount: Optional[Money] = None  # скидка по промокоду
@@ -843,6 +858,8 @@ class CategoriesRepository(AppAbstractRepository[Category]):
         return await self.find_by({})
 
 __all__ = [
+    "Placeholder",
+    "PlaceholdersRepository",
     "OrderPriceDetails",
     "Order",
     "OrdersRepository",

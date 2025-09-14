@@ -8,6 +8,7 @@ from cachetools import TTLCache
 from core.services.db import DatabaseService
 from core.helper_classes import Context, ServiceHub
 from core.services.notifications import NotificatorHub
+from core.services.placeholders import PlaceholderManager
 from core.services.tax import TaxSystem
 from core.states import NewUserStates
 from ui.translates import TranslatorHub
@@ -21,12 +22,16 @@ class ContextMiddleware(BaseMiddleware):
 
     async def __call__(self, handler, event, data):
         if not self.initialized and "bot" in data:
+            db = DatabaseService()
+            
             self.services = ServiceHub(
-                db=DatabaseService(),
+                db=db,
                 tax=TaxSystem(),
                 notificators=NotificatorHub(bot=data["bot"],
                                            logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
-                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None)
+                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None),
+                placeholders=PlaceholderManager(db.placeholders)
+
             )
             
             await self.services.db.create_indexes()
@@ -41,14 +46,14 @@ class ContextMiddleware(BaseMiddleware):
         data["lang"] = customer.lang if customer and customer.lang else "?"# |
         ###                                                                  |
         data["middleware"] = self #                                          |
-        data["db"] = self.services.db #                                               |
+        data["db"] = self.services.db #                                      |
         ### remove when redo funcs that depends                              |
 
         data["ctx"] = Context(event.message or event.callback_query,
                               data.get("state"),
                               customer,
                               data["lang"],
-                              TranslatorHub.get_for_lang(data["lang"]),
+                              TranslatorHub.get_for_lang(data["lang"], self.services.placeholders),
                               self.services)
         state = await data.get("state").get_state()
         if not customer and not state == NewUserStates.LangChoosing and state != None:
@@ -58,6 +63,8 @@ class ContextMiddleware(BaseMiddleware):
         return await handler(event, data)
     
     async def stop(self):
+        if not self.initialized: return
+        
         if self.services.notificators:
             await self.services.notificators.stop()
         await self.services.db.close()

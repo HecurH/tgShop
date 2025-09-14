@@ -29,6 +29,7 @@ class DatabaseService:
         self._init_collections()
 
     def _init_collections(self):
+        self.placeholders = PlaceholdersRepository(self)
         self.orders = OrdersRepository(self)
         self.cart_entries = CartEntriesRepository(self)
         self.delivery_services = DeliveryServicesRepository(self)
@@ -40,8 +41,9 @@ class DatabaseService:
         self.promocodes = PromocodesRepository(self)
 
     async def create_indexes(self):
-        await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
+        await self.db["placeholders"].create_index([("key", pymongo.ASCENDING)], unique=True)
         
+        await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
         await self.db["orders"].create_index([("number", pymongo.ASCENDING)], unique=True)
 
         await self.db["cart_entries"].create_index([("customer_id", pymongo.ASCENDING)])

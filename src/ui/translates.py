@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from typing import ClassVar, Type
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
+from core.services.placeholders import PlaceholderManager
 
 class TranslationField:
     """
@@ -31,6 +32,7 @@ class TranslationField:
             return self
 
         lang = instance._lang
+        pm: PlaceholderManager = instance._pm
         
         value = (
             self.translations.get(lang)
@@ -40,10 +42,10 @@ class TranslationField:
 
         if isinstance(value, dict):
             def pluralizer(count: int):
-                return owner.translate(self._attribute_name, lang, count=count)
+                return pm.process(owner.translate(self._attribute_name, lang, count=count), lang)
             return pluralizer
         else:
-            return owner.translate(self._attribute_name, lang)
+            return pm.process(owner.translate(self._attribute_name, lang), lang)
     
     def translate(self, lang: str, count: int = None) -> str:
         if self._owner_class is None:
@@ -92,8 +94,9 @@ class TranslationMeta(type):
 class Translatable(metaclass=TranslationMeta):
     """Базовый класс для переводимых объектов"""
     
-    def __init__(self, lang: str):
+    def __init__(self, lang: str, pm: PlaceholderManager):
         self._lang = lang
+        self._pm = pm
 
     @staticmethod
     def _get_plural_form(lang: str, count: int) -> str:
@@ -161,8 +164,9 @@ class TranslatorHub:
     _cache: ClassVar[dict[str, "TranslatorHub"]] = {}
     _registered_classes: ClassVar[list[Type[Translatable]]] = []
 
-    def __init__(self, lang: str):
+    def __init__(self, lang: str, pm: PlaceholderManager):
         self._lang = lang
+        self._pm = pm
 
         # обрабатываем классы по глубине __qualname__ — родители первыми
         classes_sorted = sorted(
@@ -185,7 +189,7 @@ class TranslatorHub:
 
             final_name = cls.__name__  # реальное имя класса, PascalCase
             # создаём экземпляр переводчика (с lang) и присваиваем к найденному parent
-            instance = cls(lang=lang)
+            instance = cls(lang=lang, pm=pm)
             setattr(parent, final_name, instance)
 
     @classmethod
@@ -194,12 +198,12 @@ class TranslatorHub:
             cls._registered_classes.append(translatable_class)
 
     @classmethod
-    def get_for_lang(cls, lang: str) -> "TranslatorHub":
+    def get_for_lang(cls, lang: str, pm: PlaceholderManager) -> "TranslatorHub":
         if lang not in cls._cache:
             if lang not in SUPPORTED_LANGUAGES_TEXT.values():
                 logging.getLogger(__name__).warning(f"Can't get TranslatorHub for {lang} language.")
                 return cls.get_for_lang('en')
-            cls._cache[lang] = TranslatorHub(lang=lang)
+            cls._cache[lang] = TranslatorHub(lang=lang, pm=pm)
         return cls._cache[lang]
  
 class EnumTranslates(Translatable):

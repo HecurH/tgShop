@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from core.services.db import DatabaseService
     from core.services.notifications import NotificatorHub
     from core.services.tax import TaxSystem
+    from core.services.placeholders import PlaceholderManager
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -131,7 +132,7 @@ class ServiceHub:
     db: "DatabaseService"
     tax: "TaxSystem"
     notificators: "NotificatorHub"
-    # placeholders: PlaceholderManager
+    placeholders: "PlaceholderManager"
 
 @dataclass
 class Context:
