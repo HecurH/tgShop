@@ -19,7 +19,6 @@ class AsyncCurrencyConverter:
         self._logger = logging.getLogger(__name__)
         
         self._session = aiohttp.ClientSession()
-        self._logger.warning(f"ClientSession created at {''.join(traceback.format_stack(limit=5))}")
         self._refresh_task = asyncio.create_task(self._background_refresh_task())
         
         self._cache: dict = {}

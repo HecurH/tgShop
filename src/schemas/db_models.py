@@ -801,7 +801,7 @@ class Customer(AppBaseModel):
     user_id: int
     role: str = "default"
 
-    invited_by: str
+    invited_by: Optional[PydanticObjectId] = None
     kicked: bool = False
 
     lang: str
