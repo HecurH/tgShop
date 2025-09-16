@@ -1,6 +1,6 @@
 from aiogram.fsm.context import FSMContext
 
-from aiogram import Router
+from aiogram import Dispatcher, Router
 from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
 from core.helper_classes import Context
@@ -32,9 +32,14 @@ async def user_blocked_bot(_, ctx: Context):
         ctx.customer.kicked = True
         await ctx.services.db.update(ctx.customer)
 
-
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def user_unblocked_bot(_, ctx: Context):
     if ctx.customer:
         ctx.customer.kicked = False
         await ctx.services.db.update(ctx.customer)
+
+@router.startup()
+async def on_startup(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").start(dispatcher.workflow_data.get("bots")[0])
+
+@router.shutdown()
+async def on_shutdown(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").stop()

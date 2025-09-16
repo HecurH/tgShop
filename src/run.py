@@ -124,12 +124,6 @@ async def main() -> None:
                        bottom.router)
     
     dp.workflow_data["context_middleware"] = context_middleware
-    
-    @dp.startup()
-    async def on_startup(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").start(bot)
-    
-    @dp.shutdown()
-    async def on_shutdown(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").stop()
 
     await dp.start_polling(bot)
 
