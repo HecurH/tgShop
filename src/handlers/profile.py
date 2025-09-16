@@ -25,7 +25,8 @@ async def profile_command_handler(_, ctx: Context) -> None:
             await call_state_handler(Profile.Settings.Menu, ctx)
         case ctx.t.ReplyButtonsTranslates.Profile.referrals:
             if await ctx.services.db.inviters.check_customer(ctx.customer.id):
-                await call_state_handler(Profile.Referrals.Menu, ctx)
+                inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+                await call_state_handler(Profile.Referrals.Menu, ctx, inviter=inviter)
                 return
             await call_state_handler(Profile.Referrals.AskForJoin, ctx)
         case ctx.t.ReplyButtonsTranslates.Profile.delivery:
