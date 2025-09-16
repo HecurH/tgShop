@@ -701,12 +701,25 @@ class Inviter(AppBaseModel):
     
     async def gen_link(self, ctx: Context) -> str:
         me = await ctx.message.bot.get_me()
-        return f"tg://resolve?domain={me.username}&start=inviter_{str(self.id)}"
+        return f"https://t.me/{me.username}?start=inviter_{str(self.id)}"
 
 
 class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
+        
+    async def check_customer(self, customer_id: PydanticObjectId) -> bool:
+        return await self.count_documents({"customer_id": customer_id}) > 0
+    
+    async def get_inviter_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
+        return await self.find_one_by({"customer_id": customer_id})
+    
+    async def new(self, customer_id: PydanticObjectId) -> Inviter:
+        if await self.check_customer(customer_id):
+            return await self.get_inviter_by_customer_id(customer_id)
+        inviter = Inviter(customer_id=customer_id)
+        await self.save(inviter)
+        return inviter
 
 class DeliveryRequirement(AppBaseModel):
     name: LocalizedString
@@ -905,6 +918,7 @@ class CategoriesRepository(AppAbstractRepository[Category]):
         return await self.find_by({})
 
 __all__ = [
+    "AppBaseModel",
     "Placeholder",
     "PlaceholdersRepository",
     "OrderPriceDetails",

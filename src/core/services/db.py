@@ -10,7 +10,7 @@ from pymongo.errors import PyMongoError
 from schemas.db_models import *
 from core.services.currency_converter import AsyncCurrencyConverter
 
-T = TypeVar("T", bound="MongoModel")
+T = TypeVar("T", bound="AppBaseModel")
 
 
 class DatabaseService:
@@ -52,7 +52,7 @@ class DatabaseService:
 
         await self.db["categories"].create_index([("name", pymongo.ASCENDING)], unique=True)
 
-        await self.db["inviters"].create_index([("inviter_code", pymongo.ASCENDING)], unique=True)
+        await self.db["inviters"].create_index([("customer_id", pymongo.ASCENDING)], unique=True)
 
         await self.db["promocodes"].create_index([("code", pymongo.ASCENDING)], unique=True)
 

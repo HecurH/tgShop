@@ -100,7 +100,6 @@ class Translatable(metaclass=TranslationMeta):
 
     @staticmethod
     def _get_plural_form(lang: str, count: int) -> str:
-        # sourcery skip: remove-unnecessary-else, swap-if-else-branches
         if lang == "ru":
             if count % 10 == 1 and count % 100 != 11: return "one"
             elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20): return "few"
@@ -315,6 +314,11 @@ class UncategorizedTranslates(Translatable):
         "ru": "Закончить",
         "en": "Finish"
     }
+    
+    what_is_this = {
+        "ru": "Что это?",
+        "en": "What is this?"
+    }
 
     cancel = {
         "ru": "Отмена",
@@ -329,6 +333,11 @@ class UncategorizedTranslates(Translatable):
     no = {
         "ru": "Нет",
         "en": "No"
+    }
+    
+    people = {
+        "ru": {"one": "человек", "few": "человека", "other": "человек"},
+        "en": {"one": "person", "other": "people"}
     }
     
     unit = {
@@ -682,6 +691,53 @@ class ProfileTranslates(Translatable):
             "en": "You have successfully changed absolutely nothing."
         }
         
+    class Referrals(Translatable):
+        ask_for_join = {
+            "ru": "Вы хотите вступить в нашу реферальную программу?",
+            "en": "Do you want to join our referral program?"
+        }
+        
+        what_is_this = {
+            "ru": "Тут должно быть описание реферальной системы для пользователя.",
+            "en": "Here should be a description of the referral system for the user."
+        }
+        
+        menu_customer = {
+            "ru": """👥 Реферальная система
+
+Вы пригласили: {invited_customers} {people}
+Из них сделали хотя бы один заказ: {ordered_once}
+
+Приглашайте друзей и получайте бонусы за их заказы! 🎁
+Сейчас у вас {bonus_balance} на бонусном счету.""",
+            "en": """👥 Referral program
+
+You invited: {invited_customers} {people}
+Of them made at least one order: {ordered_once}
+
+Invite friends and get bonuses for their orders! 🎁
+Now you have {bonus_balance} on your bonus account."""
+        }
+        
+        menu_channel = {
+            "ru": """👥 Реферальная система
+
+Вы пригласили: {invited_customers} {people}
+Из них сделали хотя бы один заказ: {ordered_once}""",
+            "en": """👥 Referral program
+
+You invited: {invited_customers} {people}
+Of them made at least one order: {ordered_once}"""
+        }
+        
+        invitation_link_view = {
+            "ru": """Ваша ссылка для приглашения: {link}
+Однако вы можете использовать и вариант ниже, со скрытой ссылкой:""",
+            "en": """Your invitation link: {link}
+However, you can also use the option below, with a hidden link:"""
+        }
+        
+        
     class Delivery(Translatable):
     
         menu = {
@@ -929,7 +985,14 @@ class ReplyButtonsTranslates(Translatable):
                 "ru": "Валюта",
                 "en": "Currency"
             }
-        
+            
+        class Referrals(Translatable):
+            invitation_link = {
+                "ru": "Пригласительная ссылка",
+                "en": "Invitation link"
+            }
+            
+            
         class Delivery(Translatable):
             menu_change = {
                 "ru": "Редактировать",

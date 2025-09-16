@@ -6,7 +6,7 @@ from aiogram import html
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.enums import OrderStateKey
+from schemas.enums import InviterType, OrderStateKey
 from schemas.types import LocalizedMoney
 from ui.message_tools import build_list
 
@@ -169,13 +169,36 @@ class AssortmentTextGen:
         return " —> ".join(configuration.get_localized_names_by_path(choice.get_blocking_path(configuration.options), lang))
 
 class ProfileTextGen:
-    @staticmethod
-    def settings_menu_text(ctx: Context):
-        return ctx.t.ProfileTranslates.Settings.menu
     
     @staticmethod
-    def refferals_menu_text(ctx: Context):
-        ...
+    def referrals_menu_text(inviter: Inviter, ctx: Context):
+        if inviter.inviter_type == InviterType.customer:
+            menu_customer = ctx.t.ProfileTranslates.Referrals.menu_customer
+            
+            return menu_customer.format(invited_customers=inviter.invited_customers,
+                                        people=ctx.t.UncategorizedTranslates.people(inviter.invited_customers),
+                                        ordered_once=inviter.invited_customers_first_orders,
+                                        bonus_balance=ctx.customer.bonus_wallet.to_text())
+        elif inviter.inviter_type == InviterType.channel:
+            menu_channel = ctx.t.ProfileTranslates.Referrals.menu_channel
+
+            return menu_channel.format(invited_customers=inviter.invited_customers,
+                                        people=ctx.t.UncategorizedTranslates.people(inviter.invited_customers),
+                                        ordered_once=inviter.invited_customers_first_orders)
+    
+    @staticmethod
+    async def referrals_invitation_link_view_text(inviter: Inviter, ctx: Context):
+        link = await inviter.gen_link(ctx)
+        
+        return ctx.t.ProfileTranslates.Referrals.invitation_link_view.format(link=link)
+
+    @staticmethod
+    async def hidden_invitation_link(inviter: Inviter, ctx: Context):
+        link = await inviter.gen_link(ctx)
+        me = await ctx.message.bot.get_me()
+        
+        return f"<a href=\"{link}\">{me.username}</a>"
+        
     
     @staticmethod
     def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):

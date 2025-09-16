@@ -435,6 +435,42 @@ class ProfileKBs:
                 resize_keyboard=True,
                 input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
     
+    class Referrals:
+        @staticmethod
+        def ask_for_join(ctx: Context):
+            kb = [
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.yes),
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.what_is_this)
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+
+            return types.ReplyKeyboardMarkup(
+                keyboard=kb,
+                resize_keyboard=True,
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+            )
+        
+        @staticmethod
+        def menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Referrals.invitation_link)
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+
+            return types.ReplyKeyboardMarkup(
+                keyboard=kb,
+                resize_keyboard=True,
+                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+            )
+    
     class Delivery:
         
         @staticmethod
@@ -558,8 +594,6 @@ class ProfileKBs:
                     input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
                 )
         
-        
-    
     class Balance:
             
         @staticmethod

@@ -18,17 +18,21 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
     
 @router.message(Profile.Menu)
 async def profile_command_handler(_, ctx: Context) -> None:
-    actions = {
-        ctx.t.UncategorizedTranslates.back: CommonStates.MainMenu,
-        ctx.t.ReplyButtonsTranslates.Profile.settings: Profile.Settings.Menu,
-        ctx.t.ReplyButtonsTranslates.Profile.referrals: Profile.Referrals.Menu,
-        ctx.t.ReplyButtonsTranslates.Profile.delivery: Profile.Delivery.Menu
-    }
-    next_state = actions.get(ctx.message.text)
-    if next_state is not None:
-        await call_state_handler(next_state, ctx)
-    else:
-        await call_state_handler(Profile.Menu, ctx)
+    match ctx.message.text:
+        case ctx.t.UncategorizedTranslates.back:
+            await call_state_handler(CommonStates.MainMenu, ctx)
+        case ctx.t.ReplyButtonsTranslates.Profile.settings:
+            await call_state_handler(Profile.Settings.Menu, ctx)
+        case ctx.t.ReplyButtonsTranslates.Profile.referrals:
+            if await ctx.services.db.inviters.check_customer(ctx.customer.id):
+                await call_state_handler(Profile.Referrals.Menu, ctx)
+                return
+            await call_state_handler(Profile.Referrals.AskForJoin, ctx)
+        case ctx.t.ReplyButtonsTranslates.Profile.delivery:
+            await call_state_handler(Profile.Delivery.Menu, ctx)
+        case _:
+            await call_state_handler(Profile.Menu, ctx)
+
     
 @router.message(Profile.Settings.Menu)
 async def profile_command_handler(_, ctx: Context) -> None:
@@ -86,7 +90,42 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         return
     
     await call_state_handler(Profile.Settings.ChangeCurrency, ctx)
-       
+
+@router.message(Profile.Referrals.AskForJoin)
+async def referrals_ask_for_join_handler(_, ctx: Context) -> None:
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Profile.Menu, ctx)
+        return
+
+    if ctx.message.text == ctx.t.UncategorizedTranslates.what_is_this:
+        await call_state_handler(Profile.Referrals.AskForJoin, ctx, send_before=(ctx.t.ProfileTranslates.Referrals.what_is_this, 1.5))
+        return
+    if ctx.message.text != ctx.t.UncategorizedTranslates.yes:
+        await call_state_handler(Profile.Referrals.AskForJoin, ctx)
+        return
+    
+    inviter = await ctx.services.db.inviters.new(ctx.customer.id)
+    await call_state_handler(Profile.Referrals.Menu, ctx, inviter=inviter)
+    
+@router.message(Profile.Referrals.Menu)
+async def referrals_menu_handler(_, ctx: Context) -> None:
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Profile.Menu, ctx)
+        return
+    inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+
+    if ctx.message.text == ctx.t.ReplyButtonsTranslates.Profile.Referrals.invitation_link:
+        await call_state_handler(Profile.Referrals.InvitationLinkView, ctx, inviter=inviter)
+        return
+    
+    await call_state_handler(Profile.Referrals.Menu, ctx, inviter=inviter)
+
+@router.message(Profile.Referrals.InvitationLinkView)
+async def referrals_invitation_link_view_handler(_, ctx: Context) -> None:
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(Profile.Referrals.Menu, ctx)
+        return
+
 @router.message(Profile.Delivery.Menu)
 async def delivery_command_handler(_, ctx: Context) -> None:
     text = ctx.message.text

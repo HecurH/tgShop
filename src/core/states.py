@@ -367,8 +367,11 @@ class Profile(StatesGroup):
         Menu = State()
         ChangeLanguage = State()
         ChangeCurrency = State()
-    class Refferals(StatesGroup):
+    class Referrals(StatesGroup):
+        AskForJoin = State()
         Menu = State()
+        
+        InvitationLinkView = State()
     class Delivery(StatesGroup):
         Menu = State()
         DeleteConfimation = State()
@@ -387,7 +390,7 @@ async def profile_menu_handler(ctx: Context, **_):
 @state_handlers.register(Profile.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTextGen.settings_menu_text(ctx),
+        ctx.t.ProfileTranslates.Settings.menu,
         reply_markup=ProfileKBs.Settings.menu(ctx)
     )
 
@@ -402,11 +405,29 @@ async def settings_change_currency_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_currency.format(currency=currency_name),
                              reply_markup=ProfileKBs.Settings.currency_choose(ctx))
 
-@state_handlers.register(Profile.Refferals.Menu)
-async def refferals_menu_handler(ctx: Context, **_):
+@state_handlers.register(Profile.Referrals.AskForJoin)
+async def refferals_ask_for_join_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTextGen.refferals_menu_text(ctx),
-        reply_markup=ProfileKBs.Refferals.menu(ctx)
+        ctx.t.ProfileTranslates.Referrals.ask_for_join,
+        reply_markup=ProfileKBs.Referrals.ask_for_join(ctx)
+    )
+
+@state_handlers.register(Profile.Referrals.Menu)
+async def refferals_menu_handler(ctx: Context, inviter: Inviter, **_):
+    await ctx.message.answer(
+        ProfileTextGen.referrals_menu_text(inviter, ctx),
+        reply_markup=ProfileKBs.Referrals.menu(ctx)
+    )
+    
+@state_handlers.register(Profile.Referrals.InvitationLinkView)
+async def referrals_invitation_link_view_handler(ctx: Context, inviter: Inviter, **_):
+    await ctx.message.answer(
+        ProfileTextGen.referrals_invitation_link_view_text(inviter, ctx)
+    )
+    
+    await ctx.message.answer(
+        ProfileTextGen.hidden_invitation_link(inviter, ctx),
+        reply_markup=UncategorizedKBs.reply_back(ctx)
     )
 
 @state_handlers.register(Profile.Delivery.Menu)
