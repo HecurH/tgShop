@@ -25,6 +25,7 @@ class AsyncCurrencyConverter:
         self._cache: dict = {}
         self._initial_update_done = asyncio.Event()
         self._logger.info("Converter initialized, session and background task created.")
+        
 
     async def close(self):
         self._logger.info("Closing converter resources...")
