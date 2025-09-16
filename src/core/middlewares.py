@@ -65,10 +65,9 @@ class ContextMiddleware(BaseMiddleware):
     async def stop(self):
         if not self.initialized: return
         
-        if self.services.notificators:
-            await self.services.notificators.stop()
-        await self.services.db.close()
-        await self.services.tax.close()
+        if self.services.notificators: await self.services.notificators.stop()
+        if self.services.db: await self.services.db.close()
+        if self.services.tax: await self.services.tax.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
