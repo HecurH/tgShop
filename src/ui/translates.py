@@ -213,7 +213,7 @@ class TranslatorHub:
     def get_for_lang(cls, lang: str, pm: PlaceholderManager) -> "TranslatorHub":
         if lang not in cls._cache:
             if lang not in SUPPORTED_LANGUAGES_TEXT.values():
-                logging.getLogger(__name__).warning(f"Can't get TranslatorHub for {lang} language.")
+                if lang != "?": logging.getLogger(__name__).warning(f"Can't get TranslatorHub for {lang} language.")
                 return cls.get_for_lang('en', pm)
             cls._cache[lang] = TranslatorHub(lang=lang, pm=pm)
         return cls._cache[lang]
