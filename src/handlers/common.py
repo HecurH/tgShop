@@ -40,7 +40,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         if lang in SUPPORTED_LANGUAGES_TEXT.values():
             ctx.customer.lang = lang
             ctx.lang = lang
-            ctx.t = TranslatorHub.get_for_lang(lang)
+            ctx.t = TranslatorHub.get_for_lang(lang, ctx.services.placeholders)
 
             await ctx.services.db.customers.save(ctx.customer)
             await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
