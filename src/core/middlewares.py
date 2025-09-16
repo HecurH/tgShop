@@ -19,25 +19,26 @@ class ContextMiddleware(BaseMiddleware):
         super().__init__()
         self.initialized = False
         self.services: Optional[ServiceHub] = None
+    
+    async def start(self, bot):
+        if self.initialized: return
+        db = DatabaseService()
+            
+        self.services = ServiceHub(
+            db=db,
+            tax=TaxSystem(),
+            notificators=NotificatorHub(bot=bot,
+                                        logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
+                                        admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None),
+            placeholders=PlaceholderManager(db.placeholders)
+
+        )
+        
+        await self.services.db.create_indexes()
+        
+        self.initialized = True
 
     async def __call__(self, handler, event, data):
-        if not self.initialized and "bot" in data:
-            db = DatabaseService()
-            
-            self.services = ServiceHub(
-                db=db,
-                tax=TaxSystem(),
-                notificators=NotificatorHub(bot=data["bot"],
-                                           logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
-                                           admin_chat_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None),
-                placeholders=PlaceholderManager(db.placeholders)
-
-            )
-            
-            await self.services.db.create_indexes()
-            
-            self.initialized = True
-
         user_id = data["event_from_user"].id
 
         customer = await self.services.db.customers.find_customer_by_user_id(user_id)

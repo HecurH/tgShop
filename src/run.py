@@ -125,13 +125,11 @@ async def main() -> None:
     
     dp.workflow_data["context_middleware"] = context_middleware
     
+    @dp.startup()
+    async def on_startup(dispatcher: Dispatcher): (await dispatcher.workflow_data.get("context_middleware")).start(bot)
+    
     @dp.shutdown()
-    async def on_shutdown(dispatcher: Dispatcher):
-        mw: middlewares.ContextMiddleware | None = dispatcher.workflow_data.get("context_middleware")
-        if mw:
-            logging.getLogger(__name__).warning("ContextMiddleware.stop() called")
-            await mw.stop()
-            logging.getLogger(__name__).warning("ContextMiddleware.stop() finished")
+    async def on_shutdown(dispatcher: Dispatcher): (await dispatcher.workflow_data.get("context_middleware")).stop()
 
     await dp.start_polling(bot)
 
