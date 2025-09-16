@@ -336,7 +336,7 @@ class UncategorizedTranslates(Translatable):
     }
     
     people = {
-        "ru": {"one": "человек", "few": "человека", "many": "человек"},
+        "ru": {"one": "человека", "few": "человека", "many": "человек"},
         "en": {"one": "person", "other": "people"}
     }
     
