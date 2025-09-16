@@ -422,11 +422,11 @@ async def refferals_menu_handler(ctx: Context, inviter: Inviter, **_):
 @state_handlers.register(Profile.Referrals.InvitationLinkView)
 async def referrals_invitation_link_view_handler(ctx: Context, inviter: Inviter, **_):
     await ctx.message.answer(
-        ProfileTextGen.referrals_invitation_link_view_text(inviter, ctx)
+        await ProfileTextGen.referrals_invitation_link_view_text(inviter, ctx)
     )
     
     await ctx.message.answer(
-        ProfileTextGen.hidden_invitation_link(inviter, ctx),
+        await ProfileTextGen.hidden_invitation_link(inviter, ctx),
         reply_markup=UncategorizedKBs.reply_back(ctx)
     )
 
