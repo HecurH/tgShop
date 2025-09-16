@@ -124,6 +124,7 @@ async def main() -> None:
                        bottom.router)
     
     dp.workflow_data["context_middleware"] = context_middleware
+    dp.workflow_data["bot"] = bot
 
     await dp.start_polling(bot)
 
