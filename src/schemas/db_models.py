@@ -714,6 +714,13 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     async def get_inviter_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
         return await self.find_one_by({"customer_id": customer_id})
     
+    async def get_inviter_by_deep_link(self, deep_link: str) -> Optional[Inviter]:
+        return await self.find_one_by_id(PydanticObjectId(deep_link.split("_")[-1]))
+    
+    async def count_new_customer(self, inviter: Inviter):
+        inviter.invited_customers += 1
+        await self.save(inviter)
+    
     async def new(self, customer_id: PydanticObjectId) -> Inviter:
         if await self.check_customer(customer_id):
             return await self.get_inviter_by_customer_id(customer_id)

@@ -23,11 +23,13 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
 
     user = await ctx.services.db.customers.find_customer_by_user_id(ctx.message.from_user.id)
     if not user:
-        inviter = await ctx.services.db.get_one_by_query(Inviter, {"inviter_code": command.args}) if command.args else None
+        inviter = await ctx.services.db.inviters.get_inviter_by_deep_link(command.args) if command.args else None
+        if inviter: await ctx.services.db.inviters.count_new_customer(inviter)
+            
         
         ctx.customer = await ctx.services.db.customers.new_customer(
             user_id=ctx.message.from_user.id,
-            inviter=inviter,
+            inviter=inviter.id if inviter else None,
             lang="?",
             currency="RUB"
         )
