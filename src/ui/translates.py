@@ -125,7 +125,7 @@ class Translatable(metaclass=TranslationMeta):
                 logger.warning(f"No '{lang}' or '{default_lang}' translation for '{attribute}', falling back to '{fallback_lang}'.")
             else:
                 logger.warning(f"No translations found for '{attribute}'.")
-                return "<untranslated>"
+                return "((untranslated))"
 
         final_string = ""
         if isinstance(raw_value, str) or count is None:
@@ -139,7 +139,7 @@ class Translatable(metaclass=TranslationMeta):
                     f"Available forms: {available_forms}. "
                     f"Please update translations to include this plural form."
                 )
-                final_string = f"<missing plural '{form}' for '{attribute}' in '{lang}'>"
+                final_string = f"((missing plural '{form}' for '{attribute}' in '{lang}'))"
             else:
                 final_string = raw_value[form]
         
@@ -336,7 +336,7 @@ class UncategorizedTranslates(Translatable):
     }
     
     people = {
-        "ru": {"one": "человек", "few": "человека", "other": "человек"},
+        "ru": {"one": "человек", "few": "человека", "many": "человек"},
         "en": {"one": "person", "other": "people"}
     }
     
