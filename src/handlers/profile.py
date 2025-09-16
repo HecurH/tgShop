@@ -123,7 +123,8 @@ async def referrals_menu_handler(_, ctx: Context) -> None:
 @router.message(Profile.Referrals.InvitationLinkView)
 async def referrals_invitation_link_view_handler(_, ctx: Context) -> None:
     if ctx.message.text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(Profile.Referrals.Menu, ctx)
+        inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+        await call_state_handler(Profile.Referrals.Menu, ctx, inviter=inviter)
         return
 
 @router.message(Profile.Delivery.Menu)
