@@ -29,7 +29,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         
         ctx.customer = await ctx.services.db.customers.new_customer(
             user_id=ctx.message.from_user.id,
-            inviter=inviter.id if inviter else None,
+            inviter=inviter or None,
             lang="?",
             currency="RUB"
         )

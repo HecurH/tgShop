@@ -866,7 +866,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     async def new_customer(self, user_id, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
         customer = Customer(
                 user_id=user_id,
-                invited_by=inviter.inviter_code if inviter else "",
+                invited_by=inviter.id if inviter else None,
                 lang=lang,
                 currency=currency,
                 bonus_wallet=Money(currency=currency, amount=0.0)
