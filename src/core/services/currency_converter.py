@@ -53,7 +53,6 @@ class AsyncCurrencyConverter:
                 self._logger.error(f"Failed to update currency rates in background: {e}")
                 if not self._initial_update_done.is_set() and not self._cache:
                     self._logger.critical("Initial cache update failed. Converter is non-operational.")
-            
             await asyncio.sleep(self.REFRESH_TIME)
 
     async def update_all_rates(self):
