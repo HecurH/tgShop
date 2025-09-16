@@ -709,7 +709,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         collection_name = 'inviters'
         
     async def check_customer(self, customer_id: PydanticObjectId) -> bool:
-        return await self.count_documents({"customer_id": customer_id}) > 0
+        return await self.get_collection().count_documents({"customer_id": customer_id}) > 0
     
     async def get_inviter_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
         return await self.find_one_by({"customer_id": customer_id})
