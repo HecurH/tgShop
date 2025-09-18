@@ -28,6 +28,7 @@ router.callback_query.middleware.register(middleware)
 @router.message(Command("help"))
 async def help_handler(_, ctx: Context):
     txt = "\n".join(f"{cmd} - {doc}" for cmd, doc in list_commands(router))
+    print(list_commands(router))
     
     await ctx.message.answer(txt)
 
@@ -975,12 +976,12 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
     )
 
 
-    # await ctx.db.delivery_services.save(service)
-    # await ctx.db.delivery_services.save(cdek)
-    # await ctx.db.delivery_services.save(boxberry)
+    # await ctx.services.db.delivery_services.save(service)
+    # await ctx.services.db.delivery_services.save(cdek)
+    # await ctx.services.db.delivery_services.save(boxberry)
     await ctx.services.db.delivery_services.save(universal_international)
-    # await ctx.db.delivery_services.save(ya_delivery)
-    # await ctx.db.delivery_services.save(ozon_delivery)
+    # await ctx.services.db.delivery_services.save(ya_delivery)
+    # await ctx.services.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))
 async def add_additionals_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:

@@ -75,7 +75,7 @@ def gen_product_configurable_info_text(
     return f"{ctx.t.AssortmentTranslates.currently_selected}\n{selected_options}"
 
 async def form_entry_description(entry, ctx):
-    product: Product = await ctx.db.products.find_one_by_id(entry.product_id)
+    product: Product = await ctx.services.db.products.find_one_by_id(entry.product_id)
     quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
     price = product.price + entry.configuration.price
     price_text = price.to_text(ctx.customer.currency)

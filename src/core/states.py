@@ -165,7 +165,7 @@ async def viewing_assortment_handler(ctx: Context,
                                  ctx)
         return
     
-    # product: Product = await ctx.db.products.find_one_by({'order_no': current, "category": category})
+    # product: Product = await ctx.services.db.products.find_one_by({'order_no': current, "category": category})
     product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)

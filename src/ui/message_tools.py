@@ -124,6 +124,7 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
     for route in router.message.handlers:  
         # Проверяем, что это MessageRoute или что route содержит фильтр Command
         for flt in route.filters:  
+            print(flt)
             if isinstance(flt, Command):
                 # можем взять команды (string или список)
                 cmds = flt.commands
