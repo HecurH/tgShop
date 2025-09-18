@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Dict, Optional
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context, Cryptography
 
+from aiogram.types import Message
 from pydantic import BaseModel, Field
 
 import base64
@@ -138,18 +139,22 @@ class LocalizedString(BaseModel):
         
         raw = self.raw(lang_or_context)
         if pm is not None:
-            return pm.process(raw)
+            return pm.process(raw, lang_or_context)
         return raw
     
 
 class OrderState(BaseModel):
     key: OrderStateKey
+    comment: Optional["SavedTMessage"] = None
 
     def get_localized_name(self, lang: str) -> str:
         return EnumTranslates.OrderStateKey.translate(self.key.value, lang)
     
     def set_state(self, key: OrderStateKey):
         self.key = key 
+        
+    def set_comment(self, message: Message):
+        self.comment = SavedTMessage(chat_id=message.chat.id, message_id=message.message_id)
     
     def __eq__(self, value):
         return self.key == value
@@ -179,4 +184,8 @@ class Discount(BaseModel):
         # если тип не распознан — скидка 0
         return Money(currency=amount.currency, amount=0.0)
 
-__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "OrderState", "Discount"]
+class SavedTMessage(BaseModel):
+    chat_id: int
+    message_id: int
+
+__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "OrderState", "Discount", "SavedTMessage"]

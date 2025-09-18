@@ -8,6 +8,7 @@ from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
 from schemas.db_models import Customer, Order, DeliveryInfo
+from schemas.types import SavedTMessage
 from ui.keyboards import UncategorizedKBs
 
 from core.helper_classes import Context
@@ -81,7 +82,7 @@ class TelegramNotificator:
         await self._send_notification_internal(**job)
         
     async def send_forwarded_notification(self,
-                                          message: Union[Message, List[Message]],
+                                          message: Union[Message, SavedTMessage, List[Message | SavedTMessage]],
                                           chat_id: Optional[int] = None,
                                           as_copy: bool = True,
                                           use_queue: Optional[bool] = None,
@@ -114,7 +115,7 @@ class TelegramNotificator:
                 await asyncio.sleep(wait)
                 if attempt >= self.config.retry_attempts:
                     raise
-            except (TelegramAPIError, TelegramBadRequest) as e:
+            except (TelegramAPIError, TelegramBadRequest):
                 attempt += 1
                 self.logger.exception("Telegram API error while sending to %s (attempt %s)", chat_id, attempt)
                 if attempt >= self.config.retry_attempts:
@@ -124,7 +125,7 @@ class TelegramNotificator:
                 self.logger.exception("Unexpected exception sending notification")
                 raise
             
-    async def _send_forward_internal(self, messages: List[Message], chat_id: int, as_copy: bool, kwargs: dict):
+    async def _send_forward_internal(self, messages: List[Message | SavedTMessage], chat_id: int, as_copy: bool, kwargs: dict):
         attempt = 0
         while True:
             try:
@@ -178,13 +179,18 @@ class TelegramNotificator:
             if not is_last:
                 await asyncio.sleep(self.config.between_messages_delay)
                 
-    async def _forward(self, messages: List[Message], chat_id: int, as_copy: bool):
+    async def _forward(self, messages: List[Message | SavedTMessage], chat_id: int, as_copy: bool):
         for i, msg in enumerate(messages):
-            if not hasattr(msg, "chat") or not hasattr(msg, "message_id"):
+            if isinstance(msg, Message):
+                if not hasattr(msg, "chat") or not hasattr(msg, "message_id"):
+                    self.logger.warning("Skipping non-Message element in forward list: %r", msg)
+                    continue
+            elif not isinstance(msg, SavedTMessage):
                 self.logger.warning("Skipping non-Message element in forward list: %r", msg)
                 continue
 
-            from_chat_id = msg.chat.id
+
+            from_chat_id = msg.chat.id if isinstance(msg, Message) else msg.chat_id
             message_id = msg.message_id
 
             if as_copy:

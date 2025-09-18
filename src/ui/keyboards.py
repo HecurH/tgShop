@@ -357,6 +357,9 @@ class OrdersKBs:
             
         if order.state == OrderStateKey.waiting_for_forming:
             kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.continue_forming)])
+            
+        if order.state.comment:
+            kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.view_comment)])
         
         kb.append([types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)])
         

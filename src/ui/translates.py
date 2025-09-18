@@ -958,6 +958,11 @@ class ReplyButtonsTranslates(Translatable):
             "ru": "Продолжить формирование",
             "en": "Continue forming"
         }
+        
+        view_comment = {
+            "ru": "Посмотреть комментарий",
+            "en": "View comment"
+        }
             
     
     class Profile(Translatable):

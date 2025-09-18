@@ -1,7 +1,10 @@
 import re
 from typing import List, Optional, Literal
+from aiogram import Router
+from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
+    
 
 
 
@@ -114,6 +117,26 @@ def split_message(text: str, limit: int) -> List[str]:
 
     return parts
 
+def list_commands(router: Router) -> list[tuple[str, str]]:
+    """Вернёт список (команда, описание) зарегистрированных команд в router."""
+    result = []
+    # router.routes или router.handlers / router.messages — в зависимости от версии
+    for route in router.message.handlers:  
+        # Проверяем, что это MessageRoute или что route содержит фильтр Command
+        for flt in route.filters:  
+            if isinstance(flt, Command):
+                # можем взять команды (string или список)
+                cmds = flt.commands
+                if isinstance(cmds, (list, tuple)):
+                    for cmd in cmds:
+                        # получить описание функции-обработчика
+                        doc = route.handler.__doc__ or ""
+                        result.append((cmd, doc.strip()))
+                else:
+                    cmd = cmds
+                    doc = route.handler.__doc__ or ""
+                    result.append((cmd, doc.strip()))
+    return result
 async def send_media_response(
     message: Message,
     media_id: str,

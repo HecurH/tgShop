@@ -16,6 +16,7 @@ from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
 from schemas.enums import OrderStateKey
 from schemas.types import LocalizedMoney, LocalizedString
+from ui.message_tools import list_commands
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -23,8 +24,16 @@ middleware = RoleCheckMiddleware("admin")
 router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
+
+@router.message(Command("help"))
+async def help_handler(_, ctx: Context):
+    txt = "\n".join(f"{cmd} - {doc}" for cmd, doc in list_commands(router))
+    
+    await ctx.message.answer(txt)
+
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
+    """/msg_to <user_id>"""
     user_id = int(command.args) if command.args.isdigit() else None
     if not user_id:
         await ctx.message.answer("Неправильный формат команды")

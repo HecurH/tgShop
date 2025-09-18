@@ -56,6 +56,12 @@ async def order_view_handler(_, ctx: Context) -> None:
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         return
     
+    if text == ctx.t.ReplyButtonsTranslates.Orders.view_comment and order.state.comment:
+        await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=order.state.comment.chat_id, message_id=order.state.comment.message_id)
+        
+        await call_state_handler(Orders.OrderView, ctx, order=order)
+        return
+    
     
     attribute = ctx.t.ReplyButtonsTranslates.Orders.Infos.get_attribute(text, ctx.lang)
     
