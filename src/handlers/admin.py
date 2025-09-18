@@ -27,7 +27,7 @@ router.callback_query.middleware.register(middleware)
 
 @router.message(Command("help"))
 async def help_handler(_, ctx: Context):
-    txt = "\n".join(f"{cmd} - {doc}" for cmd, doc in list_commands(router))
+    txt = "\n".join(doc for _, doc in list_commands(router))
     
     await ctx.message.answer(txt, parse_mode=None)
 
