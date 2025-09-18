@@ -127,8 +127,8 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
             print(route)
             if isinstance(flt.callback, Command):
                 # можем взять команды (string или список)
-                doc = route.__doc__ or ""
-                result.append(", ".join(flt.callback.commands), doc.strip())
+                doc = route.callback.__doc__ or ""
+                result.append((", ".join(flt.callback.commands), doc.strip()))
     return result
 async def send_media_response(
     message: Message,
