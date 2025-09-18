@@ -28,13 +28,12 @@ router.callback_query.middleware.register(middleware)
 @router.message(Command("help"))
 async def help_handler(_, ctx: Context):
     txt = "\n".join(f"{cmd} - {doc}" for cmd, doc in list_commands(router))
-    print(list_commands(router))
     
-    await ctx.message.answer(txt)
+    await ctx.message.answer(txt, parse_mode="MarkdownV2")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
-    """/msg_to <user_id>"""
+    """/msg_to <user_id> - Отправить сообщение пользователю"""
     user_id = int(command.args) if command.args.isdigit() else None
     if not user_id:
         await ctx.message.answer("Неправильный формат команды")
@@ -62,6 +61,7 @@ async def admin_message_sending_handler(_, ctx: Context):
 
 @router.message(Command("confirm_manual_payment"))
 async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):
+    """/confirm_manual_payment <order_id>|<datetime> - Подтвердить ручную оплату заказа"""
     args = command.args.split("|")
     if len(args) < 2:
         await ctx.message.answer(f"Недостаточно аргументов.")
@@ -127,6 +127,7 @@ async def ask_generate_receipt_handler(_, ctx: Context):
     
 @router.message(Command("unform_order"))
 async def unform_order_handler(_, ctx: Context, command: CommandObject):
+    """/unform_order <order_id> - Расформировать заказ"""
     order_id: str = command.args
     order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
     customer = await ctx.services.db.customers.find_one_by_id(order.customer_id) if order else None
@@ -176,6 +177,7 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
 
 @router.message(Command("confirm_order_price"))
 async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
+    """/confirm_order_price <order_id> - Подтвердить цену заказа"""
     order_id: str = command.args
     order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id)) if order_id else None
     if not order:
@@ -250,6 +252,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
 #command like /manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney>
 @router.message(Command("manual_delivery_price"))
 async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject):
+    """/manual_delivery_price <user_id> <delivery_service_id> <req_options_list_idx> <json dumped list of securs> <serialized LocalizedMoney> - Установить цену доставки"""
     if not command.args:
         await ctx.message.answer("Неверный формат команды")
         return
@@ -310,6 +313,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
 
 @router.message(Command("cancel_manual_delivery_price_confirm"))
 async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command: CommandObject):
+    """/cancel_manual_delivery_price_confirm <user_id> - Отклонить подтверждение цены доставки"""
     args = command.args
     user_id = int(args) if args and args.isdigit() else None
     customer = await ctx.services.db.customers.find_one_by({"user_id": user_id}) if user_id else None
