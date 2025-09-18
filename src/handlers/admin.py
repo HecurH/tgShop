@@ -29,7 +29,7 @@ router.callback_query.middleware.register(middleware)
 async def help_handler(_, ctx: Context):
     txt = "\n".join(f"{cmd} - {doc}" for cmd, doc in list_commands(router))
     
-    await ctx.message.answer(txt, parse_mode="MarkdownV2")
+    await ctx.message.answer(txt, parse_mode=None)
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
