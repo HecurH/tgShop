@@ -124,12 +124,11 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
     for route in router.message.handlers:  
         # Проверяем, что это MessageRoute или что route содержит фильтр Command
         for flt in route.filters:  
-            print(flt)
+            print(route)
             if isinstance(flt.callback, Command):
                 # можем взять команды (string или список)
-                print(flt.callback.commands)
-                doc = flt.callback.__doc__ or ""
-                result.append((str(flt.callback.commands), doc.strip()))
+                doc = route.__doc__ or ""
+                result.append(", ".join(flt.callback.commands), doc.strip())
     return result
 async def send_media_response(
     message: Message,
