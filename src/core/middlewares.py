@@ -43,18 +43,13 @@ class ContextMiddleware(BaseMiddleware):
 
         customer = await self.services.db.customers.find_customer_by_user_id(user_id)
 
-        ### remove when redo funcs that depends                              |
-        data["lang"] = customer.lang if customer and customer.lang else "?"# |
-        ###                                                                  |
-        data["middleware"] = self #                                          |
-        data["db"] = self.services.db #                                      |
-        ### remove when redo funcs that depends                              |
+        lang = customer.lang if customer and customer.lang else "?"                          
 
         data["ctx"] = Context(event.message or event.callback_query,
                               data.get("state"),
                               customer,
-                              data["lang"],
-                              TranslatorHub.get_for_lang(data["lang"], self.services.placeholders),
+                              lang,
+                              TranslatorHub.get_for_lang(lang, self.services.placeholders),
                               self.services)
         state = await data.get("state").get_state()
         if not customer and not state == NewUserStates.LangChoosing and state != None:

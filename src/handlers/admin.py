@@ -641,7 +641,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
 
 
 @router.message(Command("add_addit"))
-async def addit(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
+async def addit(_, ctx: Context) -> None:
     additional = ProductAdditional(
         name=LocalizedString(data={
             "ru":"Дракон Хайден",
@@ -655,14 +655,14 @@ async def addit(message: Message, command: CommandObject, state: FSMContext, db:
         price=LocalizedMoney.from_dict({"RUB": 1000, "USD": 10})
     )
 
-    await db.additionals.save(additional)
+    await ctx.services.db.additionals.save(additional)
     
 @router.message(Command("delete_acc"))
-async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
+async def addit(_, ctx: Context) -> None:
     await ctx.services.db.customers.delete(ctx.customer)
     
 @router.message(Command("add_delivery_services"))
-async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
+async def addit(_, ctx: Context) -> None:
     service = DeliveryService(
         name=LocalizedString(data={
             "ru":"Почта России",
@@ -1007,7 +1007,7 @@ async def addit(message: Message, command: CommandObject, ctx: Context) -> None:
     # await ctx.services.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))
-async def add_additionals_handler(message: Message, command: CommandObject, state: FSMContext, db: DatabaseService, lang: str) -> None:
+async def add_additionals_handler(_, ctx: Context) -> None:
     additional = ProductAdditional(
         name=LocalizedString(data={
             "ru":"Страпон",
@@ -1021,7 +1021,7 @@ async def add_additionals_handler(message: Message, command: CommandObject, stat
         price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
-    await db.additionals.save(additional)
+    await ctx.services.db.additionals.save(additional)
     
     additional = ProductAdditional(
         name=LocalizedString(data={
@@ -1036,5 +1036,5 @@ async def add_additionals_handler(message: Message, command: CommandObject, stat
         price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
         disallowed_products=[]
     )
-    await db.additionals.save(additional)
+    await ctx.services.db.additionals.save(additional)
 
