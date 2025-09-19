@@ -139,10 +139,12 @@ async def ask_generate_receipt_handler(_, ctx: Context):
     if await ctx.services.db.orders.count_customer_orders(customer) == 1 and customer.invited_by:
         if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
             if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order):
-                await ctx.services.db.customers.add_bonus_money(customer, reward)
-                await ctx.services.db.customers.save(customer)
+                inviter_customer = await ctx.services.db.customers.find_one_by_id(inviter.customer_id)
                 
-                await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(customer, reward)
+                await ctx.services.db.customers.add_bonus_money(inviter_customer, reward)
+                await ctx.services.db.customers.save(inviter_customer)
+                
+                await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(inviter_customer, reward)
                 
             await ctx.services.db.inviters.save(inviter)
     
