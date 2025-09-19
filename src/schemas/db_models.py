@@ -837,17 +837,19 @@ class Customer(AppBaseModel):
         if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
 
-        bon_wal = self.bonus_wallet
-        if bon_wal.amount > 0:
+        bonus_wallet = self.bonus_wallet
+        bonus_wallet.currency = iso
+        
+        if bonus_wallet.amount > 0:
             try:
-                amount = await acc.convert(bon_wal.amount, self.currency, iso)
+                amount = await acc.convert(bonus_wallet.amount, self.currency, iso)
             except Exception as e:
                 # Логируем ошибку и не меняем валюту
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
-            self.bonus_wallet = Money(currency=iso, amount=amount)
+            bonus_wallet.amount = round(amount, 2)
 
         self.currency = iso
 
