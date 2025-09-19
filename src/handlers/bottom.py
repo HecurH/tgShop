@@ -10,7 +10,7 @@ router = Router(name="bottom")
 @router.message(StateFilter(None))
 async def base_handler(_, ctx: Context):
     await ctx.fsm.clear()
-    await call_state_handler(CommonStates.MainMenu)
+    await call_state_handler(CommonStates.MainMenu, ctx)
 
 @router.message()
 async def real_base_handler(_, ctx: Context):
