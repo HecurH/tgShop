@@ -68,6 +68,14 @@ class Money(BaseModel):
             raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
         return Money(currency=self.currency, amount=self.amount + other.amount)
     
+    def __sub__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        if self.currency != other.currency:
+            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+        return Money(currency=self.currency, amount=self.amount - other.amount)
+
+    
     def __lt__(self, other):
         if not isinstance(other, Money):
             return NotImplemented
@@ -127,6 +135,15 @@ class LocalizedMoney(BaseModel):
             return NotImplemented
         result = {
             cur: self.get_amount(cur) + other.get_amount(cur)
+            for cur in set(self.data) | set(other.data)
+        }
+        return LocalizedMoney.from_dict(result)
+
+    def __sub__(self, other):
+        if not isinstance(other, LocalizedMoney):
+            return NotImplemented
+        result = {
+            cur: self.get_amount(cur) - other.get_amount(cur)
             for cur in set(self.data) | set(other.data)
         }
         return LocalizedMoney.from_dict(result)
