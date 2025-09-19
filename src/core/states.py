@@ -295,9 +295,8 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     amount = await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
     if amount == 0:
-        await ctx.message.answer(ctx.t.CartTranslates.no_products_in_cart)
         await call_state_handler(CommonStates.MainMenu,
-                                 ctx)
+                                 ctx, send_before=(ctx.t.CartTranslates.no_products_in_cart, 1))
         return
     if current > amount: current = 1
     
