@@ -145,7 +145,7 @@ class LocalizedString(BaseModel):
 
 class OrderState(BaseModel):
     key: OrderStateKey
-    comment: Optional["SavedTMessage"] = None
+    comment: list["SavedTMessage"] = None
 
     def get_localized_name(self, lang: str) -> str:
         return EnumTranslates.OrderStateKey.translate(self.key.value, lang)
@@ -153,8 +153,11 @@ class OrderState(BaseModel):
     def set_state(self, key: OrderStateKey):
         self.key = key 
         
-    def set_comment(self, message: Message):
-        self.comment = SavedTMessage(chat_id=message.chat.id, message_id=message.message_id)
+    def add_comment(self, message: Message):
+        self.comment.append(SavedTMessage(chat_id=message.chat.id, message_id=message.message_id))
+        
+    def get_comments(self):
+        return self.comment
     
     def __eq__(self, value):
         return self.key == value

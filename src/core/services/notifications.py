@@ -8,7 +8,7 @@ from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
 from schemas.db_models import Customer, Order, DeliveryInfo
-from schemas.types import SavedTMessage
+from schemas.types import Money, SavedTMessage
 from ui.keyboards import UncategorizedKBs
 
 from core.helper_classes import Context
@@ -291,6 +291,10 @@ class UserTelegramNotificator:
         await self.notificator.send_notification(NotificatorTranslates.Order.order_payment_accepted.translate(customer.lang).format(order_puid=f"#{order.puid}"),
                                                  chat_id=customer.user_id,
                                                  media=media)
+    
+    async def send_inviter_reward(self, customer: Customer, reward: Money):
+        await self.notificator.send_notification(NotificatorTranslates.User.inviter_reward.translate(customer.lang).format(reward=reward.to_text(), balance=customer.bonus_wallet.to_text()),
+                                                 chat_id=customer.user_id)
         
     async def send_order_unformed(self, customer: Customer, order: Order):
         await self.notificator.send_notification(NotificatorTranslates.Order.order_unformed.translate(customer.lang).format(order_puid=f"#{order.puid}"),

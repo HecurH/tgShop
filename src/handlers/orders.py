@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Router
 
 from core.helper_classes import Context
@@ -56,8 +57,10 @@ async def order_view_handler(_, ctx: Context) -> None:
         await call_state_handler(Cart.OrderConfiguration.Menu, ctx, order=order)
         return
     
-    if text == ctx.t.ReplyButtonsTranslates.Orders.view_comment and order.state.comment:
-        await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=order.state.comment.chat_id, message_id=order.state.comment.message_id)
+    if text in [ctx.t.ReplyButtonsTranslates.Orders.view_comment, ctx.t.ReplyButtonsTranslates.Orders.view_comments] and order.state.comment:
+        for comment in order.state.get_comments():
+            await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=comment.chat_id, message_id=comment.message_id)
+            await asyncio.sleep(0.2)
         
         await call_state_handler(Orders.OrderView, ctx, order=order)
         return

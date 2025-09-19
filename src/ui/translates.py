@@ -810,6 +810,10 @@ class NotificatorTranslates(Translatable):
             "ru": "Сообщение выше было направлено от Администратора. Если хотите на него ответить, напишите @{username}",
             "en": "The message above was sent from the Administrator. If you want to reply to it, write @{username}"
         }
+        
+        inviter_reward = {
+            "ru": "Вам было начислено {reward} за первый заказ приглашённого вами пользователя.\nТеперь у вас {balance} на бонусном счету.",
+        }
     
     class Delivery(Translatable):
         delivery_price_confirmed = {
@@ -962,6 +966,11 @@ class ReplyButtonsTranslates(Translatable):
         view_comment = {
             "ru": "Посмотреть комментарий",
             "en": "View comment"
+        }
+        
+        view_comments = {
+            "ru": "Посмотреть комментарии",
+            "en": "View comments"
         }
             
     

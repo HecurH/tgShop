@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
 from configs.payments import SUPPORTED_PAYMENT_METHODS
+from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
 from configs.supported import SUPPORTED_CURRENCIES
 from core.services.currency_converter import AsyncCurrencyConverter
 from core.helper_classes import Context
@@ -88,6 +89,9 @@ class OrderPriceDetails(AppBaseModel):
         total = products_price_after_promocode + self.delivery_price if self.delivery_price else products_price_after_promocode
         
         self.total_price = total - self.bonuses_applied if self.bonuses_applied else total
+    
+    async def get_referral_reward(self) -> Optional[Money]:
+        return round(self.total_price * REFERRALS_FIRST_ORDER_PERCENT, 2) if self.total_price else None
     
 class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -721,6 +725,18 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         inviter.invited_customers += 1
         await self.save(inviter)
     
+    async def count_new_first_order(self, inviter: Inviter, order: "Order") -> Optional[Money]:
+        inviter.invited_customers_first_orders += 1
+        if inviter.inviter_type == InviterType.customer:
+            customer = await self.dbs.customers.find_one_by_id(inviter.customer_id)
+            if customer:
+                reward = order.price_details.get_referral_reward()
+                
+                return await self.dbs.customers.add_bonus_money(customer, reward)
+                
+        
+        await self.save(inviter)
+    
     async def new(self, customer_id: PydanticObjectId) -> Inviter:
         if await self.check_customer(customer_id):
             return await self.get_inviter_by_customer_id(customer_id)
@@ -894,6 +910,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         money.amount = round(money.amount, 2)
         customer.bonus_wallet += money
         await self.save(customer)
+        return money
         
     async def remove_bonus_money(self, customer: Customer, money: Money):
         if money.amount <= 0.0001: return

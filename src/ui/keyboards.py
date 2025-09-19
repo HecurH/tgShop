@@ -359,7 +359,7 @@ class OrdersKBs:
             kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.continue_forming)])
             
         if order.state.comment:
-            kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.view_comment)])
+            kb.append([types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Orders.view_comment if len(order.state.comment) == 1 else ctx.t.ReplyButtonsTranslates.Orders.view_comments)])
         
         kb.append([types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)])
         
