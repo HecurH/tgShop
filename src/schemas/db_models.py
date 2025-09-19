@@ -832,7 +832,7 @@ class Customer(AppBaseModel):
     delivery_info: Optional[DeliveryInfo] = None
     waiting_for_manual_delivery_info_confirmation: bool = False
     
-    async def change_selected_currency(self, iso: str, dbs: DatabaseService):
+    async def change_selected_currency(self, iso: str, dbs: "DatabaseService"):
         """Изменить основную валюту"""
         if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
