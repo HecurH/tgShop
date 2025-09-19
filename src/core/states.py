@@ -78,6 +78,9 @@ class AdminStates(StatesGroup):
     
     class Main(StatesGroup):
         Menu = State()
+        
+        
+        Promocodes = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -95,6 +98,11 @@ class AdminStates(StatesGroup):
 async def handle_admin_menu(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.admin_menu())
+    
+@state_handlers.register(AdminStates.Main.Promocodes)
+async def handle_admin_promocodes(ctx: Context, **_):
+    await ctx.message.answer("Выберите пункт меню:",
+                             reply_markup=AdminKBs.admin_promocodes_menu())
 
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):

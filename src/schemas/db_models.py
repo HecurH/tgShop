@@ -693,6 +693,9 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     async def get_by_code(self, code: str) -> Optional[Promocode]:
         return await self.find_one_by({"code": code})
     
+    async def get_all(self) -> Iterable[Promocode]:
+        return await self.find_by({})
+    
     async def update_usage(self, promocode_id: PydanticObjectId, upd: int = 1):
         promocode = await self.find_one_by_id(promocode_id)
         if not promocode or promocode.max_usages == -1: return

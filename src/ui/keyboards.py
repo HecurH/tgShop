@@ -69,11 +69,29 @@ class AdminKBs:
                 types.KeyboardButton(text="Промокоды")
             ],
             [
-                types.KeyboardButton(text="Глоб. Плейсхолдеры")
+                types.KeyboardButton(text="Глобальные Плейсхолдеры")
             ]
         ]
         return types.ReplyKeyboardMarkup(keyboard=kb, 
                                          resize_keyboard=True)
+    
+    class Promocodes:
+        @staticmethod
+        async def admin_promocodes_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Создать"),
+                    types.KeyboardButton(text="Список всех")
+                ],
+                [
+                    types.KeyboardButton(text="Изменить")
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                             resize_keyboard=True)
     
     class Orders:
         @staticmethod

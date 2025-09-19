@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import json
 from typing import Iterable, Optional
 from aiogram import html
@@ -6,7 +7,7 @@ from aiogram import html
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.enums import InviterType, OrderStateKey
+from schemas.enums import DiscountType, InviterType, OrderStateKey
 from schemas.types import LocalizedMoney
 from ui.message_tools import build_list
 
@@ -92,7 +93,31 @@ class AdminTextGen:
 
 
         return f"{entries_desc}\n\nИзмени цену конфигурации для товаров относительно их айди\n\n<code>{next_input_info}</code>"
+    
+    @staticmethod
+    async def all_promocodes_text(ctx: Context):
+        promocodes_list = await ctx.services.db.promocodes.get_all()
+        text = ""
+        for promocode in promocodes_list:
+            text += f"🎟️ Код: {promocode.code}\n"
+            
+            expires_formated = promocode.expire_date.strftime("%d.%m.%Y %H:%M") if promocode.expire_date else None
+            expired = " (истек)" if expires_formated and datetime.now() > promocode.expire_date else ""
+            
+            used_text = f" {promocode.already_used}/{promocode.max_usages}" if promocode.max_usages != -1 else f" {promocode.already_used}"
+            
+            ll = [
+                f"➝ Скидка:{' ' if promocode.action.action_type == DiscountType.fixed else f' %' if promocode.action.action_type == DiscountType.percentage else ''}{promocode.action.value.to_text_all()} {promocode.action.value.to_text_all()}",
+                ("📌 Только для новичков" if promocode.only_newbies else "📌 Для всех пользователей"),
+                (f"⏳ Действует до: {expires_formated}{expired}" if expires_formated else "⏳ Неограниченно"),
+                (f"🔢 Использовано: {used_text}")
+            ]
+            
+            text += build_list(ll, before="")
         
+        return text
+            
+            
 
 class AssortmentTextGen:
     @staticmethod

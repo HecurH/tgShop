@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import re
@@ -16,7 +17,8 @@ from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
 from schemas.enums import OrderStateKey
 from schemas.types import LocalizedMoney, LocalizedString
-from ui.message_tools import list_commands
+from ui.message_tools import list_commands, split_message
+from ui.texts import AdminTextGen
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -34,6 +36,44 @@ async def help_handler(_, ctx: Context):
 @router.message(Command("menu"))
 async def menu_handler(_, ctx: Context):
     await call_state_handler(AdminStates.Main.Menu, ctx)
+
+@router.message(AdminStates.Main.Menu)
+async def menu_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == "Покупатели":
+        ...
+    elif text == "Товары":
+        ...
+    elif text == "Заказы":
+        ...
+    elif text == "Промокоды": 
+        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+    elif text == "Глобальные Плейсхолдеры": 
+        ...
+    else:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        
+@router.message(AdminStates.Main.Promocodes)
+async def promocodes_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+    
+    if text == "Создать": ...
+    elif text == "Список всех":
+        parts = split_message(await AdminTextGen.all_promocodes_text(ctx), limit=4096)
+        for i, part in enumerate(parts):
+            is_last = i == len(parts) - 1
+            
+            await ctx.message.answer(part)
+            if not is_last: await asyncio.sleep(.3)
+            
+        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        
+        
+    elif text == "Изменить": ...
+        
+
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
