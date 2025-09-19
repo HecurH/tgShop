@@ -97,10 +97,8 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
         await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
         await ctx.services.db.orders.save(order)
         if ctx.services.db.orders.count_customer_orders(customer) == 1 and customer.invited_by:
-            inviter = await ctx.services.db.inviters.find_one_by_id(customer.invited_by)
-            if inviter:
-                reward = await ctx.services.db.inviters.count_new_first_order(inviter, order)
-                if reward:
+            if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
+                if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order):
                     await ctx.services.db.customers.add_bonus_money(customer, reward)
                     await ctx.services.db.customers.save(customer)
                     
@@ -138,6 +136,16 @@ async def ask_generate_receipt_handler(_, ctx: Context):
     
     
     await ctx.services.db.orders.save(order)
+    if ctx.services.db.orders.count_customer_orders(customer) == 1 and customer.invited_by:
+        if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
+            if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order):
+                await ctx.services.db.customers.add_bonus_money(customer, reward)
+                await ctx.services.db.customers.save(customer)
+                
+                await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(customer, reward)
+                
+            await ctx.services.db.inviters.save(inviter)
+    
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
     
 @router.message(Command("unform_order"))
