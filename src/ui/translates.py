@@ -415,8 +415,8 @@ class AssortmentTranslates(Translatable):
     }
 
     cannot_price = {
-        "ru": "Определить точную цену товара невозможно.",
-        "en": "It is impossible to determine the exact price of the product."
+        "ru": "Определить точную цену товара невозможно из-за индивидуальных параметров.",
+        "en": "It is impossible to determine the exact price of the product due to individual parameters."
     }
 
     approximate_price = {
