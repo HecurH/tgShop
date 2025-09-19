@@ -256,13 +256,14 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         
         cart_entry.configuration.price_confirmed_override = True
         cart_entry.configuration.update_price()
+    await ctx.services.db.cart_entries.save_many(cart_entries)
         
     order.state.set_state(OrderStateKey.waiting_for_forming)
     
     products_price = await ctx.services.db.cart_entries.calculate_cart_entries_price_by_order(order)
     order.price_details = OrderPriceDetails.new(customer, products_price)
     
-    await ctx.services.db.cart_entries.save_many(cart_entries)
+    
     await ctx.services.db.orders.save(order)
     
     await ctx.services.notificators.UserTelegramNotificator.send_order_price_confirmed(customer)
