@@ -901,15 +901,15 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     async def add_bonus_money(self, customer: Customer, money: Money):
         if money.amount <= 0.0001: return
         
-        if money.currency != self.currency:
+        if money.currency != customer.currency:
             try:
-                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, self.currency)
+                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, customer.currency)
             except Exception as e:
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
-            money = Money(currency=self.currency, amount=amount)
+            money = Money(currency=customer.currency, amount=amount)
 
         money.amount = round(money.amount, 2)
         customer.bonus_wallet += money
@@ -919,15 +919,15 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     async def remove_bonus_money(self, customer: Customer, money: Money):
         if money.amount <= 0.0001: return
 
-        if money.currency != self.currency:
+        if money.currency != customer.currency:
             try:
-                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, self.currency)
+                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, customer.currency)
             except Exception as e:
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
-            money = Money(currency=self.currency, amount=amount)
+            money = Money(currency=customer.currency, amount=amount)
             
         money.amount = round(money.amount, 2)
         customer.bonus_wallet -= money
