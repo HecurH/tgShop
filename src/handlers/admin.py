@@ -61,10 +61,13 @@ async def promocodes_handler(_, ctx: Context):
     
     if text == "Создать": ...
     elif text == "Список всех":
-        parts = split_message(await AdminTextGen.all_promocodes_text(ctx), limit=4096)
-        if not parts:
+        txt = await AdminTextGen.all_promocodes_text(ctx)
+        if txt == "":
             await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Промокодов нема.")
             return
+        
+        parts = split_message(txt, limit=4096)
+        
         for i, part in enumerate(parts):
             is_last = i == len(parts) - 1
             
