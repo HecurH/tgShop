@@ -133,7 +133,7 @@ async def main_menu_handler(ctx: Context, **_):
                              reply_markup=CommonKBs.main_menu(ctx))
 
 
-class Assortment(StatesGroup):
+class AssortmentStates(StatesGroup):
     Menu = State()
     ViewingAssortment = State()
     ViewingProductDetails = State()
@@ -143,7 +143,7 @@ class Assortment(StatesGroup):
     SwitchesEditing = State()
     AdditionalsEditing = State()
 
-@state_handlers.register(Assortment.Menu)
+@state_handlers.register(AssortmentStates.Menu)
 async def assortment_menu_handler(ctx: Context, **_):
     categories = await ctx.services.db.categories.get_all()
     if not categories:
@@ -152,7 +152,7 @@ async def assortment_menu_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.AssortmentTranslates.choose_the_category,
                              reply_markup=AssortmentKBs.assortment_menu(categories, ctx))
 
-@state_handlers.register(Assortment.ViewingAssortment)
+@state_handlers.register(AssortmentStates.ViewingAssortment)
 async def viewing_assortment_handler(ctx: Context,
                                      category: str,
                                      current: int,
@@ -161,7 +161,7 @@ async def viewing_assortment_handler(ctx: Context,
 
     if amount == 0:
         await ctx.message.answer(ctx.t.AssortmentTranslates.no_products_in_category)
-        await call_state_handler(Assortment.Menu,
+        await call_state_handler(AssortmentStates.Menu,
                                  ctx)
         return
     
@@ -175,7 +175,7 @@ async def viewing_assortment_handler(ctx: Context,
                                 caption,
                                 AssortmentKBs.gen_assortment_view_kb(current, amount, ctx))
 
-@state_handlers.register(Assortment.ViewingProductDetails)
+@state_handlers.register(AssortmentStates.ViewingProductDetails)
 async def viewing_product_details_handler(ctx: Context,
                                           product: Product,
                                           **_):
@@ -198,7 +198,7 @@ async def viewing_product_details_handler(ctx: Context,
                                 AssortmentKBs.detailed_view(ctx)
                                 )
 
-@state_handlers.register(Assortment.FormingOrderEntry)
+@state_handlers.register(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_handler(ctx: Context,
                                       product: Product,
                                       **_):
@@ -217,7 +217,7 @@ async def forming_order_entry_handler(ctx: Context,
                                 AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx),
                                 "photo" if photo_id else ("video" if video_id else None))
 
-@state_handlers.register(Assortment.EntryOptionSelect)
+@state_handlers.register(AssortmentStates.EntryOptionSelect)
 async def entry_option_select_handler(ctx: Context,
                                       product: Product,
                                       delete_prev: bool = False,
@@ -231,7 +231,7 @@ async def entry_option_select_handler(ctx: Context,
                               media_type="video" if chosen.video_id else "photo" if chosen.photo_id else "text")
     if delete_prev: await ctx.message.delete()
 
-@state_handlers.register(Assortment.ChoiceEditValue)
+@state_handlers.register(AssortmentStates.ChoiceEditValue)
 async def choice_edit_value_handler(ctx: Context,
                                     choice,
                                     **_):
@@ -247,7 +247,7 @@ async def choice_edit_value_handler(ctx: Context,
                               "photo" if choice.photo_id else ("video" if choice.video_id else None)
                               )
 
-@state_handlers.register(Assortment.SwitchesEditing)
+@state_handlers.register(AssortmentStates.SwitchesEditing)
 async def switches_editing_handler(ctx: Context,
                                    switches: ConfigurationSwitches,
                                    **_):
@@ -262,7 +262,7 @@ async def switches_editing_handler(ctx: Context,
                               "photo" if switches.photo_id else ("video" if switches.video_id else None)
                               )
 
-@state_handlers.register(Assortment.AdditionalsEditing)
+@state_handlers.register(AssortmentStates.AdditionalsEditing)
 async def additionals_editing_handler(ctx: Context,
                                    product: Product,
                                    allowed_additionals: List[ProductAdditional],
@@ -279,7 +279,7 @@ async def additionals_editing_handler(ctx: Context,
         reply_markup=kb
     )
 
-class Cart(StatesGroup):
+class CartStates(StatesGroup):
     Menu = State()
     EntryRemoveConfirm = State()
     CartPriceConfirmation = State()
@@ -290,7 +290,7 @@ class Cart(StatesGroup):
         PaymentMethodSetting = State()
         PaymentConfirmation = State()
 
-@state_handlers.register(Cart.Menu)
+@state_handlers.register(CartStates.Menu)
 async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     amount = await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer)
     
@@ -315,53 +315,53 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
                             caption,
                             await CartKBs.cart_view(entry, current, amount, total_price, ctx))
 
-@state_handlers.register(Cart.EntryRemoveConfirm)
+@state_handlers.register(CartStates.EntryRemoveConfirm)
 async def entry_remove_confirm_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.entry_remove_confirm,
                              reply_markup=UncategorizedKBs.yes_no(ctx))
 
-@state_handlers.register(Cart.CartPriceConfirmation)
+@state_handlers.register(CartStates.CartPriceConfirmation)
 async def order_price_confirmation_handler(ctx: Context, order: Order, **_):
     await ctx.message.answer(await CartTextGen.generate_cart_price_confirmation_caption(order, ctx),
                              reply_markup=CartKBs.cart_price_confirmation(ctx))
 
-@state_handlers.register(Cart.OrderConfiguration.Menu)
+@state_handlers.register(CartStates.OrderConfiguration.Menu)
 async def order_configuration_handler(ctx: Context, order: Order, **_):
     await ctx.message.answer(await CartTextGen.generate_order_forming_caption(order, ctx),
                              reply_markup=CartKBs.cart_order_configuration(order, ctx))
 
-@state_handlers.register(Cart.OrderConfiguration.PromocodeSetting)
+@state_handlers.register(CartStates.OrderConfiguration.PromocodeSetting)
 async def order_promocode_setting_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.CartTranslates.OrderConfiguration.enter_promocode,
                              reply_markup=UncategorizedKBs.reply_back(ctx))
     
-@state_handlers.register(Cart.OrderConfiguration.PaymentMethodSetting)
+@state_handlers.register(CartStates.OrderConfiguration.PaymentMethodSetting)
 async def order_payment_method_setting_handler(ctx: Context, order: Order, **_):
     await ctx.message.answer(CartTextGen.generate_payment_method_setting_caption(order, ctx),
                              reply_markup=CartKBs.payment_method_choose(order, ctx))
     
-@state_handlers.register(Cart.OrderConfiguration.PaymentConfirmation)
+@state_handlers.register(CartStates.OrderConfiguration.PaymentConfirmation)
 async def order_payment_confirmation_handler(ctx: Context, order: Order, **_):
     await ctx.message.answer(CartTextGen.generate_payment_confirmation_caption(order, ctx),
                              reply_markup=CartKBs.payment_confirmation(order, ctx))
 
-class Orders(StatesGroup):
+class OrderStates(StatesGroup):
     Menu = State()
     OrderView = State()
     
-@state_handlers.register(Orders.Menu)
+@state_handlers.register(OrderStates.Menu)
 async def orders_menu_handler(ctx: Context, **_):
     orders = await ctx.services.db.orders.get_customer_orders(ctx.customer)
 
     await ctx.message.answer(await OrdersTextGen.generate_orders_menu_text(orders, ctx),
                              reply_markup=UncategorizedKBs.reply_back(ctx))
     
-@state_handlers.register(Orders.OrderView)
+@state_handlers.register(OrderStates.OrderView)
 async def order_view_handler(ctx: Context, order: Order, **_):
     await ctx.message.answer(await OrdersTextGen.generate_order_viewing_caption(order, ctx),
                              reply_markup=OrdersKBs.order_view(order, ctx))
 
-class Profile(StatesGroup):
+class ProfileStates(StatesGroup):
     Menu = State()
     class Settings(StatesGroup):
         Menu = State()
@@ -382,44 +382,44 @@ class Profile(StatesGroup):
             Requirement = State()
             SendToManualConfirmation = State()
 
-@state_handlers.register(Profile.Menu)
+@state_handlers.register(ProfileStates.Menu)
 async def profile_menu_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.ProfileTranslates.menu,
                              reply_markup=ProfileKBs.menu(ctx))
 
-@state_handlers.register(Profile.Settings.Menu)
+@state_handlers.register(ProfileStates.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Settings.menu,
         reply_markup=ProfileKBs.Settings.menu(ctx)
     )
 
-@state_handlers.register(Profile.Settings.ChangeLanguage)
+@state_handlers.register(ProfileStates.Settings.ChangeLanguage)
 async def settings_change_lang_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_lang,
                              reply_markup=ProfileKBs.Settings.lang_choose(ctx))
     
-@state_handlers.register(Profile.Settings.ChangeCurrency)
+@state_handlers.register(ProfileStates.Settings.ChangeCurrency)
 async def settings_change_currency_handler(ctx: Context, **_):
     currency_name = getattr(ctx.t.UncategorizedTranslates.Currencies, ctx.customer.currency)
     await ctx.message.answer(ctx.t.ProfileTranslates.Settings.choose_currency.format(currency=currency_name),
                              reply_markup=ProfileKBs.Settings.currency_choose(ctx))
 
-@state_handlers.register(Profile.Referrals.AskForJoin)
+@state_handlers.register(ProfileStates.Referrals.AskForJoin)
 async def refferals_ask_for_join_handler(ctx: Context, **_):
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Referrals.ask_for_join,
         reply_markup=ProfileKBs.Referrals.ask_for_join(ctx)
     )
 
-@state_handlers.register(Profile.Referrals.Menu)
+@state_handlers.register(ProfileStates.Referrals.Menu)
 async def refferals_menu_handler(ctx: Context, inviter: Inviter, **_):
     await ctx.message.answer(
         ProfileTextGen.referrals_menu_text(inviter, ctx),
         reply_markup=ProfileKBs.Referrals.menu(ctx)
     )
     
-@state_handlers.register(Profile.Referrals.InvitationLinkView)
+@state_handlers.register(ProfileStates.Referrals.InvitationLinkView)
 async def referrals_invitation_link_view_handler(ctx: Context, inviter: Inviter, **_):
     await ctx.message.answer(
         await ProfileTextGen.referrals_invitation_link_view_text(inviter, ctx)
@@ -430,14 +430,14 @@ async def referrals_invitation_link_view_handler(ctx: Context, inviter: Inviter,
         reply_markup=UncategorizedKBs.reply_back(ctx)
     )
 
-@state_handlers.register(Profile.Delivery.Menu)
+@state_handlers.register(ProfileStates.Delivery.Menu)
 async def delivery_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
         ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
         reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx)
     )
 
-@state_handlers.register(Profile.Delivery.Editables.IsForeign)
+@state_handlers.register(ProfileStates.Delivery.Editables.IsForeign)
 async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
@@ -448,7 +448,7 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
         )
     )
     
-@state_handlers.register(Profile.Delivery.Editables.Service)
+@state_handlers.register(ProfileStates.Delivery.Editables.Service)
 async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     
@@ -461,7 +461,7 @@ async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool,
         )
     )
     
-@state_handlers.register(Profile.Delivery.Editables.RequirementsLists)
+@state_handlers.register(ProfileStates.Delivery.Editables.RequirementsLists)
 async def delivery_edit_requirements_lists_handler(ctx: Context, delivery_info: DeliveryInfo, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     lists = delivery_info.service.requirements_options
@@ -473,7 +473,7 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, delivery_info: 
         )
     )
 
-@state_handlers.register(Profile.Delivery.Editables.Requirement)
+@state_handlers.register(ProfileStates.Delivery.Editables.Requirement)
 async def delivery_edit_requirement_handler(ctx: Context, delivery_info: DeliveryInfo, requirement_index: int = 0, **_):
     first_setup: bool = ctx.customer.delivery_info is None
     requirement = delivery_info.service.selected_option.requirements[requirement_index]
@@ -485,14 +485,24 @@ async def delivery_edit_requirement_handler(ctx: Context, delivery_info: Deliver
         )
     )
 
-@state_handlers.register(Profile.Delivery.Editables.SendToManualConfirmation)
+@state_handlers.register(ProfileStates.Delivery.Editables.SendToManualConfirmation)
 async def delivery_edit_send_to_manual_confirmation_handler(ctx: Context, **_):
     await ctx.message.answer(ctx.t.ProfileTranslates.Delivery.send_to_manual_confirmation_text,
                              reply_markup=UncategorizedKBs.yes_no(ctx))
 
-@state_handlers.register(Profile.Delivery.DeleteConfimation)
+@state_handlers.register(ProfileStates.Delivery.DeleteConfimation)
 async def delivery_delete_confirmation_handler(ctx: Context, **_):
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.delete_confimation,
         reply_markup=UncategorizedKBs.yes_no(ctx)
     )
+    
+__all__ = [
+    "call_state_handler",
+    "AdminStates",
+    "NewUserStates",
+    "AssortmentStates",
+    "CartStates",
+    "OrderStates",
+    "ProfileStates"
+]

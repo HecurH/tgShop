@@ -1,30 +1,24 @@
-from aiogram.fsm.context import FSMContext
-
 from aiogram import Dispatcher, Router
-from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
-from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
+from aiogram.filters import StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from core.helper_classes import Context
 from core.services.db import *
-from core.middlewares import ContextMiddleware
-from handlers.common import command_start_handler
+from core.states import call_state_handler, CommonStates
 
 router = Router(name="bottom")
 
 # Если нет состояния
 @router.message(StateFilter(None))
-async def base_handler(message: Message, state: FSMContext, db, lang):
-    await state.clear()
-    #await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
-
-    await command_start_handler(message, CommandObject(), state, db, lang)
+async def base_handler(_, ctx: Context):
+    await ctx.fsm.clear()
+    await call_state_handler(CommonStates.MainMenu)
 
 @router.message()
-async def real_base_handler(message: Message, state: FSMContext, db, lang):
-    await message.delete()
+async def real_base_handler(_, ctx: Context):
+    await ctx.message.delete()
 
 @router.callback_query()
-async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DatabaseService, lang: str, middleware: ContextMiddleware) -> None:
-    await callback.answer()
+async def base_callback_handler(_, ctx: Context) -> None:
+    await ctx.event.answer()
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
 async def user_blocked_bot(_, ctx: Context):
