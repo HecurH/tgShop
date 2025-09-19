@@ -832,7 +832,7 @@ class Customer(AppBaseModel):
     delivery_info: Optional[DeliveryInfo] = None
     waiting_for_manual_delivery_info_confirmation: bool = False
     
-    async def change_selected_currency(self, iso: str, acc: AsyncCurrencyConverter):
+    async def change_selected_currency(self, iso: str, dbs: DatabaseService):
         """Изменить основную валюту"""
         if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
@@ -842,7 +842,7 @@ class Customer(AppBaseModel):
         
         if bonus_wallet.amount > 0:
             try:
-                amount = await acc.convert(bonus_wallet.amount, self.currency, iso)
+                amount = await dbs.currency_converter.convert(bonus_wallet.amount, self.currency, iso)
             except Exception as e:
                 # Логируем ошибку и не меняем валюту
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")

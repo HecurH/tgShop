@@ -83,7 +83,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
             await call_state_handler(Profile.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
             return
         
-        ctx.customer.currency = currency
+        await ctx.customer.change_selected_currency(currency, ctx.services.db)
         await ctx.services.db.update(ctx.customer)
         
         text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
