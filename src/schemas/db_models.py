@@ -147,6 +147,7 @@ class Order(AppBaseModel):
     async def update_applied_bonuses(self, customer_bonus_balance: Optional[Money]):
         if not customer_bonus_balance:
             self.price_details.bonuses_applied = None
+            self.price_details.recalculate_price()
             return
         
         price_details = self.price_details
@@ -154,6 +155,7 @@ class Order(AppBaseModel):
         total = products_price_after_promocode + price_details.delivery_price
         
         self.price_details.bonuses_applied = min(total, customer_bonus_balance)
+        self.price_details.recalculate_price()
 
 class OrdersRepository(AppAbstractRepository[Order]):
     class Meta:
