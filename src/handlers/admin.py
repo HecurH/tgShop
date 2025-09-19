@@ -30,6 +30,10 @@ async def help_handler(_, ctx: Context):
     txt = "\n".join(doc for _, doc in list_commands(router))
     
     await ctx.message.answer(txt, parse_mode=None)
+    
+@router.message(Command("menu"))
+async def menu_handler(_, ctx: Context):
+    await call_state_handler(AdminStates.Main.Menu, ctx)
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

@@ -57,6 +57,24 @@ class CommonKBs:
 
 class AdminKBs:
     
+    @staticmethod
+    async def admin_menu() -> types.ReplyKeyboardMarkup:
+        kb = [
+            [
+                types.KeyboardButton(text="Покупатели"),
+                types.KeyboardButton(text="Товары")
+            ],
+            [
+                types.KeyboardButton(text="Заказы"),
+                types.KeyboardButton(text="Промокоды")
+            ],
+            [
+                types.KeyboardButton(text="Глоб. Плейсхолдеры")
+            ]
+        ]
+        return types.ReplyKeyboardMarkup(keyboard=kb, 
+                                         resize_keyboard=True)
+    
     class Orders:
         @staticmethod
         async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:

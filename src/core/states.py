@@ -75,6 +75,10 @@ async def call_state_handler(state: State,
     
     
 class AdminStates(StatesGroup):
+    
+    class Main(StatesGroup):
+        Menu = State()
+    
     class Customers(StatesGroup):
         AdminMessageSending = State()
     
@@ -86,6 +90,11 @@ class AdminStates(StatesGroup):
     
     class Delivery(StatesGroup):
         PriceConfirmationCancel = State()
+        
+@state_handlers.register(AdminStates.Main.Menu)
+async def handle_admin_menu(ctx: Context, **_):
+    await ctx.message.answer("Выберите пункт меню:",
+                             reply_markup=AdminKBs.admin_menu())
 
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
