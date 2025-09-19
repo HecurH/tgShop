@@ -91,7 +91,11 @@ class OrderPriceDetails(AppBaseModel):
         self.total_price = total - self.bonuses_applied if self.bonuses_applied else total
     
     async def get_referral_reward(self) -> Optional[Money]:
-        return round(self.total_price * REFERRALS_FIRST_ORDER_PERCENT, 2) if self.total_price else None
+        if not self.total_price: return None
+        reward = self.total_price * REFERRALS_FIRST_ORDER_PERCENT
+        reward.amount = round(reward.amount, 2)
+        
+        return reward
     
 class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
