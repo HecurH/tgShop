@@ -197,7 +197,7 @@ class ProfileTextGen:
         link = await inviter.gen_link(ctx)
         me = await ctx.message.bot.get_me()
         
-        return f"<a href=\"{link}\">{me.username}</a>"
+        return f"<a href=\"{link}\">@{me.username}</a>"
         
     
     @staticmethod
