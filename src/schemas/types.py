@@ -67,6 +67,28 @@ class Money(BaseModel):
         if self.currency != other.currency:
             raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
         return Money(currency=self.currency, amount=self.amount + other.amount)
+    
+    def __lt__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        if self.currency != other.currency:
+            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+        return self.amount < other.amount
+
+    def __le__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        if self.currency != other.currency:
+            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+        return self.amount <= other.amount
+
+    def __eq__(self, other):
+        if not isinstance(other, Money):
+            return NotImplemented
+        if self.currency != other.currency:
+            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+        return self.amount == other.amount
+
 
     def __mul__(self, factor: float):
         return Money(currency=self.currency, amount=self.amount * factor)
