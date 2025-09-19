@@ -145,7 +145,7 @@ class LocalizedString(BaseModel):
 
 class OrderState(BaseModel):
     key: OrderStateKey
-    comment: list["SavedTMessage"] = None
+    comment: list["SavedTMessage"] = Field(default_factory=list)
 
     def get_localized_name(self, lang: str) -> str:
         return EnumTranslates.OrderStateKey.translate(self.key.value, lang)
