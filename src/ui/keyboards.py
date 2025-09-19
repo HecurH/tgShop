@@ -77,7 +77,7 @@ class AdminKBs:
     
     class Promocodes:
         @staticmethod
-        async def admin_promocodes_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+        def admin_promocodes_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
             kb = [
                 [
                     types.KeyboardButton(text="Создать"),
