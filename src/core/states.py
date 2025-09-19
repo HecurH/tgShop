@@ -102,7 +102,7 @@ async def handle_admin_menu(ctx: Context, **_):
 @state_handlers.register(AdminStates.Main.Promocodes)
 async def handle_admin_promocodes(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
-                             reply_markup=AdminKBs.admin_promocodes_menu())
+                             reply_markup=AdminKBs.Promocodes.admin_promocodes_menu(ctx))
 
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
