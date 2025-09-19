@@ -58,7 +58,7 @@ class CommonKBs:
 class AdminKBs:
     
     @staticmethod
-    async def admin_menu() -> types.ReplyKeyboardMarkup:
+    def admin_menu() -> types.ReplyKeyboardMarkup:
         kb = [
             [
                 types.KeyboardButton(text="Покупатели"),
