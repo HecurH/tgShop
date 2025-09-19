@@ -730,7 +730,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         if inviter.inviter_type == InviterType.customer:
             customer = await self.dbs.customers.find_one_by_id(inviter.customer_id)
             if customer:
-                reward = order.price_details.get_referral_reward()
+                reward = await order.price_details.get_referral_reward()
                 
                 return await self.dbs.customers.add_bonus_money(customer, reward)
                 
