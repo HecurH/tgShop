@@ -723,7 +723,14 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         return await self.find_one_by({"customer_id": customer_id})
     
     async def get_inviter_by_deep_link(self, deep_link: str) -> Optional[Inviter]:
-        return await self.find_one_by_id(PydanticObjectId(deep_link.split("_")[-1]))
+        try:
+            if "_" not in deep_link:
+                return None
+            object_id_str = deep_link.split("_")[-1]
+            return await self.find_one_by_id(PydanticObjectId(object_id_str))
+        except (ValueError, IndexError):
+            return None
+
     
     async def count_new_customer(self, inviter: Inviter):
         inviter.invited_customers += 1
