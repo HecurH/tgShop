@@ -699,7 +699,9 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     
     async def update_usage(self, promocode_id: PydanticObjectId, upd: int = 1):
         promocode = await self.find_one_by_id(promocode_id)
-        if not promocode or promocode.max_usages == -1: return
+        if not promocode: return
+        if promocode.max_usages <= self.already_used + upd:
+            raise ValueError("Promocode max usages reached")
 
         promocode.already_used += upd
         await self.save(promocode)
