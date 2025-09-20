@@ -115,7 +115,7 @@ async def handle_admin_create_promocode(ctx: Context, **_):
   en: 10% discount for new customers
 Только_новички: yes | no
 Макс_использований: -1 — без ограничений
-Expire: 2025-12-31    # YYYY-MM-DD или 30d или none
+Expire: 2025-12-31    # YYYY-MM-DD или 30d (только в днях) или none
 
 <code>Код:
 Тип:

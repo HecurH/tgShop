@@ -137,6 +137,8 @@ async def create_promocode_code_handler(_, ctx: Context):
         fields[key] = "\n".join(buf).strip()
 
     # сборка результата
+    print(fields)
+    
     result = {
         "code": fields["код"],
         "type": fields["тип"].lower(),
