@@ -350,7 +350,7 @@ class OrdersTextGen:
         else:
             price_info = ctx.t.OrdersTranslates.total_price_info.format(total_price=order.price_details.total_price.to_text())
             
-        promocode = await ctx.services.db.promocodes.get_by_code(order.promocode_id) if order.promocode_id else None
+        promocode = await ctx.services.db.promocodes.find_one_by_id(order.promocode_id) if order.promocode_id else None
         promocode_info = ctx.t.CartTranslates.OrderConfiguration.promocode_info.format(code=promocode.code, 
                                                                                            discount=order.price_details.promocode_discount.to_text(),
                                                                                            description=promocode.description.get(ctx)) if promocode else None
