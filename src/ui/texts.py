@@ -107,7 +107,7 @@ class AdminTextGen:
             used_text = f" {promocode.already_used}/{promocode.max_usages}" if promocode.max_usages != -1 else f" {promocode.already_used}"
             
             ll = [
-                f"➝ Скидка:{' ' if promocode.discount.dicount_type == DiscountType.fixed else f' %' if promocode.discount.dicount_type == DiscountType.percent else ''}{promocode.discount.value.to_text_all() if isinstance(promocode.discount.value, LocalizedMoney) else promocode.discount.value}",
+                f"➝ Скидка:{f' {promocode.discount.value.to_text_all()}' if promocode.discount.dicount_type == DiscountType.fixed else f' {promocode.discount.value}%' if promocode.discount.dicount_type == DiscountType.percent else ''}",
                 ("📌 Только для новичков" if promocode.only_newbies else "📌 Для всех пользователей"),
                 (f"⏳ Действует до: {expires_formated}{expired}" if expires_formated else "⏳ Неограниченно"),
                 (f"🔢 Использовано: {used_text}")
