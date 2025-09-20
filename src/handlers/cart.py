@@ -184,7 +184,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
     check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.services.db.orders.count_customer_orders(ctx.customer))
     
     if check_result != PromocodeCheckResult.ok:
-        check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
+        check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result.name))
         check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
         
         await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order, 
@@ -239,7 +239,7 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
             else:
                 check_result = await promocode.check_promocode()
                 if check_result != PromocodeCheckResult.ok:
-                    check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result))
+                    check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result.name))
                     check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
                     
                     await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order, 
