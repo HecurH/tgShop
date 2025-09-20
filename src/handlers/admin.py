@@ -123,18 +123,21 @@ async def create_promocode_code_handler(_, ctx: Context):
     buf = []
     for line in text.splitlines():
         if ":" in line and not line.startswith(" "):
+            # новая ключ-строка
             if key:
+                # сохраняем предыдущий буфер
                 fields[key] = "\n".join(buf).strip()
             key, val = line.split(":", 1)
             key, val = key.strip().lower(), val.strip()
-            fields[key] = val
-            buf = []
-            if val == "":
-                buf = []
+            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
         else:
-            buf.append(line)
-    if key and buf:
+            # продолжение блока (многострочный)
+            if key is not None:
+                buf.append(line)
+    # сохраняем последний блок
+    if key:
         fields[key] = "\n".join(buf).strip()
+
 
     # сборка результата
     print(fields)
