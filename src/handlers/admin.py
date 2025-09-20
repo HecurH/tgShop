@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import re
+from typing import Dict
 from aiogram.fsm.context import FSMContext
 
 from aiogram import F, Router
@@ -15,8 +16,8 @@ from core.services.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from schemas.enums import OrderStateKey
-from schemas.types import LocalizedMoney, LocalizedString
+from schemas.enums import DiscountType, OrderStateKey
+from schemas.types import Discount, LocalizedMoney, LocalizedString
 from ui.message_tools import list_commands, split_message
 from ui.texts import AdminTextGen
 
@@ -59,7 +60,8 @@ async def promocodes_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
     
-    if text == "Создать": ...
+    if text == "Создать":
+        await call_state_handler(AdminStates.Main.PromocodeCreating.Code, ctx)
     elif text == "Список всех":
         txt = await AdminTextGen.all_promocodes_text(ctx)
         if txt == "":
@@ -78,7 +80,94 @@ async def promocodes_handler(_, ctx: Context):
         
         
     elif text == "Изменить": ...
+
+@router.message(AdminStates.Main.PromocodeCreating)
+async def create_promocode_code_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        return
+
+    def parse_localized_string(block: str) -> LocalizedString:
+        result = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ":" in line:
+                lang, text = line.split(":", 1)
+                result[lang.strip()] = text.strip()
+        return LocalizedString.from_keys(**result)
+
+    def parse_localized_money(text: str) -> LocalizedMoney:
+        result = {}
+        for part in re.split(r"[;\n]+", text):
+            part = part.strip()
+            if not part:
+                continue
+            cur, amt = part.split(":", 1)
+            result[cur.strip().upper()] = float(amt.replace(",", "."))
+        return LocalizedMoney.from_dict(result)
+
+    def parse_expire(text: str) -> Optional[datetime.datetime]:
+        t = text.strip().lower()
+        if t in ("none", "never"):
+            return None
+        if t.endswith("d"):
+            days = int(t[:-1])
+            return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)
+        return datetime.datetime.strptime(t, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc)
+
+    fields = {}
+    key = None
+    buf = []
+    for line in text.splitlines():
+        if ":" in line and not line.startswith(" "):
+            if key:
+                fields[key] = "\n".join(buf).strip()
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            fields[key] = val
+            buf = []
+            if val == "":
+                buf = []
+        else:
+            buf.append(line)
+    if key and buf:
+        fields[key] = "\n".join(buf).strip()
+
+    # сборка результата
+    result = {
+        "code": fields["код"],
+        "type": fields["тип"].lower(),
+        "only_newbies": fields.get("только_новички", "no").lower() in ("yes", "true", "да"),
+        "max_usages": -1 if fields.get("макс_использований", "-1").lower() in ("none", "-1") else int(fields["макс_использований"]),
+        "expire_date": parse_expire(fields.get("expire", "none")),
+    }
+    if result["type"] == "percent":
+        result["value"] = float(fields["значение"])
+    else:
+        result["value"] = parse_localized_money(fields["значение"])
+    result["description"] = parse_localized_string(fields["описание"])
+    
+    try:
+        promocode = Promocode(
+            code=result["code"],
+            discount=Discount(
+                dicount_type=getattr(DiscountType, result["type"]),
+                value=result["value"]
+            ),
+            description=result["description"],
+            only_newbies=result["only_newbies"],
+            max_usages=result["max_usages"],
+            expire_date=result["expire_date"]
+        )
         
+        await ctx.services.db.promocodes.save(promocode)
+        await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Промокод создан.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось создать промокод: {e}")
 
 
 @router.message(Command("msg_to"))
@@ -892,7 +981,7 @@ async def addit(_, ctx: Context) -> None:
         ),
         is_foreign=True,
         requires_manual_confirmation=True,
-        price=LocalizedMoney.from_dict({"RUB": 0,"USD": 0}),
+        price=LocalizedMoney.empty_base(),
         requirements_options=[
             DeliveryRequirementsList(
                 name=LocalizedString(data={

@@ -111,6 +111,10 @@ class LocalizedMoney(BaseModel):
     def from_dict(cls, raw: dict[str, float]) -> "LocalizedMoney":
         return cls(data={cur: Money(currency=cur, amount=amt) for cur, amt in raw.items()})
     
+    @classmethod
+    def empty_base(cls) -> "LocalizedMoney":
+        return cls(data={cur: Money(currency=cur, amount=0.0) for cur in SUPPORTED_CURRENCIES})
+    
     def get_amount(self, cur: str) -> float:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
 
@@ -171,6 +175,10 @@ class LocalizedMoney(BaseModel):
 class LocalizedString(BaseModel):
     data: dict[str, str]
     
+    @classmethod
+    def from_keys(cls, **kwargs):
+        return cls(data={key: kwargs[key] for key in kwargs})
+    
     def raw(self, lang: str) -> str: return self.data.get(lang) or self.data.get("en")
     
     def get(self, lang_or_context: str | Context, pm: "PlaceholderManager" = None) -> str:
@@ -203,8 +211,8 @@ class OrderState(BaseModel):
     
         
 class Discount(BaseModel):
-    action_type: DiscountType  # тип действия: фиксированная сумма или процент
-    value: LocalizedMoney     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
+    dicount_type: DiscountType  # тип действия: фиксированная сумма или процент
+    value: LocalizedMoney | float     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
 
     def get_discount(self, amount: Money | LocalizedMoney) -> Money | LocalizedMoney:
         if isinstance(amount, LocalizedMoney):
@@ -215,11 +223,11 @@ class Discount(BaseModel):
                 }
             )
         
-        if self.action_type == DiscountType.percent:
-            discount = amount.amount * (self.value.get_amount(amount.currency) / 100)
+        if self.dicount_type == DiscountType.percent:
+            discount = amount.amount * (self.value / 100)
             discount = round(min(discount, amount.amount), 2)
             return Money(currency=amount.currency, amount=max(discount, 0.0))
-        elif self.action_type == DiscountType.fixed:
+        elif self.dicount_type == DiscountType.fixed:
             discount = min(self.value.get_amount(amount.currency), amount.amount)
             discount = round(discount, 2)
             return Money(currency=amount.currency, amount=max(discount, 0.0))

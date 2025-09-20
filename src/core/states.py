@@ -81,6 +81,7 @@ class AdminStates(StatesGroup):
         
         
         Promocodes = State()
+        PromocodeCreating = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -104,6 +105,31 @@ async def handle_admin_promocodes(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.Promocodes.admin_promocodes_menu(ctx))
 
+@state_handlers.register(AdminStates.Main.PromocodeCreating)
+async def handle_admin_create_promocode(ctx: Context, **_):
+    txt = """Код:
+Тип: percent | fixed
+Значение: для percent — просто число 10 (-> 10%), для fixed — "USD:100;RUB:1200"
+Описание:
+  ru: Скидка 10% для новых клиентов
+  en: 10% discount for new customers
+Только_новички: yes | no
+Макс_использований: -1 — без ограничений
+Expire: 2025-12-31    # YYYY-MM-DD или 30d или none
+
+<code>Код:
+Тип:
+Значение:
+Описание:
+  ru:
+  en:
+Только_новички: no
+Макс_использований: -1
+Expire: 30d</code>
+
+Введите по шаблону:"""
+    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
     await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))

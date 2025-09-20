@@ -141,7 +141,7 @@ class Order(AppBaseModel):
             self.puid = self.generate_puid(str(self.id))
 
     async def set_promocode(self, promocode: Optional["Promocode"]):
-        self.price_details.promocode_discount = promocode.action.get_discount(self.price_details.products_price) if promocode else None
+        self.price_details.promocode_discount = promocode.discount.get_discount(self.price_details.products_price) if promocode else None
         self.price_details.recalculate_price()
     
     async def update_applied_bonuses(self, customer_bonus_balance: Optional[Money]):
@@ -304,7 +304,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
 
 class ConfigurationSwitch(AppBaseModel):
     name: LocalizedString
-    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"ru": 0, "en": 0}))
+    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
 
     enabled: bool = False
     
@@ -362,8 +362,7 @@ class ConfigurationChoice(AppBaseModel):
     
     can_be_blocked_by: List[str] = Field(default_factory=list) # формат типо 'option/choice'
     blocks_price_determination: bool = Field(default=False)
-    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.from_dict({"RUB": 0, "USD": 0}))
-
+    price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
     def update(self, base_choice: "ConfigurationChoice"):
         self.label=base_choice.label
         self.description=base_choice.description
@@ -661,10 +660,10 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
 class Promocode(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     code: str
-    action: Discount
+    discount: Discount
     
     description: LocalizedString
-    only_newbies: bool
+    only_newbies: bool = False
 
     already_used: int = 0
     max_usages: int = -1
