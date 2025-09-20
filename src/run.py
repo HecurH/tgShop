@@ -115,8 +115,8 @@ async def main() -> None:
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_routers(admin.router,
-                       common.router,
+    dp.include_routers(common.router,
+                       admin.router,
                        assortment.router,
                        cart.router,
                        orders.router,
