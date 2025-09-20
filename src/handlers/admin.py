@@ -61,7 +61,7 @@ async def promocodes_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Menu, ctx)
     
     if text == "Создать":
-        await call_state_handler(AdminStates.Main.PromocodeCreating.Code, ctx)
+        await call_state_handler(AdminStates.Main.PromocodeCreating, ctx)
     elif text == "Список всех":
         txt = await AdminTextGen.all_promocodes_text(ctx)
         if txt == "":
