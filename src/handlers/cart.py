@@ -237,7 +237,7 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
             if not promocode:
                 order.promocode_id = None
             else:
-                check_result = await promocode.check_promocode()
+                check_result = promocode.check_promocode()
                 if check_result != PromocodeCheckResult.ok:
                     check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result.name))
                     check_result_text = ctx.t.CartTranslates.OrderConfiguration.promocode_check_failed.format(reason=check_result_text)
