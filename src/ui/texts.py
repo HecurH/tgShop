@@ -99,7 +99,7 @@ class AdminTextGen:
         promocodes_list = await ctx.services.db.promocodes.get_all()
         text = ""
         for promocode in promocodes_list:
-            text += f"🎟️ Код: {promocode.code}\n"
+            text += f"\n🎟️ Код: {promocode.code}\n"
             
             expires_formated = promocode.expire_date.strftime("%d.%m.%Y %H:%M") if promocode.expire_date else None
             expired = " (истек)" if expires_formated and datetime.now(timezone.utc)  > promocode.expire_date else ""

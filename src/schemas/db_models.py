@@ -143,6 +143,8 @@ class Order(AppBaseModel):
     async def set_promocode(self, promocode: Optional["Promocode"]):
         self.price_details.promocode_discount = promocode.discount.get_discount(self.price_details.products_price) if promocode else None
         self.price_details.recalculate_price()
+        
+        self.promocode_id = promocode.id if promocode else None
     
     async def update_applied_bonuses(self, customer_bonus_balance: Optional[Money]):
         if not customer_bonus_balance:
