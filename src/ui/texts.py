@@ -102,7 +102,7 @@ class AdminTextGen:
             text += f"🎟️ Код: {promocode.code}\n"
             
             expires_formated = promocode.expire_date.strftime("%d.%m.%Y %H:%M") if promocode.expire_date else None
-            expired = " (истек)" if expires_formated and datetime.now() > promocode.expire_date else ""
+            expired = " (истек)" if expires_formated and datetime.now(timezone.utc)  > promocode.expire_date else ""
             
             used_text = f" {promocode.already_used}/{promocode.max_usages}" if promocode.max_usages != -1 else f" {promocode.already_used}"
             
