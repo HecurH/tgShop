@@ -180,7 +180,21 @@ async def global_placeholders_handler(_, ctx: Context):
     
     if text == "Создать": 
         await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreating, ctx)
-    elif text == "Список всех": ...
+    elif text == "Список всех":
+        txt = await AdminTextGen.all_placeholders_text(ctx)
+        if txt == "":
+            await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Плейсхолдеров нема.")
+            return
+        
+        parts = split_message(txt, limit=4096)
+        
+        for i, part in enumerate(parts):
+            is_last = i == len(parts) - 1
+            
+            await ctx.message.answer(part)
+            if not is_last: await asyncio.sleep(.3)
+            
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
     elif text == "Изменить": ...
     else:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)

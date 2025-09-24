@@ -116,6 +116,15 @@ class AdminTextGen:
             text += build_list(ll, before="")
         
         return text
+    
+    @staticmethod
+    async def all_placeholders_text(ctx: Context):
+        placeholders_list = await ctx.services.db.placeholders.get_all()
+        text = ""
+        for placeholder in placeholders_list:
+            text += f"\n🔑 Ключ: {placeholder.key}\n{build_list([f'{lang}: {txt}' for lang, txt in placeholder.value.data.items()], before="")}\n"
+        
+        return text
             
             
 
