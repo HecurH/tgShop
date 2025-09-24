@@ -100,7 +100,7 @@ class AdminKBs:
                 ],
                 [
                     types.KeyboardButton(text="Изменить")
-                ]
+                ],
                 [
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                 ]
