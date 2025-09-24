@@ -81,6 +81,9 @@ class AdminStates(StatesGroup):
         
         Promocodes = State()
         PromocodeCreating = State()
+        
+        GlobalPlaceholders = State()
+        GlobalPlaceholdersCreating = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -128,7 +131,28 @@ Expire: 30d</code>
 
 Введите по шаблону:"""
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
-    
+
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders)
+async def handle_admin_global_placeholders(ctx: Context, **_):
+    await ctx.message.answer("Выберите пункт меню:",
+                             reply_markup=AdminKBs.GlobalPlaceholders.admin_global_placeholders_menu(ctx))
+
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreating)
+async def handle_admin_create_global_placeholder(ctx: Context, **_):
+    txt = """Ключ:
+Значение:
+  ru: Текст на русском
+  en: Text in English
+
+<code>Ключ:
+Значение:
+  ru:
+  en:</code>
+
+Введите по шаблону:"""
+
+    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
     await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))

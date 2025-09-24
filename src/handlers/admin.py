@@ -50,7 +50,7 @@ async def menu_handler(_, ctx: Context):
     elif text == "Промокоды": 
         await call_state_handler(AdminStates.Main.Promocodes, ctx)
     elif text == "Глобальные Плейсхолдеры": 
-        ...
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
     else:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         
@@ -59,6 +59,7 @@ async def promocodes_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
     
     if text == "Создать":
         await call_state_handler(AdminStates.Main.PromocodeCreating, ctx)
@@ -83,6 +84,7 @@ async def promocodes_handler(_, ctx: Context):
 @router.message(AdminStates.Main.PromocodeCreating)
 async def create_promocode_code_handler(_, ctx: Context):
     text = ctx.message.text
+    
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Promocodes, ctx)
         return
@@ -136,10 +138,6 @@ async def create_promocode_code_handler(_, ctx: Context):
     # сохраняем последний блок
     if key:
         fields[key] = "\n".join(buf).strip()
-
-
-    # сборка результата
-    print(fields)
     
     result = {
         "code": fields["код"],
@@ -172,6 +170,75 @@ async def create_promocode_code_handler(_, ctx: Context):
         
     except Exception as e:
         raise Exception(f"Не удалось создать промокод: {e}")
+
+@router.message(AdminStates.Main.GlobalPlaceholders)
+async def global_placeholders_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    
+    if text == "Создать": 
+        await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreating, ctx)
+    elif text == "Список всех": ...
+    elif text == "Изменить": ...
+    else:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+    
+@router.message(AdminStates.Main.GlobalPlaceholdersCreating)
+async def global_placeholders_creating_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+
+    def parse_localized_string(block: str) -> LocalizedString:
+        result = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ":" in line:
+                lang, text = line.split(":", 1)
+                result[lang.strip()] = text.strip()
+        return LocalizedString.from_keys(**result)
+
+    fields = {}
+    key = None
+    buf = []
+    for line in text.splitlines():
+        if ":" in line and not line.startswith(" "):
+            # новая ключ-строка
+            if key:
+                # сохраняем предыдущий буфер
+                fields[key] = "\n".join(buf).strip()
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
+        else:
+            # продолжение блока (многострочный)
+            if key is not None:
+                buf.append(line)
+    # сохраняем последний блок
+    if key:
+        fields[key] = "\n".join(buf).strip()
+    
+    key = fields["ключ"]
+    value = parse_localized_string(fields["значение"])
+    
+    try:
+        placeholder = Placeholder(
+            key=key,
+            value=value
+        )
+        
+        await ctx.services.db.placeholders.save(placeholder)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер создан.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось создать промокод: {e}")
+    
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

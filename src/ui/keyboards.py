@@ -90,6 +90,24 @@ class AdminKBs:
             return types.ReplyKeyboardMarkup(keyboard=kb,
                                              resize_keyboard=True)
     
+    class GlobalPlaceholders:
+        @staticmethod
+        def admin_global_placeholders_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Создать"),
+                    types.KeyboardButton(text="Список всех")
+                ],
+                [
+                    types.KeyboardButton(text="Изменить")
+                ]
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                             resize_keyboard=True)
+    
     class Orders:
         @staticmethod
         async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:
