@@ -269,7 +269,11 @@ async def global_placeholders_edit_langs_handler(_, ctx: Context):
     remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
                       if not await ctx.fsm.get_value(lang)]
     
-    placeholder = await ctx.services.db.placeholders.find_by_key(text)
+    placeholder = await ctx.services.db.placeholders.find_by_key(await ctx.fsm.get_value("key"))
+
+    if not placeholder:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер не найден.")
+        return
     
     if remaining_langs:
         await ctx.fsm.update_data(**{remaining_langs[0]: text})
