@@ -209,7 +209,7 @@ async def global_placeholders_creating_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
     
-    await ctx.fsm.update_data(key=text)
+    await ctx.fsm.update_data(key=text, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
     await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
 
 @router.message(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
