@@ -124,7 +124,7 @@ class AdminTextGen:
         for placeholder in placeholders_list:
             texts = build_list([f'{lang}: {txt}' for lang, txt in placeholder.value.data.items()], before="")
             
-            text += f"\n🔑 Ключ: {placeholder.key}\n{texts}\n"
+            text += f"\n🔑 Ключ: {placeholder.key}\n{texts}\n\n"
         
         return text
             

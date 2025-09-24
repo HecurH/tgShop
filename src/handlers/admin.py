@@ -195,7 +195,8 @@ async def global_placeholders_handler(_, ctx: Context):
             if not is_last: await asyncio.sleep(.3)
             
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
-    elif text == "Изменить": ...
+    elif text == "Изменить": 
+        await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditRequestKey, ctx)
     else:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
@@ -252,7 +253,73 @@ async def global_placeholders_creating_handler(_, ctx: Context):
         
     except Exception as e:
         raise Exception(f"Не удалось создать промокод: {e}")
+
+@router.message(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
+async def global_placeholders_edit_request_key_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+
+    placeholder = await ctx.services.db.placeholders.find_by_key(text)
     
+    if not placeholder:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер не найден.")
+        return
+
+    await call_state_handler(AdminStates.Main.GlobalPlaceholdersEdit, ctx, placeholder=placeholder)
+
+@router.message(AdminStates.Main.GlobalPlaceholdersEdit)
+async def global_placeholders_edit_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+
+    
+    def parse_localized_string(block: str) -> LocalizedString:
+        result = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ":" in line:
+                lang, text = line.split(":", 1)
+                result[lang.strip()] = text.strip()
+        return LocalizedString.from_keys(**result)
+
+    fields = {}
+    key = None
+    buf = []
+    for line in text.splitlines():
+        if ":" in line and not line.startswith(" "):
+            # новая ключ-строка
+            if key:
+                # сохраняем предыдущий буфер
+                fields[key] = "\n".join(buf).strip()
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
+        else:
+            # продолжение блока (многострочный)
+            if key is not None:
+                buf.append(line)
+    # сохраняем последний блок
+    if key:
+        fields[key] = "\n".join(buf).strip()
+    
+    key = fields["ключ"]
+    value = parse_localized_string(fields["значение"])
+    
+    try:
+        placeholder = await ctx.services.db.placeholders.find_by_key(key)
+        placeholder.value = value
+        
+        await ctx.services.db.placeholders.save(placeholder)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер изменен.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось изменить промокод: {e}")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

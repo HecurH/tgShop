@@ -84,6 +84,8 @@ class AdminStates(StatesGroup):
         
         GlobalPlaceholders = State()
         GlobalPlaceholdersCreating = State()
+        GlobalPlaceholdersEditRequestKey = State()
+        GlobalPlaceholdersEdit = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -151,6 +153,22 @@ async def handle_admin_create_global_placeholder(ctx: Context, **_):
 
 Введите по шаблону:"""
 
+    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
+async def handle_admin_edit_global_placeholder_request_key(ctx: Context, **_):
+    await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEdit)
+async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeholder, **_):
+    txt = f"""<code>Ключ: {placeholder.key}
+Значение:
+  ru: {placeholder.value.data['ru']}
+  en: {placeholder.value.data['en']}
+</code>
+
+Измените:"""
+    
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)

@@ -56,7 +56,7 @@ class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
     class Meta:
         collection_name = 'placeholders'
         
-    async def get_by_key(self, key: str) -> Optional[Placeholder]:
+    async def find_by_key(self, key: str) -> Optional[Placeholder]:
         return await self.find_one_by({'key': key})
     
     async def get_all(self) -> List[Placeholder]:
