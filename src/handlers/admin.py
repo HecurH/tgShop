@@ -77,9 +77,8 @@ async def promocodes_handler(_, ctx: Context):
             if not is_last: await asyncio.sleep(.3)
             
         await call_state_handler(AdminStates.Main.Promocodes, ctx)
-        
-        
-    elif text == "Изменить": ...
+    else:
+        await call_state_handler(AdminStates.Main.Promocodes, ctx)
 
 @router.message(AdminStates.Main.PromocodeCreating)
 async def create_promocode_code_handler(_, ctx: Context):
@@ -173,7 +172,6 @@ async def create_promocode_code_handler(_, ctx: Context):
         
     except Exception as e:
         raise Exception(f"Не удалось создать промокод: {e}")
-
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

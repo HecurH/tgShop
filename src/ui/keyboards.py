@@ -84,9 +84,6 @@ class AdminKBs:
                     types.KeyboardButton(text="Список всех")
                 ],
                 [
-                    types.KeyboardButton(text="Изменить")
-                ],
-                [
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                 ]
             ]

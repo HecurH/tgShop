@@ -691,7 +691,7 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
         collection_name = 'promocodes'
         
-    async def get_by_code(self, code: str) -> Optional[Promocode]:
+    async def find_by_code(self, code: str) -> Optional[Promocode]:
         return await self.find_one_by({"code": code})
     
     async def get_all(self) -> Iterable[Promocode]:

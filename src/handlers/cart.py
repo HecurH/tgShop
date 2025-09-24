@@ -175,7 +175,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
         await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order)
         return
     
-    promocode: Promocode = await ctx.services.db.promocodes.get_by_code(text)
+    promocode: Promocode = await ctx.services.db.promocodes.find_by_code(text)
     if not promocode:
         await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order, 
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
