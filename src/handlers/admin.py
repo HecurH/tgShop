@@ -11,6 +11,7 @@ from aiogram.types import Message, BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
+from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.services.db import *
 
 from core.helper_classes import Context
@@ -179,7 +180,7 @@ async def global_placeholders_handler(_, ctx: Context):
         return
     
     if text == "Создать": 
-        await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreating, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingKey, ctx)
     elif text == "Список всех":
         txt = await AdminTextGen.all_placeholders_text(ctx)
         if txt == "":
@@ -201,58 +202,41 @@ async def global_placeholders_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
     
-@router.message(AdminStates.Main.GlobalPlaceholdersCreating)
+@router.message(AdminStates.Main.GlobalPlaceholdersCreatingKey)
 async def global_placeholders_creating_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
-
-    def parse_localized_string(block: str) -> LocalizedString:
-        result = {}
-        for line in block.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if ":" in line:
-                lang, text = line.split(":", 1)
-                result[lang.strip()] = text.strip()
-        return LocalizedString.from_keys(**result)
-
-    fields = {}
-    key = None
-    buf = []
-    for line in text.splitlines():
-        if ":" in line and not line.startswith(" "):
-            # новая ключ-строка
-            if key:
-                # сохраняем предыдущий буфер
-                fields[key] = "\n".join(buf).strip()
-            key, val = line.split(":", 1)
-            key, val = key.strip().lower(), val.strip()
-            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
-        else:
-            # продолжение блока (многострочный)
-            if key is not None:
-                buf.append(line)
-    # сохраняем последний блок
-    if key:
-        fields[key] = "\n".join(buf).strip()
     
-    key = fields["ключ"]
-    value = parse_localized_string(fields["значение"])
+    await ctx.fsm.update_data(key=text)
+    await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
+
+@router.message(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
+async def global_placeholders_creating_langs_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+    for lang in SUPPORTED_LANGUAGES_TEXT.values():
+        if not await ctx.fsm.get_value(lang):
+            await ctx.fsm.update_data(**{lang: text})
+            await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
+            return
+    
+    langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
     
     try:
         placeholder = Placeholder(
-            key=key,
-            value=value
+            key=await ctx.fsm.get_value("key"),
+            value=LocalizedString.from_keys(**langs_dict)
         )
-        
         await ctx.services.db.placeholders.save(placeholder)
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер создан.")
         
     except Exception as e:
-        raise Exception(f"Не удалось создать промокод: {e}")
+        raise Exception(f"Не удалось создать плейсхолдер: {e}")
+
 
 @router.message(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
 async def global_placeholders_edit_request_key_handler(_, ctx: Context):
@@ -269,57 +253,6 @@ async def global_placeholders_edit_request_key_handler(_, ctx: Context):
 
     await call_state_handler(AdminStates.Main.GlobalPlaceholdersEdit, ctx, placeholder=placeholder)
 
-@router.message(AdminStates.Main.GlobalPlaceholdersEdit)
-async def global_placeholders_edit_handler(_, ctx: Context):
-    text = ctx.message.text
-    if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
-        return
-
-    
-    def parse_localized_string(block: str) -> LocalizedString:
-        result = {}
-        for line in block.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            if ":" in line:
-                lang, text = line.split(":", 1)
-                result[lang.strip()] = text.strip()
-        return LocalizedString.from_keys(**result)
-
-    fields = {}
-    key = None
-    buf = []
-    for line in text.splitlines():
-        if ":" in line and not line.startswith(" "):
-            # новая ключ-строка
-            if key:
-                # сохраняем предыдущий буфер
-                fields[key] = "\n".join(buf).strip()
-            key, val = line.split(":", 1)
-            key, val = key.strip().lower(), val.strip()
-            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
-        else:
-            # продолжение блока (многострочный)
-            if key is not None:
-                buf.append(line)
-    # сохраняем последний блок
-    if key:
-        fields[key] = "\n".join(buf).strip()
-    
-    key = fields["ключ"]
-    value = parse_localized_string(fields["значение"])
-    
-    try:
-        placeholder = await ctx.services.db.placeholders.find_by_key(key)
-        placeholder.value = value
-        
-        await ctx.services.db.placeholders.save(placeholder)
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер изменен.")
-        
-    except Exception as e:
-        raise Exception(f"Не удалось изменить промокод: {e}")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

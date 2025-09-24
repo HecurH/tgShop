@@ -83,7 +83,10 @@ class AdminStates(StatesGroup):
         PromocodeCreating = State()
         
         GlobalPlaceholders = State()
-        GlobalPlaceholdersCreating = State()
+        GlobalPlaceholdersCreatingKey = State()
+        GlobalPlaceholdersCreatingLangs = State()
+        
+        
         GlobalPlaceholdersEditRequestKey = State()
         GlobalPlaceholdersEdit = State()
     
@@ -139,21 +142,16 @@ async def handle_admin_global_placeholders(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.GlobalPlaceholders.admin_global_placeholders_menu(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreating)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreatingKey)
 async def handle_admin_create_global_placeholder(ctx: Context, **_):
-    txt = """Ключ:
-Значение:
-  ru: Текст на русском
-  en: Text in English
+    await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
-<code>Ключ:
-Значение:
-  ru:
-  en:</code>
-
-Введите по шаблону:"""
-
-    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
+async def handle_admin_create_global_placeholder_langs(ctx: Context, placeholder: Placeholder, **_):
+    for lang in SUPPORTED_LANGUAGES_TEXT.values():
+        if not await ctx.fsm.get_value(lang):
+            await ctx.message.answer(f"Введите значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+            return
 
 @state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
 async def handle_admin_edit_global_placeholder_request_key(ctx: Context, **_):
