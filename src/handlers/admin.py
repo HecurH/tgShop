@@ -197,7 +197,7 @@ async def global_placeholders_handler(_, ctx: Context):
             
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
     elif text == "Изменить": 
-        await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditRequestKey, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditKey, ctx)
     else:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
@@ -243,20 +243,50 @@ async def global_placeholders_creating_langs_handler(_, ctx: Context):
         raise Exception(f"Не удалось создать плейсхолдер: {e}")
 
 
-@router.message(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
+@router.message(AdminStates.Main.GlobalPlaceholdersEditKey)
 async def global_placeholders_edit_request_key_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
-
+    
     placeholder = await ctx.services.db.placeholders.find_by_key(text)
     
     if not placeholder:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер не найден.")
         return
 
-    await call_state_handler(AdminStates.Main.GlobalPlaceholdersEdit, ctx, placeholder=placeholder)
+    await ctx.fsm.update_data(key=text, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
+    await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditLangs, ctx, placeholder=placeholder)
+    
+@router.message(AdminStates.Main.GlobalPlaceholdersEditLangs)
+async def global_placeholders_edit_langs_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        return
+    
+    remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
+                      if not await ctx.fsm.get_value(lang)]
+    
+    placeholder = await ctx.services.db.placeholders.find_by_key(text)
+    
+    if remaining_langs:
+        await ctx.fsm.update_data(**{remaining_langs[0]: text})
+        
+        if len(remaining_langs) > 1:
+            await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditLangs, ctx, placeholder=placeholder)
+            return
+    
+    langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
+    
+    try:
+        placeholder.value = LocalizedString.from_keys(**langs_dict)
+        await ctx.services.db.placeholders.save(placeholder)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер изменен.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось изменить плейсхолдер: {e}")
 
 
 @router.message(Command("msg_to"))

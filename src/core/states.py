@@ -87,8 +87,8 @@ class AdminStates(StatesGroup):
         GlobalPlaceholdersCreatingLangs = State()
         
         
-        GlobalPlaceholdersEditRequestKey = State()
-        GlobalPlaceholdersEdit = State()
+        GlobalPlaceholdersEditKey = State()
+        GlobalPlaceholdersEditLangs = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -153,21 +153,16 @@ async def handle_admin_create_global_placeholder_langs(ctx: Context, **_):
             await ctx.message.answer(f"Введите значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
             return
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditRequestKey)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditKey)
 async def handle_admin_edit_global_placeholder_request_key(ctx: Context, **_):
     await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEdit)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditLangs)
 async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeholder, **_):
-    txt = f"""<code>Ключ: {placeholder.key}
-Значение:
-  ru: {placeholder.value.data['ru']}
-  en: {placeholder.value.data['en']}
-</code>
-
-Измените:"""
-    
-    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    for lang in SUPPORTED_LANGUAGES_TEXT.values():
+        if not await ctx.fsm.get_value(lang):
+            await ctx.message.answer(f"Было: {placeholder.value.get(lang)}\nВведите новое значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+            return
 
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
