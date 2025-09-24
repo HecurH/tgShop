@@ -218,9 +218,14 @@ async def global_placeholders_creating_langs_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
         return
-    for lang in SUPPORTED_LANGUAGES_TEXT.values():
-        if not await ctx.fsm.get_value(lang):
-            await ctx.fsm.update_data(**{lang: text})
+    
+    remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
+                      if not await ctx.fsm.get_value(lang)]
+    
+    if remaining_langs:
+        await ctx.fsm.update_data(**{remaining_langs[0]: text})
+        
+        if len(remaining_langs) > 1:
             await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
             return
     
