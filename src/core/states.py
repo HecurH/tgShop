@@ -147,7 +147,7 @@ async def handle_admin_create_global_placeholder(ctx: Context, **_):
     await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
 @state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
-async def handle_admin_create_global_placeholder_langs(ctx: Context, placeholder: Placeholder, **_):
+async def handle_admin_create_global_placeholder_langs(ctx: Context, **_):
     for lang in SUPPORTED_LANGUAGES_TEXT.values():
         if not await ctx.fsm.get_value(lang):
             await ctx.message.answer(f"Введите значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
