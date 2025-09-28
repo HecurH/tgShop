@@ -128,7 +128,7 @@ class AdminTextGen:
 Она ждет подтверждения стоимости? {customer.waiting_for_manual_delivery_info_confirmation}
 
 Скольких пригласил: {invited} 
-[{', '.join([c.user_id for c in invited_list])}]
+[{', '.join([str(c.user_id) for c in invited_list])}]
 
 Из них сделали хоть один заказ: {invited_orders}
 
