@@ -1,21 +1,14 @@
-import logging
 from os import getenv
-from typing import Iterable, Optional, Type, TypeVar, Union
 
 import pymongo
 from pymongo import AsyncMongoClient
 
 from schemas.db_models import *
-from core.services.currency_converter import AsyncCurrencyConverter
-
-T = TypeVar("T", bound="AppBaseModel")
-
 
 class DatabaseService:
     def __init__(self, db_name="Shop"):
         self.client = AsyncMongoClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))
         self.db = self.client[db_name]
-        self.logger = logging.getLogger(__name__)
 
         self._init_collections()
 
