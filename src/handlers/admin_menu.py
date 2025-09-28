@@ -81,7 +81,7 @@ async def customer_menu_handler(_, ctx: Context):
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
     if text == "Написать сообщение":
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer, send_before=f"<code>/msg_to {customer.user_id}</code>")
-    elif text == ["Заблокировать", "Разблокировать"]:
+    elif text in ["Заблокировать", "Разблокировать"]:
         customer.banned = not customer.banned
         await ctx.services.db.customers.save(customer)
         await customer.save_in_fsm(ctx, "customer")
