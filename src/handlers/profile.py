@@ -25,7 +25,7 @@ async def profile_command_handler(_, ctx: Context) -> None:
             await call_state_handler(ProfileStates.Settings.Menu, ctx)
         case ctx.t.ReplyButtonsTranslates.Profile.referrals:
             if await ctx.services.db.inviters.check_customer(ctx.customer.id):
-                inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+                inviter = await ctx.services.db.inviters.find_by_customer_id(ctx.customer.id)
                 await call_state_handler(ProfileStates.Referrals.Menu, ctx, inviter=inviter)
                 return
             await call_state_handler(ProfileStates.Referrals.AskForJoin, ctx)
@@ -113,7 +113,7 @@ async def referrals_menu_handler(_, ctx: Context) -> None:
     if ctx.message.text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(ProfileStates.Menu, ctx)
         return
-    inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+    inviter = await ctx.services.db.inviters.find_by_customer_id(ctx.customer.id)
 
     if ctx.message.text == ctx.t.ReplyButtonsTranslates.Profile.Referrals.invitation_link:
         await call_state_handler(ProfileStates.Referrals.InvitationLinkView, ctx, inviter=inviter)
@@ -124,7 +124,7 @@ async def referrals_menu_handler(_, ctx: Context) -> None:
 @router.message(ProfileStates.Referrals.InvitationLinkView)
 async def referrals_invitation_link_view_handler(_, ctx: Context) -> None:
     if ctx.message.text == ctx.t.UncategorizedTranslates.back:
-        inviter = await ctx.services.db.inviters.get_inviter_by_customer_id(ctx.customer.id)
+        inviter = await ctx.services.db.inviters.find_by_customer_id(ctx.customer.id)
         await call_state_handler(ProfileStates.Referrals.Menu, ctx, inviter=inviter)
         return
 

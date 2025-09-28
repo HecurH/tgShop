@@ -23,7 +23,6 @@ def load_env(name: str) -> str:
     if value := getenv(name): return value
     else: raise KeyError(f"Missing {name} environment variable.")
 
-# Bot token can be obtained via https://t.me/BotFather
 BOT_TOKEN = load_env("BOT_TOKEN")
 MONGO_URI = load_env("MONGO_URI")
 MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")

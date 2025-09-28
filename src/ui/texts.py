@@ -87,6 +87,56 @@ async def form_entry_description(entry, ctx):
 
 class AdminTextGen:
     @staticmethod
+    async def customer_menu_text(ctx: Context, customer: Customer):
+        inviter = await ctx.services.db.inviters.find_by_customer_id(customer.id)
+        invited = inviter.invited_customers if inviter else 0
+        invited_list = await ctx.services.db.customers.find_many_by_inviter_id(inviter.id)
+        
+        invited_orders = inviter.invited_customers_first_orders if inviter else 0
+        
+        def delivery_info(delivery_info: DeliveryInfo):
+            service = delivery_info.service
+        
+            requirements = service.selected_option.requirements
+            
+            requirements_info_text = "\n".join([f"  {requirement.name.get(ctx)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
+            return ctx.t.ProfileTranslates.Delivery.menu.format(delivery_service=service.name.get(ctx), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx), requirements=requirements_info_text)
+        
+        async def orders_info():
+            orders = await ctx.services.db.orders.find_customer_orders(customer)
+            if len(orders) == 0:
+                return "Нету."
+            txt = ""
+            for order in orders:
+                txt += f"\n🛒 {order.id} — {order.state.get_localized_name(ctx.lang)} — {order.price_details.total_price.to_text()}"
+            return txt
+            
+            
+        
+        text = f"""👤 {customer.name}
+Приглашён: {(await ctx.services.db.inviters.find_one_by_id(customer.invited_by)).customer_id if customer.invited_by else 'Никем'}
+Зарегистрировался: {customer.id.generation_time.strftime("%d.%m.%Y %H:%M")} UTC
+Заблокировал бота? {customer.kicked}
+
+Язык: {customer.lang}
+Валюта: {customer.currency}
+
+На бонусном счету {customer.bonus_wallet.to_text()}
+
+Доставка: {delivery_info(customer.delivery_info) if customer.delivery_info else 'Нет'}
+Она ждет подтверждения стоимости? {customer.waiting_for_manual_delivery_info_confirmation}
+
+Скольких пригласил: {invited} 
+[{', '.join([c.user_id for c in invited_list])}]
+
+Из них сделали хоть один заказ: {invited_orders}
+
+Заказы: {await orders_info()}
+"""
+        return text
+    
+    
+    @staticmethod
     def price_confirmation_text(entries: list[CartEntry], ctx: Context):
         entries_desc = "\n".join(f"{idx}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nБазовая Цена: {entry.frozen_product.price.to_text_all()};\nЦена Конфигурации: {entry.configuration.price.to_text_all()}" for idx, entry in enumerate(entries))
         next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump()}for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False)}" for idx, entry in enumerate(entries))

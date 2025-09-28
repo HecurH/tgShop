@@ -79,16 +79,20 @@ class AdminStates(StatesGroup):
     class Main(StatesGroup):
         Menu = State()
         
-        Promocodes = State()
-        PromocodeCreating = State()
+        class Customers(StatesGroup):
+            AskId = State()
+            CustomerMenu = State()
         
-        GlobalPlaceholders = State()
-        GlobalPlaceholdersCreatingKey = State()
-        GlobalPlaceholdersCreatingLangs = State()
+        class Promocodes(StatesGroup):
+            Menu = State()
+            Creating = State()
         
-        
-        GlobalPlaceholdersEditKey = State()
-        GlobalPlaceholdersEditLangs = State()
+        class GlobalPlaceholders(StatesGroup):
+            Menu = State()
+            CreatingKey = State()
+            CreatingLangs = State()
+            EditKey = State()
+            EditLangs = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -106,13 +110,22 @@ class AdminStates(StatesGroup):
 async def handle_admin_menu(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.admin_menu())
+
+@state_handlers.register(AdminStates.Main.Customers.AskId)
+async def handle_admin_customers_ask_id(ctx: Context, **_):
+    await ctx.message.answer("Введите ID пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
-@state_handlers.register(AdminStates.Main.Promocodes)
+@state_handlers.register(AdminStates.Main.Customers.CustomerMenu)
+async def handle_admin_customers_menu(ctx: Context, customer: Customer, **_):
+    await ctx.message.answer(await AdminTextGen.customer_menu_text(ctx, customer), 
+                             reply_markup=AdminKBs.Customers.customer_menu(ctx, customer))
+
+@state_handlers.register(AdminStates.Main.Promocodes.Menu)
 async def handle_admin_promocodes(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.Promocodes.admin_promocodes_menu(ctx))
 
-@state_handlers.register(AdminStates.Main.PromocodeCreating)
+@state_handlers.register(AdminStates.Main.Promocodes.Creating)
 async def handle_admin_create_promocode(ctx: Context, **_):
     txt = """Код:
 Тип: percent | fixed
@@ -137,27 +150,27 @@ Expire: 30d</code>
 Введите по шаблону:"""
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholders)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders.Menu)
 async def handle_admin_global_placeholders(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
                              reply_markup=AdminKBs.GlobalPlaceholders.admin_global_placeholders_menu(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreatingKey)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders.CreatingKey)
 async def handle_admin_create_global_placeholder(ctx: Context, **_):
     await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders.CreatingLangs)
 async def handle_admin_create_global_placeholder_langs(ctx: Context, **_):
     for lang in SUPPORTED_LANGUAGES_TEXT.values():
         if not await ctx.fsm.get_value(lang):
             await ctx.message.answer(f"Введите значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
             return
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditKey)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders.EditKey)
 async def handle_admin_edit_global_placeholder_request_key(ctx: Context, **_):
     await ctx.message.answer("Введите ключ:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
-@state_handlers.register(AdminStates.Main.GlobalPlaceholdersEditLangs)
+@state_handlers.register(AdminStates.Main.GlobalPlaceholders.EditLangs)
 async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeholder, **_):
     for lang in SUPPORTED_LANGUAGES_TEXT.values():
         if not await ctx.fsm.get_value(lang):
@@ -427,7 +440,7 @@ class OrderStates(StatesGroup):
     
 @state_handlers.register(OrderStates.Menu)
 async def orders_menu_handler(ctx: Context, **_):
-    orders = await ctx.services.db.orders.get_customer_orders(ctx.customer)
+    orders = await ctx.services.db.orders.find_customer_orders(ctx.customer)
 
     await ctx.message.answer(await OrdersTextGen.generate_orders_menu_text(orders, ctx),
                              reply_markup=UncategorizedKBs.reply_back(ctx))

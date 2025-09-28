@@ -36,19 +36,59 @@ async def menu_handler(_, ctx: Context):
 async def menu_handler(_, ctx: Context):
     text = ctx.message.text
     if text == "Покупатели":
-        ...
+        await call_state_handler(AdminStates.Main.Customers.AskId, ctx)
     elif text == "Товары":
         ...
     elif text == "Заказы":
         ...
     elif text == "Промокоды": 
-        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
     elif text == "Глобальные Плейсхолдеры": 
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
     else:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         
-@router.message(AdminStates.Main.Promocodes)
+@router.message(AdminStates.Main.Customers.AskId)
+async def ask_id_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    if not text.isdigit:
+        await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Неправильный формат.")
+        return
+    
+    try:
+        customer = await ctx.services.db.customers.find_by_user_id(int(text))
+        if not customer:
+            await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Пользователь не найден.")
+            return
+        
+        await customer.save_in_fsm(ctx, "customer")
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+    except Exception as e:
+        await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before=e)
+        return
+    
+@router.message(AdminStates.Main.Customers.CustomerMenu)
+async def customer_menu_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    
+    
+    customer: Customer = await Customer.from_fsm_context(ctx, "Customer")
+    if text == "Написать сообщение":
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer, send_before=f"<code>/msg_to {customer.user_id}</code>")
+    elif text == ["Заблокировать", "Разблокировать"]:
+        customer.banned = not customer.banned
+        await ctx.services.db.customers.save(customer)
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+    else:
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+        
+@router.message(AdminStates.Main.Promocodes.Menu)
 async def promocodes_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.back:
@@ -56,11 +96,11 @@ async def promocodes_handler(_, ctx: Context):
         return
     
     if text == "Создать":
-        await call_state_handler(AdminStates.Main.PromocodeCreating, ctx)
+        await call_state_handler(AdminStates.Main.Promocodes.Creating, ctx)
     elif text == "Список всех":
         txt = await AdminTextGen.all_promocodes_text(ctx)
         if txt == "":
-            await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Промокодов нема.")
+            await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx, send_before="Промокодов нема.")
             return
         
         parts = split_message(txt, limit=4096)
@@ -71,16 +111,16 @@ async def promocodes_handler(_, ctx: Context):
             await ctx.message.answer(part)
             if not is_last: await asyncio.sleep(.3)
             
-        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
     else:
-        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
 
-@router.message(AdminStates.Main.PromocodeCreating)
+@router.message(AdminStates.Main.Promocodes.Creating)
 async def create_promocode_code_handler(_, ctx: Context):
     text = ctx.message.text
     
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.Promocodes, ctx)
+        await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
         return
 
     def parse_localized_string(block: str) -> LocalizedString:
@@ -160,12 +200,12 @@ async def create_promocode_code_handler(_, ctx: Context):
         )
         
         await ctx.services.db.promocodes.save(promocode)
-        await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Промокод создан.")
+        await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx, send_before="Промокод создан.")
         
     except Exception as e:
         raise Exception(f"Не удалось создать промокод: {e}")
 
-@router.message(AdminStates.Main.GlobalPlaceholders)
+@router.message(AdminStates.Main.GlobalPlaceholders.Menu)
 async def global_placeholders_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.back:
@@ -173,11 +213,11 @@ async def global_placeholders_handler(_, ctx: Context):
         return
     
     if text == "Создать": 
-        await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingKey, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.CreatingKey, ctx)
     elif text == "Список всех":
         txt = await AdminTextGen.all_placeholders_text(ctx)
         if txt == "":
-            await call_state_handler(AdminStates.Main.Promocodes, ctx, send_before="Плейсхолдеров нема.")
+            await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx, send_before="Плейсхолдеров нема.")
             return
         
         parts = split_message(txt, limit=4096)
@@ -188,28 +228,28 @@ async def global_placeholders_handler(_, ctx: Context):
             await ctx.message.answer(part)
             if not is_last: await asyncio.sleep(.3)
             
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
     elif text == "Изменить": 
-        await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditKey, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.EditKey, ctx)
     else:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
     
-@router.message(AdminStates.Main.GlobalPlaceholdersCreatingKey)
+@router.message(AdminStates.Main.GlobalPlaceholders.CreatingKey)
 async def global_placeholders_creating_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
     
     await ctx.fsm.update_data(key=text, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
-    await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
+    await call_state_handler(AdminStates.Main.GlobalPlaceholders.CreatingLangs, ctx)
 
-@router.message(AdminStates.Main.GlobalPlaceholdersCreatingLangs)
+@router.message(AdminStates.Main.GlobalPlaceholders.CreatingLangs)
 async def global_placeholders_creating_langs_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
     
     remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
@@ -219,7 +259,7 @@ async def global_placeholders_creating_langs_handler(_, ctx: Context):
         await ctx.fsm.update_data(**{remaining_langs[0]: text})
         
         if len(remaining_langs) > 1:
-            await call_state_handler(AdminStates.Main.GlobalPlaceholdersCreatingLangs, ctx)
+            await call_state_handler(AdminStates.Main.GlobalPlaceholders.CreatingLangs, ctx)
             return
     
     langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
@@ -230,33 +270,33 @@ async def global_placeholders_creating_langs_handler(_, ctx: Context):
             value=LocalizedString.from_keys(**langs_dict)
         )
         await ctx.services.db.placeholders.save(placeholder)
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер создан.")
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx, send_before="Плейсхолдер создан.")
         
     except Exception as e:
         raise Exception(f"Не удалось создать плейсхолдер: {e}")
 
 
-@router.message(AdminStates.Main.GlobalPlaceholdersEditKey)
+@router.message(AdminStates.Main.GlobalPlaceholders.EditKey)
 async def global_placeholders_edit_request_key_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
     
     placeholder = await ctx.services.db.placeholders.find_by_key(text)
     
     if not placeholder:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер не найден.")
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx, send_before="Плейсхолдер не найден.")
         return
 
     await ctx.fsm.update_data(key=text, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
-    await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditLangs, ctx, placeholder=placeholder)
+    await call_state_handler(AdminStates.Main.GlobalPlaceholders.EditLangs, ctx, placeholder=placeholder)
     
-@router.message(AdminStates.Main.GlobalPlaceholdersEditLangs)
+@router.message(AdminStates.Main.GlobalPlaceholders.EditLangs)
 async def global_placeholders_edit_langs_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx)
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
     
     remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
@@ -265,14 +305,14 @@ async def global_placeholders_edit_langs_handler(_, ctx: Context):
     placeholder = await ctx.services.db.placeholders.find_by_key(await ctx.fsm.get_value("key"))
 
     if not placeholder:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер не найден.")
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx, send_before="Плейсхолдер не найден.")
         return
     
     if remaining_langs:
         await ctx.fsm.update_data(**{remaining_langs[0]: text})
         
         if len(remaining_langs) > 1:
-            await call_state_handler(AdminStates.Main.GlobalPlaceholdersEditLangs, ctx, placeholder=placeholder)
+            await call_state_handler(AdminStates.Main.GlobalPlaceholders.EditLangs, ctx, placeholder=placeholder)
             return
     
     langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
@@ -280,7 +320,7 @@ async def global_placeholders_edit_langs_handler(_, ctx: Context):
     try:
         placeholder.value = LocalizedString.from_keys(**langs_dict)
         await ctx.services.db.placeholders.save(placeholder)
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders, ctx, send_before="Плейсхолдер изменен.")
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx, send_before="Плейсхолдер изменен.")
         
     except Exception as e:
         raise Exception(f"Не удалось изменить плейсхолдер: {e}")

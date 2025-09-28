@@ -169,10 +169,10 @@ class OrdersRepository(AppAbstractRepository[Order]):
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
     
-    async def get_customer_orders(self, customer: "Customer") -> Iterable[Order]:
+    async def find_customer_orders(self, customer: "Customer") -> Iterable[Order]:
         return await self.find_by({"customer_id": customer.id})
     
-    async def get_by_puid(self, puid: str, customer: "Customer") -> Optional[Order]:
+    async def find_by_puid(self, puid: str, customer: "Customer") -> Optional[Order]:
         return await self.find_one_by({"puid": puid, "customer_id": customer.id})
 
     async def count_customer_orders(self, customer: "Customer") -> int:
@@ -727,7 +727,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     async def check_customer(self, customer_id: PydanticObjectId) -> bool:
         return await self.get_collection().count_documents({"customer_id": customer_id}) > 0
     
-    async def get_inviter_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
+    async def find_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
         return await self.find_one_by({"customer_id": customer_id})
     
     async def get_inviter_by_deep_link(self, deep_link: str) -> Optional[Inviter]:
@@ -739,7 +739,6 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         except (ValueError, IndexError):
             return None
 
-    
     async def count_new_customer(self, inviter: Inviter):
         inviter.invited_customers += 1
         await self.save(inviter)
@@ -758,7 +757,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     
     async def new(self, customer_id: PydanticObjectId) -> Inviter:
         if await self.check_customer(customer_id):
-            return await self.get_inviter_by_customer_id(customer_id)
+            return await self.find_by_customer_id(customer_id)
         inviter = Inviter(customer_id=customer_id)
         await self.save(inviter)
         return inviter
@@ -838,6 +837,7 @@ class Customer(AppBaseModel):
 
     invited_by: Optional[PydanticObjectId] = None
     kicked: bool = False
+    banned: bool = False
 
     lang: str
     
@@ -912,8 +912,11 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         await self.save(customer)
         return customer
 
-    async def find_customer_by_user_id(self, user_id: int) -> Optional[Customer]:
+    async def find_by_user_id(self, user_id: int) -> Optional[Customer]:
         return await self.find_one_by({"user_id": user_id})
+    
+    async def find_many_by_inviter_id(self, inviter_id: PydanticObjectId) -> Optional[Iterable[Customer]]:
+        return await self.find_by({"invited_by": inviter_id})
     
     async def add_bonus_money(self, customer: Customer, money: Money):
         if money.amount <= 0.0001: return

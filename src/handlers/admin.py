@@ -41,7 +41,7 @@ async def msg_to_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Неправильный формат команды")
         return
     
-    customer = await ctx.services.db.customers.find_customer_by_user_id(user_id)
+    customer = await ctx.services.db.customers.find_by_user_id(user_id)
     if not customer:
         await ctx.message.answer("Пользователь не найден")
         return

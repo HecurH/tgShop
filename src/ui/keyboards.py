@@ -75,6 +75,23 @@ class AdminKBs:
         return types.ReplyKeyboardMarkup(keyboard=kb, 
                                          resize_keyboard=True)
     
+    class Customers:
+        @staticmethod
+        def customer_menu(ctx: Context, customer: Customer) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Написать сообщение")
+                ],
+                [
+                    types.KeyboardButton(text="Разблокировать" if customer.banned else "Заблокировать"),
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            return types.ReplyKeyboardMarkup(keyboard=kb, 
+                                         resize_keyboard=True)
+    
     class Promocodes:
         @staticmethod
         def admin_promocodes_menu(ctx: Context) -> types.ReplyKeyboardMarkup:

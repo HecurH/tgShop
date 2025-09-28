@@ -41,7 +41,9 @@ class ContextMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         user_id = data["event_from_user"].id
 
-        customer = await self.services.db.customers.find_customer_by_user_id(user_id)
+        customer = await self.services.db.customers.find_by_user_id(user_id)
+        if customer.banned:
+            return await data["ctx"].message.answer("You are banned. Contact the administrator.", reply_keyboard=ReplyKeyboardRemove())
 
         lang = customer.lang if customer and customer.lang else "?"                          
 
