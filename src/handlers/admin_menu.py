@@ -85,7 +85,8 @@ async def customer_menu_handler(_, ctx: Context):
         customer.banned = not customer.banned
         await ctx.services.db.customers.save(customer)
         await customer.save_in_fsm(ctx, "customer")
-        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+        
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer, send_before="Успешно.")
     else:
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
         
