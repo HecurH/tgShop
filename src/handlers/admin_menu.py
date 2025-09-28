@@ -111,13 +111,17 @@ async def orders_ask_id_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before=txt)
     else:
         order_id = text
-        order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id))
-        if not order:
-            await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before="Заказ не найден.")
-            return
+        try:
+            order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id))
+            if not order:
+                await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before="Заказ не найден.")
+                return
 
-        await order.save_in_fsm(ctx, "order")
-        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
+            await order.save_in_fsm(ctx, "order")
+            await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
+        except:
+            await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before="Неправильный формат.")
+            return
 
 @router.message(AdminStates.Main.Orders.OrderMenu)
 async def order_menu_handler(_, ctx: Context):

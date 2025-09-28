@@ -129,7 +129,7 @@ async def handle_admin_customers_menu(ctx: Context, customer: Customer, **_):
     
 @state_handlers.register(AdminStates.Main.Orders.AskId)
 async def handle_admin_orders_ask_id(ctx: Context, **_):
-    await ctx.message.answer("Введите ID заказа либо попытайтесь найти по PIDу (начинать с #):", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    await ctx.message.answer("Введите ID заказа либо попытайтесь найти по PUIDу (начинать с #):", reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
 @state_handlers.register(AdminStates.Main.Orders.OrderMenu)
 async def handle_admin_orders_menu(ctx: Context, order: Order, **_):
