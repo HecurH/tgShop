@@ -280,7 +280,7 @@ async def viewing_assortment_handler(ctx: Context,
         return
     
     # product: Product = await ctx.services.db.products.find_one_by({'order_no': current, "category": category})
-    product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
+    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 
@@ -414,7 +414,7 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
         return
     if current > amount: current = 1
     
-    entry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+    entry = await ctx.services.db.cart_entries.find_customer_cart_entry_by_id(ctx.customer, current-1)
     product: Product = await ctx.services.db.products.find_one_by_id(entry.product_id)
     total_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     
@@ -614,6 +614,7 @@ __all__ = [
     "call_state_handler",
     "AdminStates",
     "NewUserStates",
+    "CommonStates",
     "AssortmentStates",
     "CartStates",
     "OrderStates",

@@ -10,7 +10,6 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
 from configs.supported import SUPPORTED_CURRENCIES
-from core.services.currency_converter import AsyncCurrencyConverter
 from core.helper_classes import Context
 from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
@@ -222,7 +221,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def count_customer_cart_entries(self, customer: "Customer"):
         return await self.get_collection().count_documents({"customer_id": customer.id, "order_id": None})
     
-    async def get_customer_cart_ids_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
+    async def find_customer_cart_ids_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         cursor = self.get_collection().find(
             {"customer_id": customer.id,
@@ -231,21 +230,21 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
-    async def get_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
+    async def find_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
         return await self.find_by({"customer_id": customer.id, "order_id": None}, sort=[("_id", 1)])
     
-    async def get_entries_by_order(self, order: "Order", query: Optional[dict] = None) -> Iterable[CartEntry]:
+    async def find_entries_by_order(self, order: "Order", query: Optional[dict] = None) -> Iterable[CartEntry]:
         base_query = {**(query or {}), "order_id": order.id}
         return await self.find_by(base_query, sort=[("_id", 1)])
 
-    async def get_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> Optional[CartEntry]:
-        ids = await self.get_customer_cart_ids_sorted_by_date(customer)
+    async def find_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> Optional[CartEntry]:
+        ids = await self.find_customer_cart_ids_sorted_by_date(customer)
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
     
     async def assign_cart_entries_to_order(self, customer: "Customer", order: "Order"):
-        entries = await self.get_customer_cart_entries(customer)
+        entries = await self.find_customer_cart_entries(customer)
         
         if not entries:
             return
@@ -299,7 +298,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         document = await self.get_collection().find_one(query, projection={"_id": 1})
         return document is not None
     
-    async def get_price_confirmation_entries(self, order: "Order") -> Iterable[CartEntry]:
+    async def find_price_confirmation_entries(self, order: "Order") -> Iterable[CartEntry]:
         query = {
             "order_id": order.id,
             "configuration.requires_price_confirmation": True
@@ -625,7 +624,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
-    async def get_by_category_and_index(self, category: str, idx: int) -> Optional[Product]:
+    async def find_by_category_and_index(self, category: str, idx: int) -> Optional[Product]:
         ids = await self.get_ids_by_category_sorted_by_date(category)
         if not ids: return None
         
@@ -703,7 +702,7 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     async def update_usage(self, promocode_id: PydanticObjectId, upd: int = 1):
         promocode = await self.find_one_by_id(promocode_id)
         if not promocode: return
-        if promocode.max_usages <= self.already_used + upd:
+        if promocode.max_usages <= promocode.already_used + upd:
             raise ValueError("Promocode max usages reached")
 
         promocode.already_used += upd
@@ -733,7 +732,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
     async def find_by_customer_id(self, customer_id: PydanticObjectId) -> Optional[Inviter]:
         return await self.find_one_by({"customer_id": customer_id})
     
-    async def get_inviter_by_deep_link(self, deep_link: str) -> Optional[Inviter]:
+    async def find_inviter_by_deep_link(self, deep_link: str) -> Optional[Inviter]:
         try:
             if "_" not in deep_link:
                 return None

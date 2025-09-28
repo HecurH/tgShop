@@ -121,7 +121,7 @@ async def ask_generate_receipt_handler(_, ctx: Context):
 
     order = await Order.from_fsm_context(ctx, "order")
     customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
-    cart_entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
+    cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
     
     if text == ctx.t.UncategorizedTranslates.yes:
         try:
@@ -182,7 +182,7 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed(customer, order)
     else:
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
-    cart_entries = await ctx.services.db.cart_entries.get_entries_by_order(order)
+    cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
     await ctx.services.db.orders.delete(order)
     for entry in cart_entries:
         entry.order_id = None
@@ -205,7 +205,7 @@ async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Заказ не найден")
         return
     
-    entries = list(await ctx.services.db.cart_entries.get_price_confirmation_entries(order))
+    entries = list(await ctx.services.db.cart_entries.find_price_confirmation_entries(order))
     if order.state != OrderStateKey.waiting_for_price_confirmation or not entries:
         await ctx.message.answer("Заказ не в ожидании подтверждения цены")
         return
@@ -248,7 +248,7 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await ctx.message.answer("Пользователь не найден")
         return
     
-    cart_entries = list(await ctx.services.db.cart_entries.get_price_confirmation_entries(order))
+    cart_entries = list(await ctx.services.db.cart_entries.find_price_confirmation_entries(order))
     
     for idx, cart_entry in enumerate(cart_entries):
         updater_entry = entries[idx]

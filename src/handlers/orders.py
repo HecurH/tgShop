@@ -31,7 +31,7 @@ async def orders_menu_handler(_, ctx: Context) -> None:
         return
     
     normalized_order_id = text[1:] if text.startswith("#") else text
-    order = await ctx.services.db.orders.get_by_puid(normalized_order_id, ctx.customer)
+    order = await ctx.services.db.orders.find_by_puid(normalized_order_id, ctx.customer)
     if not order:
         await call_state_handler(OrderStates.Menu, ctx)
         return

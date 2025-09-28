@@ -42,7 +42,7 @@ async def cart_viewer_handler(_, ctx: Context):
                                 ctx,
                                 current=new_order)
     elif text in ['➖', '➕']:
-        entry: CartEntry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        entry: CartEntry = await ctx.services.db.cart_entries.find_customer_cart_entry_by_id(ctx.customer, current-1)
         if entry:
             if text == '➖':
                 if entry.quantity == 1:
@@ -94,7 +94,7 @@ async def entry_remove_confirm_handler(_, ctx: Context):
         return
     
     if ctx.message.text == ctx.t.UncategorizedTranslates.yes:
-        entry = await ctx.services.db.cart_entries.get_customer_cart_entry_by_id(ctx.customer, current-1)
+        entry = await ctx.services.db.cart_entries.find_customer_cart_entry_by_id(ctx.customer, current-1)
         await ctx.services.db.cart_entries.delete(entry)
     
     current = max(1, current - 1)

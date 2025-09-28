@@ -71,7 +71,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
         
         await ctx.fsm.update_data(product=None)
         
-        product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
+        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
         await call_state_handler(AssortmentStates.ViewingProductDetails,
                                 ctx,
                                 product=product)
@@ -98,7 +98,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
                                 current=current)
         return
         
-    product: Product = await ctx.services.db.products.get_by_category_and_index(category, current-1)
+    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
     if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
         await product.save_in_fsm(ctx, "product")
         await call_state_handler(AssortmentStates.FormingOrderEntry,
