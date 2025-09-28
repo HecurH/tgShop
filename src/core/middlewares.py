@@ -43,9 +43,9 @@ class ContextMiddleware(BaseMiddleware):
 
         customer = await self.services.db.customers.find_by_user_id(user_id)
         if customer.banned:
-            return await data["ctx"].message.answer("You are banned. Contact the administrator.", reply_keyboard=ReplyKeyboardRemove())
+            return await (event.message or event.callback_query.message).answer("You are banned. Contact the administrator.", reply_keyboard=ReplyKeyboardRemove())
 
-        lang = customer.lang if customer and customer.lang else "?"                          
+        lang = customer.lang if customer and customer.lang else        
 
         data["ctx"] = Context(event.message or event.callback_query,
                               data.get("state"),
