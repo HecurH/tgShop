@@ -113,7 +113,8 @@ class AdminTextGen:
             
             
         
-        text = f"""👤 {customer.name}
+        text = f"""👤 {customer.user_id}
+
 Приглашён: {(await ctx.services.db.inviters.find_one_by_id(customer.invited_by)).customer_id if customer.invited_by else 'Никем'}
 Зарегистрировался: {customer.id.generation_time.strftime("%d.%m.%Y %H:%M")} UTC
 Заблокировал бота? {customer.kicked}
