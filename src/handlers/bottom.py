@@ -24,13 +24,13 @@ async def base_callback_handler(_, ctx: Context) -> None:
 async def user_blocked_bot(_, ctx: Context):
     if ctx.customer:
         ctx.customer.kicked = True
-        await ctx.services.db.update(ctx.customer)
+        await ctx.services.db.customers.save(ctx.customer)
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def user_unblocked_bot(_, ctx: Context):
     if ctx.customer:
         ctx.customer.kicked = False
-        await ctx.services.db.update(ctx.customer)
+        await ctx.services.db.customers.save(ctx.customer)
 
 @router.startup()
 async def on_startup(dispatcher: Dispatcher):

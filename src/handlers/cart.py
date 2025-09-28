@@ -248,7 +248,7 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
                     
                 await ctx.services.db.promocodes.update_usage(order.promocode_id, 1)
         if order.price_details.bonuses_applied:
-            await ctx.services.db.customers.remove_bonus_money(ctx.customer, order.price_details.bonuses_applied)
+            await ctx.services.db.customers.remove_bonus_money(ctx.customer, order.price_details.bonuses_applied, ctx)
         
         await ctx.services.db.orders.save(order)
         

@@ -1,4 +1,3 @@
-import traceback
 from configs.supported import SUPPORTED_CURRENCIES
 import aiohttp
 
@@ -108,3 +107,5 @@ class AsyncCurrencyConverter:
             raise ValueError(f"Currency {to_currency} is not supported")
             
         return amount * rate_to
+    
+__all__ = ["AsyncCurrencyConverter"]

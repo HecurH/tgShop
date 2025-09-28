@@ -83,6 +83,11 @@ class AdminStates(StatesGroup):
             AskId = State()
             CustomerMenu = State()
             
+        class Products(StatesGroup):
+            SelectCategory = State()
+            ProductMenu = State()
+            
+            
         class Orders(StatesGroup):
             AskId = State()
             OrderMenu = State()

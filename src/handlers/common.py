@@ -64,7 +64,7 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
     ctx.customer.lang = callback.data
     ctx.lang = callback.data
 
-    await ctx.services.db.update(ctx.customer)
+    await ctx.services.db.customers.save(ctx.customer)
 
     await callback.message.delete()
 
@@ -74,9 +74,9 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
-    await ctx.customer.change_selected_currency(callback.data, ctx.services.db.currency_converter)
+    await ctx.customer.change_selected_currency(callback.data, ctx)
 
-    await ctx.services.db.update(ctx.customer)
+    await ctx.services.db.customers.save(ctx.customer)
 
     await callback.message.delete()
 

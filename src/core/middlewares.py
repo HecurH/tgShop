@@ -5,6 +5,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import ReplyKeyboardRemove
 from cachetools import TTLCache
 
+from core.services.currency_converter import AsyncCurrencyConverter
 from core.services.db import DatabaseService
 from core.helper_classes import Context, ServiceHub
 from core.services.notifications import NotificatorHub
@@ -30,8 +31,8 @@ class ContextMiddleware(BaseMiddleware):
             notificators=NotificatorHub(bot=bot,
                                         logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
                                         admin_chat_id=int(env_var) if (env_var := getenv("TG_ADMIN_CHAT_ID")) else None),
-            placeholders=PlaceholderManager(db.placeholders)
-
+            placeholders=PlaceholderManager(db.placeholders),
+            currency_converter=AsyncCurrencyConverter()
         )
         
         await self.services.db.create_indexes()
@@ -66,6 +67,7 @@ class ContextMiddleware(BaseMiddleware):
         if self.services.notificators: await self.services.notificators.stop()
         if self.services.db: await self.services.db.close()
         if self.services.tax: await self.services.tax.close()
+        if self.services.currency_converter: await self.services.currency_converter.close()
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)

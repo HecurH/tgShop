@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from core.services.notifications import NotificatorHub
     from core.services.tax import TaxSystem
     from core.services.placeholders import PlaceholderManager
+    from core.services.currency_converter import AsyncCurrencyConverter
     
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
@@ -133,6 +134,7 @@ class ServiceHub:
     tax: "TaxSystem"
     notificators: "NotificatorHub"
     placeholders: "PlaceholderManager"
+    currency_converter: "AsyncCurrencyConverter"
 
 @dataclass
 class Context:

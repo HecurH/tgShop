@@ -100,7 +100,7 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
         await ctx.services.db.orders.save(order)
         if await ctx.services.db.orders.count_customer_orders(customer) == 1 and customer.invited_by:
             if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
-                if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order):
+                if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order, ctx):
                     inviter_customer = await ctx.services.db.customers.find_one_by_id(inviter.customer_id)
                     await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(inviter_customer, reward)
                     
@@ -138,7 +138,7 @@ async def ask_generate_receipt_handler(_, ctx: Context):
     await ctx.services.db.orders.save(order)
     if await ctx.services.db.orders.count_customer_orders(customer) == 1 and customer.invited_by:
         if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
-            if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order):
+            if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order, ctx):
                 inviter_customer = await ctx.services.db.customers.find_one_by_id(inviter.customer_id)
                 await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(inviter_customer, reward)
                 
@@ -190,7 +190,7 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
     
     await ctx.services.db.cart_entries.save_many(cart_entries)
     
-    await ctx.services.db.customers.add_bonus_money(customer, order.price_details.bonuses_applied)
+    await ctx.services.db.customers.add_bonus_money(customer, order.price_details.bonuses_applied, ctx)
     if order.promocode_id:
         await ctx.services.db.promocodes.update_usage(order.promocode_id, -1)
         

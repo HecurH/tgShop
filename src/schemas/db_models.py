@@ -11,6 +11,7 @@ from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context
+from core.services.currency_converter import AsyncCurrencyConverter
 from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
 from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
@@ -745,14 +746,14 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         inviter.invited_customers += 1
         await self.save(inviter)
     
-    async def count_new_first_order(self, inviter: Inviter, order: "Order") -> Optional[Money]:
+    async def count_new_first_order(self, inviter: Inviter, order: "Order", ctx: Context) -> Optional[Money]:
         inviter.invited_customers_first_orders += 1
         if inviter.inviter_type == InviterType.customer:
             customer = await self.dbs.customers.find_one_by_id(inviter.customer_id)
             if customer:
                 reward = await order.price_details.get_referral_reward()
                 
-                return await self.dbs.customers.add_bonus_money(customer, reward)
+                return await self.dbs.customers.add_bonus_money(customer, reward, ctx)
                 
         
         await self.save(inviter)
@@ -849,7 +850,7 @@ class Customer(AppBaseModel):
     delivery_info: Optional[DeliveryInfo] = None
     waiting_for_manual_delivery_info_confirmation: bool = False
     
-    async def change_selected_currency(self, iso: str, dbs: "DatabaseService"):
+    async def change_selected_currency(self, iso: str, ctx: Context):
         """Изменить основную валюту"""
         if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
@@ -859,7 +860,7 @@ class Customer(AppBaseModel):
         
         if bonus_wallet.amount > 0:
             try:
-                amount = await dbs.currency_converter.convert(bonus_wallet.amount, self.currency, iso)
+                amount = await ctx.services.currency_converter.convert(bonus_wallet.amount, self.currency, iso)
             except Exception as e:
                 # Логируем ошибку и не меняем валюту
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
@@ -869,34 +870,6 @@ class Customer(AppBaseModel):
             bonus_wallet.amount = round(amount, 2)
 
         self.currency = iso
-
-    async def get_cart(self, db: "DatabaseService") -> Iterable[CartEntry]:
-        return await db.get_by_query(CartEntry, {"customer_id": self.id})
-
-    async def get_orders(self, db: "DatabaseService") -> Iterable[Order]:
-        return await db.get_by_query(Order, {"customer_id": self.id})
-
-    async def add_to_cart(self, db: "DatabaseService", product: Product,
-        configuration: ProductConfiguration):
-
-        # Проверка на существующую запись
-        existing = await db.get_one_by_query(CartEntry, {
-            "customer_id": self.id,
-            "product_id": product.id,
-            "configuration": configuration
-        })
-
-        if existing:
-            existing.quantity += 1
-            await db.update(existing)
-            return existing
-
-        new_entry = CartEntry(
-            customer_id=self.id,
-            product_id=product.id,
-            configuration=configuration
-        )
-        return await db.insert(new_entry)
 
 class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
@@ -920,12 +893,12 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     async def find_many_by_inviter_id(self, inviter_id: PydanticObjectId) -> Optional[Iterable[Customer]]:
         return await self.find_by({"invited_by": inviter_id})
     
-    async def add_bonus_money(self, customer: Customer, money: Money):
+    async def add_bonus_money(self, customer: Customer, money: Money, ctx: Context):
         if money.amount <= 0.0001: return
         
         if money.currency != customer.currency:
             try:
-                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, customer.currency)
+                amount = await ctx.services.currency_converter.convert(money.amount, money.currency, customer.currency)
             except Exception as e:
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(
@@ -938,12 +911,12 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         await self.save(customer)
         return money
         
-    async def remove_bonus_money(self, customer: Customer, money: Money):
+    async def remove_bonus_money(self, customer: Customer, money: Money, ctx: Context):
         if money.amount <= 0.0001: return
 
         if money.currency != customer.currency:
             try:
-                amount = await self.dbs.currency_converter.convert(money.amount, money.currency, customer.currency)
+                amount = await ctx.services.currency_converter.convert(money.amount, money.currency, customer.currency)
             except Exception as e:
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(

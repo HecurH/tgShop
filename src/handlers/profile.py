@@ -62,7 +62,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         
         ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
-        await ctx.services.db.update(ctx.customer)
+        await ctx.services.db.customers.save(ctx.customer)
         
         text = ProfileTranslates.Settings.lang_changed.translate(ctx.lang) # тк тут ctx.t уже В-С-Е
         
@@ -83,8 +83,8 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
             await call_state_handler(ProfileStates.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
             return
         
-        await ctx.customer.change_selected_currency(currency, ctx.services.db)
-        await ctx.services.db.update(ctx.customer)
+        await ctx.customer.change_selected_currency(currency, ctx)
+        await ctx.services.db.customers.save(ctx.customer)
         
         text = ctx.t.ProfileTranslates.Settings.currency_changed.format(currency=ctx.message.text)
         await call_state_handler(ProfileStates.Settings.Menu, ctx, send_before=(text, 1))

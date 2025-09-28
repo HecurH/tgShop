@@ -2,10 +2,8 @@ import logging
 from os import getenv
 from typing import Iterable, Optional, Type, TypeVar, Union
 
-from pydantic_mongo import PydanticObjectId
 import pymongo
 from pymongo import AsyncMongoClient
-from pymongo.errors import PyMongoError
 
 from schemas.db_models import *
 from core.services.currency_converter import AsyncCurrencyConverter
@@ -14,18 +12,11 @@ T = TypeVar("T", bound="AppBaseModel")
 
 
 class DatabaseService:
-    """Represents the database interface for the application.
-
-    Provides methods for interacting with MongoDB collections, including CRUD operations and index management.
-    """
-
-
     def __init__(self, db_name="Shop"):
         self.client = AsyncMongoClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))
         self.db = self.client[db_name]
         self.logger = logging.getLogger(__name__)
 
-        self.currency_converter = AsyncCurrencyConverter()
         self._init_collections()
 
     def _init_collections(self):
@@ -66,106 +57,6 @@ class DatabaseService:
         )
 
         return counter["value"]
-
-    async def get_by_id(self, model: Type[T], entity_id: PydanticObjectId) -> Optional[T]:
-        try:
-            collection = self._get_collection(model)
-            doc = await collection.find_one_by_id(entity_id)
-            return doc or None
-        except PyMongoError as e:
-            self._handle_error(e)
-            return None
-
-    async def get_by_query(self, model: Type[T], query: dict) -> Optional[Iterable[T]]:
-        try:
-            collection = self._get_collection(model)
-            doc = await collection.find_by(query)
-            return doc or None
-        except PyMongoError as e:
-            self._handle_error(e)
-            return None
-
-    async def get_count_by_query(self, model: Type[T], query: dict) -> int | None:
-        try:
-            collection = self._get_collection(model).Meta.collection_name
-
-            return await self.db[collection].count_documents(query)
-        except PyMongoError as e:
-            self._handle_error(e)
-            return None
-
-    async def get_one_by_query(self, model: Type[T], query: dict) -> Optional[T]:
-        try:
-            collection = self._get_collection(model)
-            doc = await collection.find_one_by(query)
-            return doc or None
-        except PyMongoError as e:
-            self._handle_error(e)
-            return None
-
-    async def insert(self, entities: Union[T, list[T]]) -> Union[T, list[T]]:
-        try:
-            if isinstance(entities, list):
-                if not entities:
-                    return []
-                collection = self._get_collection(type(entities[0]))
-                result = await collection.save_many(entities)
-                # Assign inserted IDs to each entity in the list
-                for entity, inserted_id in zip(entities, result.inserted_ids):
-                    entity.id = inserted_id
-            else:
-                collection = self._get_collection(type(entities))
-                result = await collection.save(entities)
-                entities.id = result.inserted_id
-                
-            return entities
-        except PyMongoError as e:
-            self._handle_error(e)
-            raise
-
-    async def delete(self, entity: T) -> bool:
-        try:
-            if not entity.id:
-                raise ValueError("Entity must have an id to be deleted")
-
-            collection = self._get_collection(type(entity))
-            result = await collection.delete_by_id(entity.id)
-
-            return result.deleted_count > 0
-
-        except PyMongoError as e:
-            self._handle_error(e)
-            raise
-
-    async def update(self, entity: T) -> bool:
-        try:
-            if not entity.id:
-                raise ValueError("Entity must have an id to be updated")
-            collection = self._get_collection(type(entity))
-            updated = await collection.save(
-                entity
-            )
-            return updated.modified_count > 0
-        except PyMongoError as e:
-            self._handle_error(e)
-            return False
-
-    def _get_collection(self, model: Type[T]):
-        if model == CartEntry:
-            return self.cart_entries
-        if model == Customer:
-            return self.customers
-        if model == Product:
-            return self.products
-        if model == Inviter:
-            return self.inviters
-        if model == Promocode:
-            return self.promocodes
-        raise ValueError(f"No collection for model {model.__name__}")
     
     async def close(self):
         await self.client.close()
-        await self.currency_converter.close()
-
-    def _handle_error(self, error: PyMongoError):
-        self.logger.error(f"Database error: {error}")
