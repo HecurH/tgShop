@@ -188,6 +188,11 @@ class LocalizedString(BaseModel):
         if pm is not None:
             return pm.process(raw, lang_or_context)
         return raw
+
+
+class SavedTMessage(BaseModel):
+    chat_id: int
+    message_id: int
     
 
 class OrderState(BaseModel):
@@ -200,8 +205,10 @@ class OrderState(BaseModel):
     def set_state(self, key: OrderStateKey):
         self.key = key 
         
-    def add_comment(self, message: Message):
-        self.comment.append(SavedTMessage(chat_id=message.chat.id, message_id=message.message_id))
+    def add_comment(self, message: Message) -> SavedTMessage:
+        tmsg = SavedTMessage(chat_id=message.chat.id, message_id=message.message_id)
+        self.comment.append(tmsg)
+        return tmsg
         
     def get_comments(self):
         return self.comment
@@ -234,8 +241,5 @@ class Discount(BaseModel):
         # если тип не распознан — скидка 0
         return Money(currency=amount.currency, amount=0.0)
 
-class SavedTMessage(BaseModel):
-    chat_id: int
-    message_id: int
 
 __all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "OrderState", "Discount", "SavedTMessage"]

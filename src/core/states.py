@@ -82,6 +82,13 @@ class AdminStates(StatesGroup):
         class Customers(StatesGroup):
             AskId = State()
             CustomerMenu = State()
+            
+        class Orders(StatesGroup):
+            AskId = State()
+            OrderMenu = State()
+            
+            ChangeStatusChoice = State()
+            SetChangeStatusComment = State()
         
         class Promocodes(StatesGroup):
             Menu = State()
@@ -117,8 +124,25 @@ async def handle_admin_customers_ask_id(ctx: Context, **_):
     
 @state_handlers.register(AdminStates.Main.Customers.CustomerMenu)
 async def handle_admin_customers_menu(ctx: Context, customer: Customer, **_):
-    await ctx.message.answer(await AdminTextGen.customer_menu_text(ctx, customer), 
-                             reply_markup=AdminKBs.Customers.customer_menu(ctx, customer))
+    await ctx.message.answer(await AdminTextGen.customer_menu_text(customer, ctx), 
+                             reply_markup=AdminKBs.Customers.customer_menu(customer, ctx))
+    
+@state_handlers.register(AdminStates.Main.Orders.AskId)
+async def handle_admin_orders_ask_id(ctx: Context, **_):
+    await ctx.message.answer("Введите ID заказа либо попытайтесь найти по PIDу (начинать с #):", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    
+@state_handlers.register(AdminStates.Main.Orders.OrderMenu)
+async def handle_admin_orders_menu(ctx: Context, order: Order, **_):
+    await ctx.message.answer(await AdminTextGen.order_menu_text(order, ctx),
+                             reply_markup=AdminKBs.Orders.order_menu(ctx))
+    
+@state_handlers.register(AdminStates.Main.Orders.ChangeStatusChoice)
+async def handle_admin_orders_change_status_choice(ctx: Context, **_):
+    await ctx.message.answer("Выберите новый статус:", reply_markup=AdminKBs.Orders.change_status_choice(ctx))
+    
+@state_handlers.register(AdminStates.Main.Orders.SetChangeStatusComment)
+async def handle_admin_orders_set_change_status_comment(ctx: Context, **_):
+    await ctx.message.answer("Введите комментарий (если не надо - введите ноль):", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
 @state_handlers.register(AdminStates.Main.Promocodes.Menu)
 async def handle_admin_promocodes(ctx: Context, **_):

@@ -281,7 +281,11 @@ class UserTelegramNotificator:
         await self.notificator.send_notification(NotificatorTranslates.Order.order_price_confirmed.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
-    async def send_order_state_changed(self, customer: Customer, order: Order):
+    async def send_order_state_changed(self, customer: Customer, order: Order, comment: Optional[SavedTMessage] = None):
+        if comment:
+            await self.notificator.send_forwarded_notification(comment,
+                                                               chat_id=customer.user_id)
+        
         await self.notificator.send_notification(NotificatorTranslates.Order.order_state_changed.translate(customer.lang).format(order_puid=f"#{order.puid}", order_state=order.state.get_localized_name(customer.lang)),
                                                  chat_id=customer.user_id)
     

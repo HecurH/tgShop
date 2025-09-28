@@ -19,6 +19,7 @@ from schemas.enums import DiscountType, OrderStateKey
 from schemas.types import Discount, LocalizedMoney, LocalizedString
 from ui.message_tools import list_commands, split_message
 from ui.texts import AdminTextGen
+from ui.translates import EnumTranslates
 
 router = Router(name="admin_menu")
 middleware = RoleCheckMiddleware("admin")
@@ -40,7 +41,7 @@ async def menu_handler(_, ctx: Context):
     elif text == "Товары":
         ...
     elif text == "Заказы":
-        ...
+        await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
     elif text == "Промокоды": 
         await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
     elif text == "Глобальные Плейсхолдеры": 
@@ -49,7 +50,7 @@ async def menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Menu, ctx)
         
 @router.message(AdminStates.Main.Customers.AskId)
-async def ask_id_handler(_, ctx: Context):
+async def customers_ask_id_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
@@ -89,6 +90,95 @@ async def customer_menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer, send_before="Успешно.")
     else:
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+        
+@router.message(AdminStates.Main.Orders.AskId)
+async def orders_ask_id_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    
+    if text.startswith("#"):
+        puid = text[1:]
+        orders = list(await ctx.services.db.orders.find_by_puid(puid))
+        if len(orders) == 1:
+            await orders[0].save_in_fsm(ctx, "order")
+            await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=orders[0])
+            return
+        
+        customers = await asyncio.gather(*[ctx.services.db.customers.find_one_by_id(order.customer_id) for order in orders])
+        txt = "\n\n".join([f"{str(order.id)}\nЗаказ пользователя {customers[idx].user_id}\nСумма: {order.price_details.total_price.to_text()}" for idx, order in enumerate(orders)])
+        await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before=txt)
+    else:
+        order_id = text
+        order = await ctx.services.db.orders.find_one_by_id(PydanticObjectId(order_id))
+        if not order:
+            await call_state_handler(AdminStates.Main.Orders.AskId, ctx, send_before="Заказ не найден.")
+            return
+
+        await order.save_in_fsm(ctx, "order")
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
+
+@router.message(AdminStates.Main.Orders.OrderMenu)
+async def order_menu_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    if text == "Изменить статус":
+        await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx)
+    elif text == "Посмотреть историю комментариев":
+        for comment in order.state.get_comments():
+            await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=comment.chat_id, message_id=comment.message_id)
+            await asyncio.sleep(0.2)
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
+    else:
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
+
+@router.message(AdminStates.Main.Orders.ChangeStatusChoice)
+async def order_change_status_choice_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx)
+        return
+
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    attr_name = EnumTranslates.OrderStateKey.get_attribute(text, ctx.lang)
+    if not attr_name:
+        await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx)
+        return
+    
+    order.state.set_state(getattr(OrderStateKey, attr_name))
+    await order.save_in_fsm(ctx, "order")
+    
+    await call_state_handler(AdminStates.Main.Orders.SetChangeStatusComment, ctx)
+
+@router.message(AdminStates.Main.Orders.SetChangeStatusComment)
+async def order_set_change_status_comment_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx)
+        return
+
+    order: Order = await Order.from_fsm_context(ctx, "order")
+    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
+    if text.isdigit() and text == '0':
+        await ctx.services.db.orders.save(order)
+        
+        await ctx.services.notificators.UserTelegramNotificator.send_order_state_changed(customer, order)
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order, send_before="Успешно.")
+    else:
+        tmsg = await order.state.add_comment(ctx.message)
+        await ctx.services.db.orders.save(order)
+        
+        await ctx.services.notificators.UserTelegramNotificator.send_order_state_changed(customer, order, tmsg)
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order, send_before="Успешно.")
+        
+        
+        
+    
         
 @router.message(AdminStates.Main.Promocodes.Menu)
 async def promocodes_handler(_, ctx: Context):

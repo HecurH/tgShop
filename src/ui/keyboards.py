@@ -10,7 +10,7 @@ from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
-from ui.translates import ReplyButtonsTranslates
+from ui.translates import EnumTranslates, ReplyButtonsTranslates
 
 class CommonKBs:
 
@@ -77,7 +77,7 @@ class AdminKBs:
     
     class Customers:
         @staticmethod
-        def customer_menu(ctx: Context, customer: Customer) -> types.ReplyKeyboardMarkup:
+        def customer_menu(customer: Customer, ctx: Context) -> types.ReplyKeyboardMarkup:
             kb = [
                 [
                     types.KeyboardButton(text="Написать сообщение")
@@ -91,6 +91,7 @@ class AdminKBs:
             ]
             return types.ReplyKeyboardMarkup(keyboard=kb, 
                                          resize_keyboard=True)
+        
     
     class Promocodes:
         @staticmethod
@@ -136,6 +137,31 @@ class AdminKBs:
                 ]
             ]
             return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
+        
+        
+        @staticmethod
+        def order_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Изменить статус"),
+                    types.KeyboardButton(text="Посмотреть историю комментариев")
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                            resize_keyboard=True)
+        
+        @staticmethod
+        def change_status_choice(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = []
+            for state in OrderStateKey:
+                kb.append([types.KeyboardButton(text=EnumTranslates.OrderStateKey.translate(state.value, ctx.lang))])
+            kb.append([types.KeyboardButton(text=ctx.t.UncategorizedTranslates.cancel)])
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                             resize_keyboard=True)
+            
 
 
 class AssortmentKBs:

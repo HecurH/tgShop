@@ -590,6 +590,13 @@ class OrdersTranslates(Translatable):
 Суммарная стоимость товаров: {products_price}
 {price_info}
 """,
+        "en": """<b>Order #{order_puid}</b> from {order_forming_date}
+{order_entries_description}
+
+Order status: {order_status}{delivery_info}{payment_method}{promocode_info}{bonus_money_info}
+
+Total cost of goods: {products_price}
+{price_info}"""
     }
     
     payment_method = {
