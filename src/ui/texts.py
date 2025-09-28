@@ -172,7 +172,7 @@ class AdminTextGen:
         
         bonus_money_info = f"{order.price_details.bonuses_applied.to_text()}" if order.price_details.bonuses_applied else None
         
-        return order_viewing_menu.format(order_puid=str(order.id),
+        return order_viewing_menu.format(order_id=str(order.id),
                                          user_id=customer.user_id,
                                         order_forming_date=order.id.generation_time.strftime("%d.%m.%Y %H:%M UTC"),
                                         order_entries_description=entries_description,
