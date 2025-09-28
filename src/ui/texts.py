@@ -100,7 +100,7 @@ class AdminTextGen:
             requirements = service.selected_option.requirements
             
             requirements_info_text = "\n".join([f"  {requirement.name.get(ctx)}: <tg-spoiler>{html.quote(requirement.value.get())}</tg-spoiler>" for requirement in requirements])
-            return ctx.t.ProfileTranslates.Delivery.menu.format(delivery_service=service.name.get(ctx), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx), requirements=requirements_info_text)
+            return ("Способ доставки: {delivery_service} ({service_price}), {delivery_req_lists_name}\n{requirements}").format(delivery_service=service.name.get(ctx), service_price=service.price.to_text(ctx.customer.currency), delivery_req_lists_name=service.selected_option.name.get(ctx), requirements=requirements_info_text)
         
         async def orders_info():
             orders = await ctx.services.db.orders.find_customer_orders(customer)
