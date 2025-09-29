@@ -106,10 +106,10 @@ class Money(BaseModel):
 
 class LocalizedMoney(BaseModel):
     data: Dict[str, Money] = Field(default_factory=dict)
-
+    
     @classmethod
-    def from_dict(cls, raw: dict[str, float]) -> "LocalizedMoney":
-        return cls(data={cur: Money(currency=cur, amount=amt) for cur, amt in raw.items()})
+    def from_keys(cls, **kwargs):
+        return cls(data={cur: Money(currency=cur, amount=kwargs[cur]) for cur in kwargs})
     
     @classmethod
     def empty_base(cls) -> "LocalizedMoney":
@@ -141,7 +141,7 @@ class LocalizedMoney(BaseModel):
             cur: self.get_amount(cur) + other.get_amount(cur)
             for cur in set(self.data) | set(other.data)
         }
-        return LocalizedMoney.from_dict(result)
+        return LocalizedMoney.from_keys(**result)
 
     def __sub__(self, other):
         if not isinstance(other, LocalizedMoney):
@@ -150,7 +150,7 @@ class LocalizedMoney(BaseModel):
             cur: self.get_amount(cur) - other.get_amount(cur)
             for cur in set(self.data) | set(other.data)
         }
-        return LocalizedMoney.from_dict(result)
+        return LocalizedMoney.from_keys(**result)
 
     def __iadd__(self, other: "LocalizedMoney") -> "LocalizedMoney":
         for cur, money in other.data.items():

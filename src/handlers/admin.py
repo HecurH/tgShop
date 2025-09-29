@@ -446,7 +446,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedMoney.from_dict({"RUB":-1000.00, "USD":-30.00})
+                    price=LocalizedMoney.from_keys(RUB=-1000.00, USD=-30.00)
                 ),
                 "medium": ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
@@ -462,7 +462,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
 
-                    price=LocalizedMoney.from_dict({"RUB":1000.00, "USD":30.00})
+                    price=LocalizedMoney.from_keys(RUB=1000.00, USD=30.00)
                 )
             }
         ),
@@ -508,7 +508,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "ru": "на картинке типо дилдак с полосами, разделяющими зоны, и юзер типо расписывает, - (кнот мягкий, кончик и основание средние)",
                         "en": "The picture shows a dildo with stripes dividing zones, and the user can specify, for example: (knot - soft, the rest are medium)."
                     }),
-                    price=LocalizedMoney.from_dict({"RUB":400.00, "USD":6.00})
+                    price=LocalizedMoney.from_keys(RUB=400.00, USD=6.00)
 
                 )
             }
@@ -560,7 +560,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
-                    price=LocalizedMoney.from_dict({"RUB":500.00, "USD":10.00}),
+                    price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
 
                     description=LocalizedString(data={
                         "ru": "Выберите до трёх цветов для вихревой раскраски. Просто напишите, какие цвета хотите смешать. Если хотите шиммер, блёстки или люминофор — не забудьте выбрать их в разделе «Дополнительно».",
@@ -586,23 +586,19 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     switches=[
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Градиент", "en": "Gradient"}),
-                            price=LocalizedMoney.from_dict({"RUB":100.00, "USD":6.00})
-
+                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Блёстки", "en": "Glitter"}),
-                            price=LocalizedMoney.from_dict({"RUB":100.00, "USD":6.00})
-
+                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Шиммер", "en": "Shimmer"}),
-                            price=LocalizedMoney.from_dict({"RUB": 100.00, "USD": 6.00})
-
+                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
                         ),
                         ConfigurationSwitch(
                             name=LocalizedString(data={"ru": "Люминофор", "en": "Phosphor"}),
-                            price=LocalizedMoney.from_dict({"RUB": 100.00, "USD": 6.00})
-
+                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
                         )
                     ]
                 )
@@ -632,10 +628,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
             "en":"Hiden Dragon"}
         ),
         long_description_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
-        base_price=LocalizedMoney.from_dict({
-            "RUB": 5000.00,
-            "USD": 100.00
-        }),
+        base_price=LocalizedMoney.from_keys(RUB=5000.00, USD=100.00),
         configuration_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
         configuration=configuration
     )
@@ -655,7 +648,7 @@ async def addit(_, ctx: Context) -> None:
             "ru":"Заглушка хд",
             "en":"Заглушка хд"}
         ),
-        price=LocalizedMoney.from_dict({"RUB": 1000, "USD": 10})
+        price=LocalizedMoney.from_keys(RUB=1000.00, USD=10.00)
     )
 
     await ctx.services.db.additionals.save(additional)
@@ -954,11 +947,7 @@ async def addit(_, ctx: Context) -> None:
             "en":"Ozon Delivery"
             }
         ),
-        price=LocalizedMoney.from_dict({
-            "RUB": 200,
-            "USD": 3
-            }
-        ),
+        price=LocalizedMoney.from_keys(RUB=200.00, USD=3.00),
         requirements_options=[
             DeliveryRequirementsList(
                 name=LocalizedString(data={
@@ -1021,7 +1010,7 @@ async def add_additionals_handler(_, ctx: Context) -> None:
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
-        price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
+        price=LocalizedMoney.from_keys(RUB=400.00, USD=10.00),
         disallowed_products=[]
     )
     await ctx.services.db.additionals.save(additional)
@@ -1036,7 +1025,7 @@ async def add_additionals_handler(_, ctx: Context) -> None:
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
-        price=LocalizedMoney.from_dict({"RUB": 400, "USD": 10}),
+        price=LocalizedMoney.from_keys(RUB=400.00, USD=10.00),
         disallowed_products=[]
     )
     await ctx.services.db.additionals.save(additional)

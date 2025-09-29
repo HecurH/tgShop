@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import re
+from typing import Optional
 
 from aiogram import Router
 from aiogram.filters import CommandObject, Command
@@ -238,7 +239,7 @@ async def create_promocode_code_handler(_, ctx: Context):
                 continue
             cur, amt = part.split(":", 1)
             result[cur.strip().upper()] = float(amt.replace(",", "."))
-        return LocalizedMoney.from_dict(result)
+        return LocalizedMoney.from_keys(**result)
 
     def parse_expire(text: str) -> Optional[datetime.datetime]:
         t = text.strip().lower()

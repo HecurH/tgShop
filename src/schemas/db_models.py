@@ -781,12 +781,7 @@ class DeliveryService(AppBaseModel):
     is_foreign: bool = False
     requires_manual_confirmation: bool = False
     
-    price: LocalizedMoney = LocalizedMoney.from_dict(
-                                           {
-                                            "RUB": 500.0,
-                                            "USD": 7.0
-                                           }
-                                           )
+    price: LocalizedMoney = LocalizedMoney.from_keys(RUB=500.0, USD=7.0)
     requirements_options: list[DeliveryRequirementsList] # для почты россии, например, можно оформить как по адресу с ФИО, так и просто по номеру до востребования
     selected_option: Optional[DeliveryRequirementsList] = None # для заполнения в будущем при конфигурации
     
