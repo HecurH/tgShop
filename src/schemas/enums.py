@@ -1,5 +1,10 @@
 from enum import Enum
 
+class MediaType(str, Enum):
+    photo = "photo"
+    video = "video"
+    document = "document"
+
 class DiscountType(str, Enum):
     fixed = "fixed"      # фиксированная сумма
     percent = "percent"  # процент от суммы

@@ -1,9 +1,7 @@
-import asyncio
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardRemove
-from typing import Callable, Dict, Any, Awaitable, Tuple, Union, Iterable, List
+from typing import Callable, Dict, Any, Awaitable, Tuple, Union, List
 
-from core.helper_classes import Context
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import *
 from ui.keyboards import *
@@ -82,11 +80,6 @@ class AdminStates(StatesGroup):
         class Customers(StatesGroup):
             AskId = State()
             CustomerMenu = State()
-            
-        class Products(StatesGroup):
-            SelectCategory = State()
-            ProductMenu = State()
-            
             
         class Orders(StatesGroup):
             AskId = State()
@@ -284,13 +277,12 @@ async def viewing_assortment_handler(ctx: Context,
                                  ctx)
         return
     
-    # product: Product = await ctx.services.db.products.find_one_by({'order_no': current, "category": category})
     product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 
     await send_media_response(ctx.message,
-                                product.short_description_photo_id,
+                                product.short_description_media,
                                 caption,
                                 AssortmentKBs.gen_assortment_view_kb(current, amount, ctx))
 
@@ -300,19 +292,8 @@ async def viewing_product_details_handler(ctx: Context,
                                           **_):
     caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx)
 
-    # if ctx.is_query:
-    #     await edit_media_message(ctx.message,
-    #                             product.long_description_photo_id or product.long_description_video_id,
-    #                             caption,
-    #                             AssortmentKBs.detailed_view(ctx),
-    #                             "photo" if product.long_description_photo_id
-    #                             else ("video" if product.long_description_video_id
-    #                                 else None))
-    # else:
-    #     await clear_keyboard_effect(ctx.message)
-
     await send_media_response(ctx.message,
-                                product.long_description_photo_id or product.long_description_video_id,
+                                product.long_description_media,
                                 caption,
                                 AssortmentKBs.detailed_view(ctx)
                                 )
@@ -322,19 +303,15 @@ async def forming_order_entry_handler(ctx: Context,
                                       product: Product,
                                       **_):
     options: dict[str, ConfigurationOption] = product.configuration.options
-    photo_id = product.configuration_photo_id
-    video_id = product.configuration_video_id
 
     if ctx.is_query: await clear_keyboard_effect(ctx.message)
     
     additionals = await ctx.services.db.additionals.get(product)
 
-    # if edit: await ctx.message.delete()
     await send_media_response(ctx.message,
-                                photo_id or video_id,
+                                product.configuration_media,
                                 AssortmentTextGen.generate_product_configurating_main(product, ctx),
-                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx),
-                                "photo" if photo_id else ("video" if video_id else None))
+                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx))
 
 @state_handlers.register(AssortmentStates.EntryOptionSelect)
 async def entry_option_select_handler(ctx: Context,
@@ -346,8 +323,7 @@ async def entry_option_select_handler(ctx: Context,
     text = AssortmentTextGen.generate_choice_text(option, ctx)
     kb = AssortmentKBs.generate_choice_kb(product, option, ctx)
 
-    await send_media_response(ctx.message, chosen.photo_id or chosen.video_id, text, kb,
-                              media_type="video" if chosen.video_id else "photo" if chosen.photo_id else "text")
+    await send_media_response(ctx.message, chosen.media, text, kb)
     if delete_prev: await ctx.message.delete()
 
 @state_handlers.register(AssortmentStates.ChoiceEditValue)
@@ -360,11 +336,9 @@ async def choice_edit_value_handler(ctx: Context,
     kb = UncategorizedKBs.inline_cancel(ctx)
 
     await send_media_response(ctx.message,
-                              choice.photo_id or choice.video_id,
+                              choice.media,
                               text,
-                              kb,
-                              "photo" if choice.photo_id else ("video" if choice.video_id else None)
-                              )
+                              kb)
 
 @state_handlers.register(AssortmentStates.SwitchesEditing)
 async def switches_editing_handler(ctx: Context,
@@ -375,11 +349,9 @@ async def switches_editing_handler(ctx: Context,
     kb = AssortmentKBs.generate_switches_kb(switches, ctx)
 
     await send_media_response(ctx.message,
-                              switches.photo_id or switches.video_id,
+                              switches.media,
                               text,
-                              kb,
-                              "photo" if switches.photo_id else ("video" if switches.video_id else None)
-                              )
+                              kb)
 
 @state_handlers.register(AssortmentStates.AdditionalsEditing)
 async def additionals_editing_handler(ctx: Context,
@@ -429,7 +401,7 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
                                             ctx)
     
     await send_media_response(ctx.message,
-                            product.short_description_photo_id,
+                            product.short_description_media,
                             caption,
                             await CartKBs.cart_view(entry, current, amount, total_price, ctx))
 

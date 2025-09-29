@@ -11,10 +11,9 @@ from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context
-from core.services.currency_converter import AsyncCurrencyConverter
 from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
-from schemas.types import LocalizedMoney, LocalizedString, Money, OrderState, Discount, SecureValue
+from schemas.types import *
 
 if TYPE_CHECKING:
     from core.services.db import DatabaseService
@@ -320,8 +319,7 @@ class ConfigurationSwitch(AppBaseModel):
 class ConfigurationSwitches(AppBaseModel):
     label: LocalizedString
     description: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
+    media: Optional[SavedMedia] = None
 
     switches: list[ConfigurationSwitch]
 
@@ -337,8 +335,7 @@ class ConfigurationSwitches(AppBaseModel):
     def update(self, update_from_switches: "ConfigurationSwitches"):
         self.label = update_from_switches.label
         self.description = update_from_switches.description
-        self.photo_id = update_from_switches.photo_id
-        self.video_id = update_from_switches.video_id
+        self.media = update_from_switches.media
         
         for i, switch in enumerate(update_from_switches.switches):
             if len(self.switches) <= i:
@@ -355,8 +352,7 @@ class ConfigurationSwitches(AppBaseModel):
 class ConfigurationChoice(AppBaseModel):
     label: LocalizedString
     description: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
+    media: Optional[SavedMedia] = None
 
     existing_presets: bool = Field(default=False)
     existing_presets_chosen: int = 1
@@ -371,8 +367,7 @@ class ConfigurationChoice(AppBaseModel):
     def update(self, base_choice: "ConfigurationChoice"):
         self.label=base_choice.label
         self.description=base_choice.description
-        self.photo_id=base_choice.photo_id
-        self.video_id=base_choice.video_id
+        self.media=base_choice.media
         self.existing_presets=base_choice.existing_presets
         self.existing_presets_quantity=base_choice.existing_presets_quantity
         self.is_custom_input=base_choice.is_custom_input
@@ -412,8 +407,6 @@ class ConfigurationChoice(AppBaseModel):
 class ConfigurationOption(AppBaseModel):
     name: LocalizedString
     text: LocalizedString
-    photo_id: Optional[str] = None
-    video_id: Optional[str] = None
     chosen: str # ConfigurationSwitches нельзя выбрать, это лишь группа выключателей относящейся к целевой опции
 
     choices: Dict[str, ConfigurationChoice | ConfigurationSwitches]
@@ -451,8 +444,6 @@ class ConfigurationOption(AppBaseModel):
     def update(self, update_from_option: "ConfigurationOption"):
         self.name = update_from_option.name
         self.text = update_from_option.text
-        self.photo_id = update_from_option.photo_id
-        self.video_id = update_from_option.video_id
         
         # Обновляем choices
         for choice_key, base_choice in update_from_option.choices.items():
@@ -582,11 +573,10 @@ class Product(AppBaseModel):
     category: str
 
     short_description: LocalizedString
-    short_description_photo_id: str
+    short_description_media: Optional[SavedMedia] = None
 
     long_description: LocalizedString
-    long_description_photo_id: Optional[str] = None
-    long_description_video_id: Optional[str] = None
+    long_description_media: Optional[SavedMedia] = None
     
     base_price: LocalizedMoney
     discount: Optional[Discount] = None
@@ -596,9 +586,8 @@ class Product(AppBaseModel):
         return self.base_price - self.discount.get_discount(self.base_price) if self.discount else self.base_price
         
 
-    configuration_photo_id: Optional[str] = None
-    configuration_video_id: Optional[str] = None
     configuration: ProductConfiguration
+    configuration_media: Optional[SavedMedia] = None
     
     
     # def calculate_price(self, configuration: ProductConfiguration = None) -> LocalizedPrice:

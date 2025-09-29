@@ -4,6 +4,9 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
+
+from schemas.enums import MediaType
+from schemas.types import SavedMedia
     
 
 
@@ -132,17 +135,26 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
     return result
 async def send_media_response(
     message: Message,
-    media_id: str,
-    caption: str,
-    keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None,
-    media_type: Literal["photo", "video"] = "photo"
+    media: Optional[SavedMedia] = None,
+    caption: str = "",
+    keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None
 ) -> None:
-    if media_type == "photo":
-        await message.answer_photo(media_id, caption=caption, reply_markup=keyboard)
-    elif media_type == "video":
-        await message.answer_video(media_id, caption=caption, reply_markup=keyboard)
-    else:
+    if not media:
         await message.answer(caption, reply_markup=keyboard)
+        return
+    
+    media_handlers = {
+        MediaType.photo: message.answer_photo,
+        MediaType.video: message.answer_video,
+        MediaType.document: message.answer_document
+    }
+    
+    handler = media_handlers.get(media.media_type, message.answer)
+    
+    if handler == message.answer:
+        await handler(caption, reply_markup=keyboard)
+    else:
+        await handler(media.media_id, caption=caption, reply_markup=keyboard)
 
 async def edit_media_message(
     message: Message,

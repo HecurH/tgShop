@@ -1,24 +1,20 @@
-import asyncio
 import datetime
 import json
-import re
 
-from aiogram import Router
+from aiogram import Bot, Router
 from aiogram.filters import CommandObject, Command
 from aiogram.types import BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
-from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from schemas.enums import DiscountType, OrderStateKey
-from schemas.types import Discount, LocalizedMoney, LocalizedString
+from schemas.enums import DiscountType, OrderStateKey, MediaType
+from schemas.types import Discount, LocalizedMoney, LocalizedString, SavedMedia
 from ui.message_tools import list_commands, split_message
-from ui.texts import AdminTextGen
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -376,7 +372,7 @@ async def image_saving_handler(_, ctx: Context):
 
     msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
         raw.read(),
-        filename="image.jpg"
+        filename=ctx.message.document.file_name
     )
     )
     await ctx.message.answer(msg_id.photo[-1].file_id)
@@ -387,10 +383,23 @@ async def image_saving_handler(_, ctx: Context):
 
     msg_id = await ctx.message.answer_video(video=BufferedInputFile(
         raw.read(),
-        filename="image.mp4"
+        filename=ctx.message.document.file_name
     )
     )
     await ctx.message.answer(msg_id.video.file_id)
+    
+@router.message(Command("save_file"))
+async def image_saving_handler(_, ctx: Context):
+    bot: Bot = ctx.message.bot
+    
+    raw = await bot.download(ctx.message.document)
+
+    msg_id = await ctx.message.answer_document(document=BufferedInputFile(
+        raw.read(),
+        filename=ctx.message.document.file_name
+    )
+    )
+    await ctx.message.answer(msg_id.document.file_id)
 
 @router.message(Command("add_cats"))
 async def cats_handler(_, ctx: Context) -> None:
@@ -441,7 +450,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
             choices={
                 "small": ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Маленький", "en":"Small"}),
-                    photo_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.photo,
+                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
@@ -450,14 +462,20 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "medium": ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
-                    photo_id="AgACAgIAAxkDAAIEuWgdAVwm5m-WAtrHRu_LZrlvUa-MAAKS8zEb4TjpSHff2pId4ujoAQADAgADeQADNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.photo,
+                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран <b>Средний</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Medium</b> size.\n\nYou can see all the size values in the attached picture."})
                 ),
                 "big": ConfigurationChoice(
                     label=LocalizedString(data={"ru":"Большой", "en":"Big"}),
-                    photo_id="AgACAgIAAxkDAAIEwmgdCcaeJbdRNP39SPUifkgCY0T1AAL28zEb4TjpSODUEAABvCEBnAEAAwIAA3kAAzYE",
+                    media=SavedMedia(
+                        media_type=MediaType.photo,
+                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                         "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
@@ -479,28 +497,40 @@ async def image_saving_handler(_, ctx: Context) -> None:
             choices={
                 "soft": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Мягкий", "en": "Soft"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран <b>Мягкий</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
                         "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
                 ),
                 "medium": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Средний", "en": "Medium"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
                         "en": "<b>Medium-soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
                 ),
                 "firm": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Твёрдый", "en": "Firm"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Выбран <b>Твёрдый</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
                         "en": "<b>Firm</b> silicone is selected.\n\nYou can see an example in the attached video."})
                 ),
                 "firmness_gradation": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Градация жёсткости", "en": "Firmness gradation"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     is_custom_input=True,
                     can_be_blocked_by=["color/swirl"],
 
@@ -526,7 +556,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
             choices={
                 "sel_existing": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Существующий", "en": "Existing one"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     existing_presets=True,
                     existing_presets_chosen=1,
                     existing_presets_quantity=3,
@@ -537,7 +570,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "two-zone": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Двухзонный", "en": "Two-zone"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     is_custom_input=True,
 
                     description=LocalizedString(data={
@@ -547,7 +583,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "three-zone": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Трёхзонный", "en": "Three-zone"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     is_custom_input=True,
 
                     description=LocalizedString(data={
@@ -557,7 +596,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "swirl": ConfigurationChoice( # вихревая, пользователю надо уточнить до трех цветов для этого
                     label=LocalizedString(data={"ru": "Вихрь", "en": "Swirl"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
                     price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
@@ -569,7 +611,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "own_colors": ConfigurationChoice(
                     label=LocalizedString(data={"ru": "Своя раскраска", "en": "Custom colors"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     is_custom_input=True,
                     blocks_price_determination=True,
 
@@ -579,7 +624,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "additional": ConfigurationSwitches(
                     label=LocalizedString(data={"ru": "Дополнительно", "en": "Additional"}),
-                    video_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ",
+                    media=SavedMedia(
+                        media_type=MediaType.video,
+                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
+                    ),
                     description=LocalizedString(data={
                         "ru": "Тут чисто инфа про сами свитчи",
                         "en": "Тут чисто инфа про сами свитчи"}),
@@ -617,7 +665,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
             "ru":"Заглушка хд",
             "en":"Заглушка хд"}
         ),
-        short_description_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
+        short_description_media=SavedMedia(
+            media_type=MediaType.photo,
+            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+        ),
         long_description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
 
@@ -627,10 +678,16 @@ async def image_saving_handler(_, ctx: Context) -> None:
 Присоска идет в комплекте!""",
             "en":"Hiden Dragon"}
         ),
-        long_description_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
+        long_description_media=SavedMedia(
+            media_type=MediaType.photo,
+            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+        ),
         base_price=LocalizedMoney.from_keys(RUB=5000.00, USD=100.00),
-        configuration_photo_id="AgACAgIAAxkDAAIEqmgc2mt5nYStZBhwifMHuicCdPk5AAJo8TEb4TjpSPRjXA9O3dgSAQADAgADeQADNgQ",
-        configuration=configuration
+        configuration=configuration,
+        configuration_media=SavedMedia(
+            media_type=MediaType.photo,
+            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+        )
     )
 
     await ctx.services.db.products.save(product)
@@ -640,13 +697,13 @@ async def image_saving_handler(_, ctx: Context) -> None:
 async def addit(_, ctx: Context) -> None:
     additional = ProductAdditional(
         name=LocalizedString(data={
-            "ru":"Дракон Хайден",
-            "en":"Hiden Dragon"}
+            "ru":"Присоска",
+            "en":"Suction Cup"}
         ),
         category="dildos",
         short_description=LocalizedString(data={
-            "ru":"Заглушка хд",
-            "en":"Заглушка хд"}
+            "ru":"",
+            "en":""}
         ),
         price=LocalizedMoney.from_keys(RUB=1000.00, USD=10.00)
     )

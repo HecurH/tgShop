@@ -189,11 +189,13 @@ class LocalizedString(BaseModel):
             return pm.process(raw, lang_or_context)
         return raw
 
-
 class SavedTMessage(BaseModel):
     chat_id: int
     message_id: int
-    
+
+class SavedMedia(BaseModel):
+    media_type: MediaType
+    media_id: str
 
 class OrderState(BaseModel):
     key: OrderStateKey
@@ -242,4 +244,4 @@ class Discount(BaseModel):
         return Money(currency=amount.currency, amount=0.0)
 
 
-__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "OrderState", "Discount", "SavedTMessage"]
+__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "SavedMedia", "OrderState", "Discount", "SavedTMessage"]
