@@ -5,11 +5,11 @@ from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
-from schemas.types import SavedMedia
+from schemas.enums import MediaType
+
 
 if TYPE_CHECKING:
-    from schemas.enums import MediaType
-
+    from schemas.types import SavedMedia
 
 
 async def clear_keyboard_effect(message: Message) -> None:
