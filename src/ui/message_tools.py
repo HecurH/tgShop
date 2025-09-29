@@ -1,13 +1,14 @@
 import re
-from typing import List, Optional, Literal
+from typing import TYPE_CHECKING, List, Optional, Literal
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
-from schemas.enums import MediaType
 from schemas.types import SavedMedia
-    
+
+if TYPE_CHECKING:
+    from schemas.enums import MediaType
 
 
 
@@ -135,7 +136,7 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
     return result
 async def send_media_response(
     message: Message,
-    media: Optional[SavedMedia] = None,
+    media: Optional["SavedMedia"] = None,
     caption: str = "",
     keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None
 ) -> None:
