@@ -584,7 +584,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                                 }
 
                             class PhosphorsGroup(Translatable):
-                                label = {
+                                name = {
                                     "ru": "Люминофоры",
                                     "en": "Phosphors"
                                 }

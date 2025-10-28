@@ -696,7 +696,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                             price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),
                         "phosphors": ConfigurationSwitchesGroup(
-                            label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.label"),
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.name"),
                             description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.description"),
                             switches={
                                 "blue": ConfigurationSwitch(

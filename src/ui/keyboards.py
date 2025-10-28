@@ -319,7 +319,7 @@ class AssortmentKBs:
                     builder.row(*current_row)
                     current_row = []
                 
-                builder.row(types.KeyboardButton(text=f"-- {switch_or_group.label.get(ctx)} --"))
+                builder.row(types.KeyboardButton(text=f"-- {switch_or_group.name.get(ctx)} --"))
                 for switch in switch_or_group.get_all():
                     current_row.append(types.KeyboardButton(text=gen_label(switch)))
                     if len(current_row) == 3:

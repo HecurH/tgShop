@@ -335,7 +335,7 @@ class ConfigurationSwitch(AppBaseModel):
         self.price=base_sw.price
         
 class ConfigurationSwitchesGroup(AppBaseModel):
-    label: LocalizedEntry
+    name: LocalizedEntry
     description: LocalizedEntry
     switches: Dict[str, ConfigurationSwitch]
     
@@ -347,7 +347,7 @@ class ConfigurationSwitchesGroup(AppBaseModel):
         return [switch for switch in self.switches.values() if switch.enabled]
     
     def update(self, base_grp: "ConfigurationSwitchesGroup"):
-        self.label=base_grp.label
+        self.name=base_grp.name
         self.description=base_grp.description
         
         for key, switch in base_grp.switches.items():
