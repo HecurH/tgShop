@@ -266,7 +266,7 @@ class AssortmentTextGen:
                 text += f"{switch_or_group.name.get(ctx)} — {switch_or_group.price.to_text(ctx.customer.currency)} ( {'✅' if switch_or_group.enabled else '❌'} )\n"
                 text += f"    {switch_or_group.description.get(ctx)}\n\n" if switch_or_group.description else "\n\n"
             elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
-                text += f"{switch_or_group.name.get(ctx)}:\n  — {switch_or_group.description.get(ctx)}\nф"
+                text += f"{switch_or_group.name.get(ctx)}:\n  — {switch_or_group.description.get(ctx)}\n"
                 for switch in switch_or_group.get_all():
                     text += f"    {switch.name.get(ctx)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )\n"
                     text += f"        {switch.description.get(ctx)}\n" if switch.description else ""
@@ -281,7 +281,7 @@ class AssortmentTextGen:
             return f"{additional.name.get(ctx)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n{description}"
         
         additionals_info = "\n".join([gen(additional) for additional in available])
-        return f"\n{additionals_info}\n\n{ctx.t.AssortmentTranslates.switches_enter}"
+        return f"\n{additionals_info}\n{ctx.t.AssortmentTranslates.switches_enter}"
 
     @staticmethod
     def generate_presets_text(ctx: Context):
