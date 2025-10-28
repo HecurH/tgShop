@@ -579,8 +579,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Shimmer"
                                 }
                                 description = {
-                                    "ru": "Представляет собой мелкодисперсный порошок с металлическим сиянием, придающий поверхности интересный перелив и игру света. Используется как добавка для смешения с цветами.",
-                                    "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light. It is used as an additive for mixing with colors."
+                                    "ru": "Представляет собой мелкодисперсный порошок с металлическим сиянием, придающий поверхности интересный перелив и игру света. Является самостоятельным цветом для покраски. (см. Доступные цвета)",
+                                    "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light. It is an independent color for painting. (see Available colors)"
                                 }
                             
                             class NeonColors(Translatable):
@@ -589,8 +589,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Neon colors"
                                 }
                                 description = {
-                                    "ru": "Отдельные цвета, способные отражать ультрафиолетовый свет. (см. Доступные цвета)",
-                                    "en": "Individual colors that can reflect ultraviolet light. (see Available colors)"
+                                    "ru": "Отдельные пигменты, способные отражать ультрафиолетовый свет. (см. Доступные цвета)",
+                                    "en": "Individual pigments capable of reflecting ultraviolet light. (see Available colors)"
                                 }
 
                             class PhosphorsGroup(Translatable):
@@ -648,8 +648,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
 
                         text = {
-                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, доступные для смешения.\nУчтите, перламутровый пигмент — добавка, а неон — самостоятельный цвет.",
-                            "en": "The attached media file displays all the original colors used for mixing.\nPlease note that shimmer is an additive, and neon is an independent color."
+                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, доступные для смешения.",
+                            "en": "The attached media file displays all the original colors used for mixing."
                         }
             
 class UncategorizedTranslates(Translatable):
