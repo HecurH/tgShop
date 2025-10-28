@@ -17,8 +17,8 @@ class PlaceholderManager:
         self.txt_repo = txt_repo
         self.media_repo = media_repo
         
-        self._txt_cache: dict[str, Placeholder] = {}
-        self._media_cache: dict[str, LocalizedSavedMedia] = {}
+        self._txt_cache: dict[str, "Placeholder"] = {}
+        self._media_cache: dict[str, "LocalizedSavedMedia"] = {}
         
         asyncio.create_task(self._background_refresh())
     
@@ -46,5 +46,5 @@ class PlaceholderManager:
 
         return re.sub(r"\[\[([a-zA-Z0-9_]+)\]\]", replacer, text)
     
-    def resolve_media(self, key: str) -> Optional[LocalizedSavedMedia]:
+    def resolve_media(self, key: str) -> Optional["LocalizedSavedMedia"]:
         return self._media_cache.get(key)
