@@ -492,6 +492,11 @@ class ConfigurationAnnotation(AppBaseModel):
     name: LocalizedEntry
     text: LocalizedEntry
     media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
+    
+    def update(self, base_annotation: "ConfigurationAnnotation"):
+        self.name=base_annotation.name
+        self.text=base_annotation.text
+        self.media=base_annotation.media
 
 class ConfigurationOption(AppBaseModel):
     name: LocalizedEntry
@@ -536,11 +541,16 @@ class ConfigurationOption(AppBaseModel):
         
         # Обновляем choices
         for choice_key, base_choice in update_from_option.choices.items():
+            cur_choice = self.choices[choice_key]
+            
             if choice_key not in self.choices.keys():
                 self.choices[choice_key] = base_choice
                 continue
             
-            self.choices[choice_key].update(base_choice)
+            if type(cur_choice) == type(base_choice):
+                cur_choice.update(base_choice)
+            else:
+                self.choices[choice_key] = base_choice
         # Удаляем choices, которых больше нет в base
         for choice_key in list(self.choices.keys()):
             if choice_key not in update_from_option.choices:
