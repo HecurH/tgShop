@@ -464,13 +464,13 @@ class ConfigurationChoice(AppBaseModel):
             None
         )
     
-    def check_blocked_path(self, path: str, options: Dict[str, Any]) -> bool:
+    def check_blocked_path(self, path: str, options: Dict[str, "ConfigurationOption"]) -> bool:
         keys = path.split("/")
         
         option = options.get(keys[0]) if keys else None
         if not option: raise Exception("BPath: No such option")
         
-        chosen_key = option.chosen
+        chosen_key = option.chosen_key
         if chosen_key == keys[1] and len(keys) == 2:
             return True
         
