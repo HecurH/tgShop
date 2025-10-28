@@ -340,7 +340,7 @@ async def entry_option_select_handler(ctx: Context,
         annotation_media = await annotation.media.resolve(ctx) if annotation.media and isinstance(annotation.media, MediaPlaceholderLink) else annotation.media
 
         await send_media_response(ctx.message, annotation_media, annotation.text.get(ctx), kb)
-        await asyncio.sleep(2)
+        return
     
     media = await chosen.media.resolve(ctx) if chosen.media and isinstance(chosen.media, MediaPlaceholderLink) else chosen.media
 

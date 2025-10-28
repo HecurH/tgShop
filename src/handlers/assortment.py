@@ -204,14 +204,12 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
                                     ctx,
                                     switches=choice)
     elif isinstance(choice, ConfigurationAnnotation):
-        print(2)
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
                                     product=product,
                                     option=changing_option,
                                     annotation=choice)
     else:
-        print(type(choice))
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
                                     product=product,
