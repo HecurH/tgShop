@@ -111,7 +111,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
 async def setting_localized_media_handler(_, ctx: Context):
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
+        await call_state_handler(CommonStates.MainMenu, ctx)
         return
     
     remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
