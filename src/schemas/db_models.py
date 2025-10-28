@@ -386,7 +386,7 @@ class ConfigurationSwitches(AppBaseModel):
             if isinstance(switch, ConfigurationSwitchesGroup):
                 for sw in switch.get_all():
                     if sw.name.get(ctx) == name:
-                        switch.enabled = not switch.enabled
+                        sw.enabled = not sw.enabled
                         break
             elif switch.name.get(ctx) == name:
                 switch.enabled = not switch.enabled
