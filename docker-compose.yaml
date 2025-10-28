@@ -11,3 +11,6 @@ services:
       - ./logs/:/gss_logs/
     env_file:
       - .env
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
