@@ -349,15 +349,17 @@ async def entry_option_select_handler(ctx: Context,
 
 @state_handlers.register(AssortmentStates.ChoiceEditValue)
 async def choice_edit_value_handler(ctx: Context,
-                                    choice,
+                                    choice: ConfigurationChoice,
                                     **_):
     await clear_keyboard_effect(ctx.message)
 
     text = AssortmentTextGen.generate_presets_text(ctx) if choice.existing_presets else AssortmentTextGen.generate_custom_input_text(choice, ctx)
     kb = UncategorizedKBs.inline_cancel(ctx)
+    
+    media = await choice.media.resolve(ctx) if choice.media and isinstance(choice.media, MediaPlaceholderLink) else choice.media
 
     await send_media_response(ctx.message,
-                              choice.media,
+                              media,
                               text,
                               kb)
 
