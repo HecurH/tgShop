@@ -513,12 +513,12 @@ class ConfigurationOption(AppBaseModel):
     
     def get_key_by_label(self, label: str, ctx: Context) -> Optional[str]:
         for key, choice in self.choices.items():
-            if hasattr(choice, "label") and choice.label.get(ctx) == label:
+            if (hasattr(choice, "label") and choice.label.get(ctx) == label) or (hasattr(choice, "name") and choice.name.get(ctx) == label):
                 return key
     
     def get_by_label(self, label: str, ctx: Context) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
         for choice in self.choices.values():
-            if hasattr(choice, "label") and choice.label.get(ctx) == label:
+            if (hasattr(choice, "label") and choice.label.get(ctx) == label) or (hasattr(choice, "name") and choice.name.get(ctx) == label):
                 return choice
 
     def calculate_price(self):
