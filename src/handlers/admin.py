@@ -101,6 +101,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
                                                 media_id=media_id)
         
         await ctx.services.db.media_placeholders.save(placeholder)
+        await ctx.services.placeholders.update_placeholders()
         await ctx.message.answer(f"Медиаплэйсхолдер изменен.")
         return
     
@@ -153,6 +154,7 @@ async def setting_localized_media_handler(_, ctx: Context):
                                                                           )
                                                          )
         
+        await ctx.services.placeholders.update_placeholders()
         await call_state_handler(CommonStates.MainMenu, ctx, send_before="Плейсхолдер установлен.")
         
     except Exception as e:
@@ -696,7 +698,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                             price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),
                         "neon_colors": ConfigurationSwitch(
-                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.name"),
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.ффффффффффффффффффффф.name"),
                             description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.description"),
                             price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),
