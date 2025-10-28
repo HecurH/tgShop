@@ -589,7 +589,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Phosphors"
                                 }
                                 description = {
-                                    "ru": "Светящиеся пигменты, способные накапливать энергию от ультрафиолетового света и постепенно отдавать её в виде яркого послесвечения. Зеленые и голубые оттенки имеют самое сильное и долгое свечение",
+                                    "ru": "Светящиеся пигменты, способные накапливать энергию от ультрафиолетового света и постепенно отдавать её в виде яркого послесвечения. Зеленые и голубые оттенки имеют самое сильное и долгое свечение.",
                                     "en": "Luminous pigments that can accumulate energy from ultraviolet light and gradually release it in the form of a bright afterglow. Green and blue shades have the strongest and longest glow."
                                 }
                                 
