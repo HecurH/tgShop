@@ -437,7 +437,7 @@ class DBEntryTranslates(Translatable):
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 
-Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+Если вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
     <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх - фиолетовый с перламутром</i>, <i>низ - зелёный с люминофором</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
@@ -448,7 +448,7 @@ class DBEntryTranslates(Translatable):
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – transparent</i>), and optionally add comments about transition details or special effects.
 
-If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
     <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top – purple with pearlescent effect</i>, <i>bottom – green with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
@@ -467,7 +467,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 
-Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+Если вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
     <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх — фиолетовый с перламутром</i>, <i>середина — розовая с блёстками</i>, <i>низ — зелёный с люминофором</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
@@ -478,7 +478,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — transparent</i>), and optionally add comments about transition details or special effects.
 
-If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
     <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top — violet with pearlescent effect</i>, <i>middle — pink with glitter</i>, <i>bottom — green with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
@@ -497,7 +497,7 @@ Add-ons are charged separately."""
                             
 В текстовом описании раскраски <b>укажите от двух до четырёх цветов</b>, которые будут использованы для создания вихря.
 
-Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+Если вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
     <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>вихрь из фиолетового и синего с перламутром</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
 
@@ -507,7 +507,7 @@ Add-ons are charged separately."""
 
 In the color description field, <b>specify two to four colors</b> that will be used to create the swirl.
 
-If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
     <b>1.</b> <b>Mention them in the color description</b> (for example: <i>a swirl of purple and blue with pearlescent effect</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.     
     
@@ -525,7 +525,7 @@ Add-ons are charged separately."""
 
 В текстовом описании раскраски <b>укажите, какие цвета (из меню) и эффекты</b> вы хотите видеть, а также любые другие пожелания.
 
-Если вы хотите добавить <b>люминофор, перламутровый пигмент, блёстки или градиент</b>, обязательно:
+Если вы хотите добавить <b>люминофор, перламутровый пигмент, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 <b>1.</b> <b>Упомяните их</b> в своём описании окраса.
 <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
 
@@ -534,7 +534,7 @@ Add-ons are charged separately."""
 
 In your text description of the paint job, <b>specify which colors and effects</b> you would like to see, as well as any other wishes.
 
-If you want to add <b>luminescent or pearlescent pigment, glitter, or a gradient</b>, please ensure you:
+If you want to add <b>luminescent or pearlescent pigment, glitter, use a gradient or neon colors</b>, please ensure you:
     <b>1.</b> <b>Mention them</b> in your paint job description.
     <b>2.</b> <b>Enable the corresponding toggles</b> in the “Additionals” menu.
 
@@ -579,8 +579,18 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Shimmer"
                                 }
                                 description = {
-                                    "ru": "Представляет собой мелкодисперсный порошок с металлическим сиянием, придающий поверхности интересный перелив и игру света.",
-                                    "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light."
+                                    "ru": "Представляет собой мелкодисперсный порошок с металлическим сиянием, придающий поверхности интересный перелив и игру света. Используется как добавка для смешения с цветами.",
+                                    "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light. It is used as an additive for mixing with colors."
+                                }
+                            
+                            class NeonColors(Translatable):
+                                name = {
+                                    "ru": "Неоновые цвета",
+                                    "en": "Neon colors"
+                                }
+                                description = {
+                                    "ru": "Отдельные цвета, способные отражать ультрафиолетовый свет. (см. Доступные цвета)",
+                                    "en": "Individual colors that can reflect ultraviolet light. (see Available colors)"
                                 }
 
                             class PhosphorsGroup(Translatable):
@@ -589,8 +599,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Phosphors"
                                 }
                                 description = {
-                                    "ru": "Светящиеся пигменты, способные накапливать энергию от ультрафиолетового света и постепенно отдавать её в виде яркого послесвечения. Зеленые и голубые оттенки имеют самое сильное и долгое свечение.",
-                                    "en": "Luminous pigments that can accumulate energy from ultraviolet light and gradually release it in the form of a bright afterglow. Green and blue shades have the strongest and longest glow."
+                                    "ru": "Светящиеся пигменты, способные накапливать энергию от ультрафиолетового света и постепенно отдавать её в виде яркого послесвечения. Зеленые и голубые оттенки имеют самое сильное и долгое свечение. Используется как добавка для смешения с цветами.",
+                                    "en": "Luminous pigments that can accumulate energy from ultraviolet light and gradually release it in the form of a bright afterglow. Green and blue shades have the strongest and longest glow. It is used as an additive for mixing with colors."
                                 }
                                 
                                 class Switches(Translatable):
@@ -638,8 +648,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
 
                         text = {
-                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, используемые для смешения.",
-                            "en": "The attached media file displays all the original colors used for mixing."
+                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, доступные для смешения.\nУчтите, перламутровый пигмент — добавка, а неон — самостоятельный цвет.",
+                            "en": "The attached media file displays all the original colors used for mixing.\nPlease note that shimmer is an additive, and neon is an independent color."
                         }
             
 class UncategorizedTranslates(Translatable):
