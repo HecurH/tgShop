@@ -275,7 +275,12 @@ class AssortmentTextGen:
 
     @staticmethod
     def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], ctx: Context):
-        additionals_info = "\n".join([f"{additional.name.get(ctx)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(ctx)}\n" for additional in available])
+        def gen(additional: ProductAdditional):
+            description = f"    {additional.description.get(ctx)}\n" if additional.description else ""
+            
+            return f"{additional.name.get(ctx)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n{description}"
+        
+        additionals_info = "\n".join([gen(additional) for additional in available])
         return f"\n{additionals_info}\n\n{ctx.t.AssortmentTranslates.switches_enter}"
 
     @staticmethod

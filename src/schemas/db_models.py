@@ -730,7 +730,7 @@ class ProductAdditional(AppBaseModel):
     name: LocalizedString
     category: str
 
-    short_description: LocalizedString
+    description: Optional[LocalizedString] = None
 
     price: LocalizedMoney
     disallowed_products: list[PydanticObjectId] = Field(default_factory=list)

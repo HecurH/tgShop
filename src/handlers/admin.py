@@ -785,7 +785,7 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
     await ctx.services.db.products.save(product)
 
 
-@router.message(Command("add_addit"))
+@router.message(Command("add_additionals"))
 async def addit(_, ctx: Context) -> None:
     additional = ProductAdditional(
         name=LocalizedString(data={
@@ -793,11 +793,7 @@ async def addit(_, ctx: Context) -> None:
             "en":"Suction Cup"}
         ),
         category="dildos",
-        short_description=LocalizedString(data={
-            "ru":"",
-            "en":""}
-        ),
-        price=LocalizedMoney.from_keys(RUB=1000.00, USD=10.00)
+        price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00)
     )
 
     await ctx.services.db.additionals.save(additional)
@@ -1155,7 +1151,7 @@ async def add_additionals_handler(_, ctx: Context) -> None:
             "en":"DB PLACEHOLDER"}
         ),
         category="dildos",
-        short_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
@@ -1170,7 +1166,7 @@ async def add_additionals_handler(_, ctx: Context) -> None:
             "en":"Стержень"}
         ),
         category="dildos",
-        short_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"DB PLACEHOLDER",
             "en":"DB PLACEHOLDER"}
         ),
