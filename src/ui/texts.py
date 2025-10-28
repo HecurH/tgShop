@@ -266,10 +266,10 @@ class AssortmentTextGen:
                 text += f"{switch_or_group.name.get(ctx)} — {switch_or_group.price.to_text(ctx.customer.currency)} ( {'✅' if switch_or_group.enabled else '❌'} )\n"
                 text += f"    {switch_or_group.description.get(ctx)}\n\n" if switch_or_group.description else "\n\n"
             elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
-                text += f"{switch_or_group.name.get(ctx)}:\n"
+                text += f"{switch_or_group.name.get(ctx)}\n  — {switch_or_group.description.get(ctx)}\n\n"
                 for switch in switch_or_group.get_all():
                     text += f"    {switch.name.get(ctx)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )\n"
-                    text += f"        {switch.description.get(ctx)}\n\n" if switch.description else "\n\n"
+                    text += f"        {switch.description.get(ctx)}\n\n" if switch.description else "\n"
         
         
         return text + ctx.t.AssortmentTranslates.switches_enter
