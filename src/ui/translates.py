@@ -144,7 +144,7 @@ class Translatable(metaclass=TranslationMeta):
                 final_string = raw_value[form]
         
         if pm:
-            return pm.process(final_string, lang)
+            return pm.process_text(final_string, lang)
         
         return final_string
 
@@ -217,7 +217,7 @@ class TranslatorHub:
                 return cls.get_for_lang('en', pm)
             cls._cache[lang] = TranslatorHub(lang=lang, pm=pm)
         return cls._cache[lang]
- 
+
 class EnumTranslates(Translatable):
     
     class PromocodeCheckResult(Translatable):
@@ -289,6 +289,359 @@ class EnumTranslates(Translatable):
             "en": "Received"
         }
 
+
+class DBEntryTranslates(Translatable):
+    class ProductConfigurationTranslates(Translatable):
+        class Options(Translatable):
+            class Size(Translatable):
+                name = {
+                    "ru": "Размер",
+                    "en": "Size"
+                }
+                
+                text = {
+                    "ru": "Выберите размер изделия:",
+                    "en": "Choose the size of the product:"
+                }
+                
+                class Choices(Translatable):
+                    class Small(Translatable):
+                        label = {
+                            "ru": "Маленький",
+                            "en": "Small"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
+                            "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."
+                        }
+                    
+                    class Medium(Translatable):
+                        label = {
+                            "ru": "Средний",
+                            "en": "Medium"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Средний</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
+                            "en": "Selected <b>Medium</b> size.\n\nYou can see all the size values in the attached picture."
+                        }
+                    
+                    class Large(Translatable):
+                        label = {
+                            "ru": "Большой",
+                            "en": "Large"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
+                            "en": "Selected <b>Large</b> size.\n\nYou can see all the size values in the attached picture."
+                        }
+
+            class Firmness(Translatable):
+                name = {
+                    "ru": "Мягкость",
+                    "en": "Firmness"
+                }
+                
+                text = {
+                    "ru": "Выберите мягкость изделия:",
+                    "en": "Choose the firmness of the product:"
+                }
+                
+                class Choices(Translatable):
+                    class Soft(Translatable):
+                        label = {
+                            "ru": "Мягкий",
+                            "en": "Soft"
+                        }
+                        
+                        description = {
+                            "ru": "Выбран <b>Мягкий</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
+                            "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."
+                        }
+                    
+                    class Medium(Translatable):
+                        label = {
+                            "ru": "Средняя",
+                            "en": "Medium"
+                        }
+
+                        description = {
+                            "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
+                            "en": "<b>Medium-soft</b> silicone is selected.\n\nYou can see an example in the attached video."
+                        }
+                    
+                    class Firm(Translatable):
+                        label = {
+                            "ru": "Твёрдый",
+                            "en": "Firm"
+                        }
+
+                        description = {
+                            "ru": "Выбран <b>Твёрдый</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
+                            "en": "<b>Firm</b> silicone is selected.\n\nYou can see an example in the attached video."
+                        }
+                    
+                    class FirmnessGradation(Translatable):
+                        label = {
+                            "ru": "Градация жёсткости",
+                            "en": "Firmness gradation"
+                        }
+
+                        description = {
+                            "ru": "Представьте, что изделие не однородное, а состоит из нескольких областей с разной мягкостью, которые <i>плавно</i> перетекают друг в друга.\nДля каждой из зон на картинке вы можете выбрать нужную мягкость.",
+                            "en": "Imagine that the product is not uniform, but consists of several areas with different firmness that <i>smoothly</i> transition into each other.\nFor each of the zones in the picture, you can choose the desired firmness."
+                        }
+
+            class Color(Translatable):
+                name = {
+                    "ru": "Окрас",
+                    "en": "Color"
+                }
+
+                text = {
+                    "ru": "Выберите окрас изделия:",
+                    "en": "Choose the color of the product:"
+                }
+                
+                class Choices(Translatable):
+                    
+                    class Standart(Translatable):
+                        label = {
+                            "ru": "Стандартный",
+                            "en": "Standard"
+                        }
+
+                        description = {
+                            "ru": "Выбран <b>стандартный</b> окрас.\n\nПример можете увидеть в прикрепленном к сообщению медиа.",
+                            "en": "Selected <b>standard</b> color.\n\nYou can see an example in the attached media."
+                        }
+                            
+                    class Existing(Translatable):
+                        label = {
+                            "ru": "Существующий",
+                            "en": "Existing One"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали раскраску {chosen}.",
+                            "en": "You have chosen the color {chosen}."
+                        }
+                    
+                    class TwoZone(Translatable):
+                        label = {
+                            "ru": "Двухзонный",
+                            "en": "Two-zone"
+                        }
+
+                        description = {
+                        "ru": """Опция позволяет окрасить изделие в два разных цвета — каждая зона окрашивается отдельно, с чёткой границей перехода (граница указана на изображении).
+
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+
+Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх - фиолетовый с перламутром</i>, <i>низ - зелёный с люминофором</i>).
+    <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
+
+Базовая двухзонная окраска — бесплатная. Дополнения оплачиваются отдельно.""",
+
+                            "en": """The option allows you to color the product in two different shades — each zone is painted separately, with a clear dividing line (the boundary is shown in the image).
+
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – transparent</i>), and optionally add comments about transition details or special effects.
+
+If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top – purple with pearlescent effect</i>, <i>bottom – green with phosphor</i>).
+    <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
+
+The basic two-zone coloring is free of charge. Add-ons are charged separately."""
+                        }
+                    
+                    class ThreeZone(Translatable):
+                        label = {
+                            "ru": "Трёхзонный",
+                            "en": "Three-zone"
+                        }
+
+                        description = {
+                        "ru": """Опция позволяет окрасить изделие в три разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
+
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+
+Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх — фиолетовый с перламутром</i>, <i>середина — розовая с блёстками</i>, <i>низ — зелёный с люминофором</i>).
+    <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
+
+Дополнения оплачиваются отдельно.""",
+
+                            "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
+
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — transparent</i>), and optionally add comments about transition details or special effects.
+
+If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top — violet with pearlescent effect</i>, <i>middle — pink with glitter</i>, <i>bottom — green with phosphor</i>).
+    <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
+
+Add-ons are charged separately."""
+                        }
+                    
+                    class Swirl(Translatable):
+                        label = {
+                            "ru": "Вихрь",
+                            "en": "Swirl"
+                        }
+
+                        description = {
+                            "ru": """Опция создаёт <b>уникальный вихревой рисунок</b> — хаотичное смешение выбранных вами цветов, в результате чего получается плавный и равномерный перелив оттенков по всему изделию.
+                            
+В текстовом описании раскраски <b>укажите от двух до четырёх цветов</b>, которые будут использованы для создания вихря.
+
+Если вы хотите использовать <b>люминофор, перламутр, блёстки или градиент</b>, обязательно:
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>вихрь из фиолетового и синего с перламутром</i>).
+    <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
+
+Дополнения оплачиваются отдельно.""",
+
+                            "en": """The option creates a <b>unique swirl pattern</b> — a chaotic blend of the colors you choose, resulting in a smooth and even transition of shades across the entire product.
+
+In the color description field, <b>specify two to four colors</b> that will be used to create the swirl.
+
+If you want to use <b>phosphor, pearlescent pigment, glitter, or gradient</b>, make sure to:
+    <b>1.</b> <b>Mention them in the color description</b> (for example: <i>a swirl of purple and blue with pearlescent effect</i>).
+    <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.     
+    
+Add-ons are charged separately."""
+                        }
+                    
+                    class Custom(Translatable):
+                        label = {
+                            "ru": "Свой",
+                            "en": "Custom"
+                        }
+
+                        description = {
+                            "ru": """Опция позволяет создать <b>уникальный индивидуальный окрас</b> изделия по вашему описанию. Итоговая стоимость рассчитывается <b>в зависимости от сложности работы</b>.
+
+В текстовом описании раскраски <b>укажите, какие цвета (из меню) и эффекты</b> вы хотите видеть, а также любые другие пожелания.
+
+Если вы хотите добавить <b>люминофор, перламутровый пигмент, блёстки или градиент</b>, обязательно:
+<b>1.</b> <b>Упомяните их</b> в своём описании окраса.
+<b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
+
+Итоговая стоимость кастомного окраса рассчитывается индивидуально и зависит от сложности исполнения. Дополнения оплачиваются отдельно.""",
+                            "en": """This option allows you to create a <b>unique, individual paint job</b> based on your description. The final cost is calculated <b>based on the complexity of the work</b>.
+
+In your text description of the paint job, <b>specify which colors and effects</b> you would like to see, as well as any other wishes.
+
+If you want to add <b>luminescent or pearlescent pigment, glitter, or a gradient</b>, please ensure you:
+    <b>1.</b> <b>Mention them</b> in your paint job description.
+    <b>2.</b> <b>Enable the corresponding toggles</b> in the “Additionals” menu.
+
+The final cost for a custom paint job is calculated individually and depends on the complexity of the design. Add-ons are charged separately."""
+                    
+                        }
+                    
+                    class Additionals(Translatable):
+                        label = {
+                            "ru": "Дополнения",
+                            "en": "Additionals"
+                        }
+                        description = {
+                            "ru": "Используйте меню ниже, чтобы добавить к окраске дополнительные элементы.",
+                            "en": "todo"
+                        }
+                        
+                        class Switches(Translatable):
+                            class Gradient(Translatable):
+                                name = {
+                                    "ru": "Градиент",
+                                    "en": "Gradient"
+                                }
+                                description = {
+                                    "ru": "Создаёт плавный и естественный переход от одного цвета к другому.",
+                                    "en": "Creates a smooth and natural transition from one color to another."
+                                }
+                            
+                            class Glitter(Translatable):
+                                name = {
+                                    "ru": "Блёстки",
+                                    "en": "Glitter"
+                                }
+                                description = {
+                                    "ru": "Декоративная добавка, размер около 0.2мм, играет на свету. По умолчанию используются серебряные.",
+                                    "en": "Decorative additive, about 0.2mm in size, plays in the light. Silver is used by default."
+                                }
+                        
+                            class Shimmer(Translatable):
+                                name = {
+                                    "ru": "Перламутровый пигмент",
+                                    "en": "Shimmer"
+                                }
+                                description = {
+                                    "ru": "Представляет собой мелкодисперсный порошок с металлическим сиянием, придающий поверхности интересный перелив и игру света.",
+                                    "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light."
+                                }
+
+                            class PhosphorsGroup(Translatable):
+                                label = {
+                                    "ru": "Люминофоры",
+                                    "en": "Phosphors"
+                                }
+                                description = {
+                                    "ru": "Светящиеся пигменты, способные накапливать энергию от ультрафиолетового света и постепенно отдавать её в виде яркого послесвечения. Зеленые и голубые оттенки имеют самое сильное и долгое свечение",
+                                    "en": "Luminous pigments that can accumulate energy from ultraviolet light and gradually release it in the form of a bright afterglow. Green and blue shades have the strongest and longest glow."
+                                }
+                                
+                                class Switches(Translatable):
+                                    class Blue(Translatable):
+                                        name = {
+                                            "ru": "Синий",
+                                            "en": "Blue"
+                                        }
+                                        
+                                    class Cyan(Translatable):
+                                        name = {
+                                            "ru": "Голубой",
+                                            "en": "Cyan"
+                                        }
+
+                                    class Green(Translatable):
+                                        name = {
+                                            "ru": "Зелёный",
+                                            "en": "Green"
+                                        }
+                                    
+                                    class Red(Translatable):
+                                        name = {
+                                            "ru": "Красный",
+                                            "en": "Red"
+                                        }
+                                        
+                                    class Purple(Translatable):
+                                        name = {
+                                            "ru": "Фиолетовый",
+                                            "en": "Purple"
+                                        }
+                                    
+                                    class White(Translatable):
+                                        name = {
+                                            "ru": "Белый",
+                                            "en": "White"
+                                        }
+                                    
+                        
+                    class AvailableColors(Translatable):
+                        label = {
+                            "ru": "Доступные цвета",
+                            "en": "Available colors"
+                        }
+
+                        text = {
+                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, используемые для смешения.",
+                            "en": "The attached media file displays all the original colors used for mixing."
+                        }
+            
 class UncategorizedTranslates(Translatable):
     oopsie = {
         "ru": "Упс! Прости, мне нужно начать заново...",
@@ -1042,6 +1395,7 @@ class ReplyButtonsTranslates(Translatable):
                 }
                 
 class TypedTranslatorHub(TranslatorHub):
+    DBEntryTranslates: DBEntryTranslates
     EnumTranslates: EnumTranslates
     UncategorizedTranslates: UncategorizedTranslates
     CommonTranslates: CommonTranslates

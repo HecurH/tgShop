@@ -7,14 +7,15 @@ from aiogram.types import BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
+from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from schemas.enums import DiscountType, OrderStateKey, MediaType
-from schemas.types import Discount, LocalizedMoney, LocalizedString, SavedMedia
-from ui.message_tools import list_commands, split_message
+from schemas.enums import OrderStateKey, MediaType
+from schemas.types import LocalizedMoney, LocalizedString, LocalizedSavedMedia, LocalizedEntry, MediaPlaceholderLink
+from ui.message_tools import list_commands
 
 router = Router(name="admin")
 middleware = RoleCheckMiddleware("admin")
@@ -28,6 +29,134 @@ async def help_handler(_, ctx: Context):
     txt = "\n".join(doc for _, doc in list_commands(router))
     
     await ctx.message.answer(txt, parse_mode=None)
+    
+@router.message(Command("add_media_placeholder"))
+async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject):
+    """/add_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Добавить медиаплэйсхолдер"""
+    args = command.args.split("|")
+    if len(args) < 3:
+        await ctx.message.answer(f"Недостаточно аргументов.")
+        
+    media_type = args[0]
+    key = args[1]
+    is_localized = args[1] == "true"
+    
+    if media_type not in ["photo","video","document"]:
+        await ctx.message.answer(f"Неправильный тип медиа.")
+        return
+    if not is_localized:
+        raw = await ctx.message.bot.download(ctx.message.document)
+
+        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
+            raw.read(),
+            filename=ctx.message.document.file_name
+        )
+        )
+        media_id = getattr(msg_id, media_type)
+        media_id = media_id[-1] if isinstance(media_id, list) else media_id
+        media_id = media_id.file_id
+        
+        await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
+                                                                       value=LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
+                                                                                                 media_id=media_id)
+                                                                       )
+                                                      )
+        await ctx.message.answer(f"Медиаплэйсхолдер добавлен.")
+        return
+    
+    await ctx.fsm.update_data(media_type=media_type, key=key, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
+    await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
+
+@router.message(Command("edit_media_placeholder"))
+async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject):
+    """/edit_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Добавить медиаплэйсхолдер"""
+    args = command.args.split("|")
+    if len(args) < 3:
+        await ctx.message.answer(f"Недостаточно аргументов.")
+        
+    media_type = args[0]
+    key = args[1]
+    is_localized = args[1] == "true"
+    
+    if media_type not in ["photo","video","document"]:
+        await ctx.message.answer(f"Неправильный тип медиа.")
+        return
+    if not is_localized:
+        placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
+        if not placeholder:
+            await ctx.message.answer(f"Медиаплэйсхолдер не найден.")
+        
+        raw = await ctx.message.bot.download(ctx.message.document)
+
+        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
+            raw.read(),
+            filename=ctx.message.document.file_name
+        )
+        )
+        media_id = getattr(msg_id, media_type)
+        media_id = media_id[-1] if isinstance(media_id, list) else media_id
+        media_id = media_id.file_id
+        
+        placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
+                                                media_id=media_id)
+        
+        await ctx.services.db.media_placeholders.save(placeholder)
+        await ctx.message.answer(f"Медиаплэйсхолдер изменен.")
+        return
+    
+    await ctx.fsm.update_data(media_type=media_type, key=key, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
+    await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
+
+@router.message(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia)
+async def setting_localized_media_handler(_, ctx: Context):
+    text = ctx.message.text
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
+        return
+    
+    remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
+                      if not await ctx.fsm.get_value(lang)]
+    
+    if remaining_langs:
+        raw = await ctx.message.bot.download(ctx.message.document)
+
+        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
+            raw.read(),
+            filename=ctx.message.document.file_name
+        )
+        )
+        
+        media_id = getattr(msg_id, await ctx.fsm.get_value("media_type"))
+        media_id = media_id[-1] if isinstance(media_id, list) else media_id
+        media_id = media_id.file_id
+        
+        await ctx.fsm.update_data(**{remaining_langs[0]: media_id})
+        
+        if len(remaining_langs) > 1:
+            await call_state_handler(AdminStates.Main.GlobalPlaceholders.CreatingLangs, ctx)
+            return
+    
+    langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
+    key = await ctx.fsm.get_value("key")
+    try:
+        placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
+        if placeholder:
+            placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
+                                                    media_id=langs_dict)
+            
+            await ctx.services.db.media_placeholders.save(placeholder)
+        else:
+        
+            await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
+                                                                           value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
+                                                                                                     media_id=langs_dict)
+                                                                          )
+                                                         )
+        
+        await call_state_handler(CommonStates.MainMenu, ctx, send_before="Плейсхолдер установлен.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось установить плейсхолдер: {e}")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
@@ -56,7 +185,6 @@ async def admin_message_sending_handler(_, ctx: Context):
     await ctx.services.notificators.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Сообщение отправлено.", 1))
     
-
 @router.message(Command("confirm_manual_payment"))
 async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):
     """/confirm_manual_payment <order_id>|<datetime> - Подтвердить ручную оплату заказа"""
@@ -438,217 +566,173 @@ async def cats_handler(_, ctx: Context) -> None:
 async def image_saving_handler(_, ctx: Context) -> None:
     configuration = ProductConfiguration(options={
         "size": ConfigurationOption(
-            name=LocalizedString(data={
-                "ru": "Размер",
-                "en": "Size"
-            }),
-            text=LocalizedString(data={
-                "ru": "Выберите размер изделия:",
-                "en": "Choose the size of the product:"
-            }),
-            chosen="medium",
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.text"),
+            chosen_key="medium",
             choices={
                 "small": ConfigurationChoice(
-                    label=LocalizedString(data={"ru":"Маленький", "en":"Small"}),
-                    media=SavedMedia(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.label"),
+                    media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAJTFmjhH0XzDUPMlbiirkzSzK08JSZTAAIs-TEbKEYIS5N_kpftMhc7AQADAgADeQADNgQ"
                     ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран <b>Маленький</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
-                        "en": "Selected <b>Small</b> size.\n\nYou can see all the size values in the attached picture."}),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.description"),
 
-                    price=LocalizedMoney.from_keys(RUB=-1000.00, USD=-30.00)
+                    price=LocalizedMoney.from_keys(RUB=-1500.00, USD=-30.00)
                 ),
                 "medium": ConfigurationChoice(
-                    label=LocalizedString(data={"ru":"Средний", "en":"Medium"}),
-                    media=SavedMedia(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.label"),
+                    media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAJTGWjhH1tl4-D7zyWf_E01I37KKsWWAAIt-TEbKEYISxpvT1mJjCaUAQADAgADeQADNgQ"
                     ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран <b>Средний</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
-                        "en": "Selected <b>Medium</b> size.\n\nYou can see all the size values in the attached picture."})
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description")
                 ),
-                "big": ConfigurationChoice(
-                    label=LocalizedString(data={"ru":"Большой", "en":"Big"}),
-                    media=SavedMedia(
+                "large": ConfigurationChoice(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.label"),
+                    media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAJTHGjhH4sb4bbdOgjhxIdCuwanphioAAIu-TEbKEYIS88pbDq-UqvXAQADAgADeQADNgQ"
                     ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
-                        "en": "Selected <b>Big</b> size.\n\nYou can see all the size values in the attached picture."}),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.description"),
 
-                    price=LocalizedMoney.from_keys(RUB=1000.00, USD=30.00)
+                    price=LocalizedMoney.from_keys(RUB=1500.00, USD=30.00)
                 )
             }
         ),
         "firmness": ConfigurationOption(
-            name=LocalizedString(data={
-                "ru": "Мягкость",
-                "en": "Firmness"
-            }),
-            text=LocalizedString(data={
-                "ru": "Выберите мягкость изделия:",
-                "en": "Choose the firmness of the product:"
-            }),
-            chosen="medium",
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.text"),
+            chosen_key="medium",
             choices={
                 "soft": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Мягкий", "en": "Soft"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран <b>Мягкий</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                        "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Soft.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Soft.description"),
                 ),
                 "medium": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Средний", "en": "Medium"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                        "en": "<b>Medium-soft</b> silicone is selected.\n\nYou can see an example in the attached video."})
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description"),
                 ),
                 "firm": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Твёрдый", "en": "Firm"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
-                    description=LocalizedString(data={
-                        "ru": "Выбран <b>Твёрдый</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                        "en": "<b>Firm</b> silicone is selected.\n\nYou can see an example in the attached video."})
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Firm.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Firm.description"),
                 ),
                 "firmness_gradation": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Градация жёсткости", "en": "Firmness gradation"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.FirmnessGradation.label"),
+                    media=MediaPlaceholderLink(placeholder_key="firmness_gradation_choice"),
                     is_custom_input=True,
                     can_be_blocked_by=["color/swirl"],
 
-                    description=LocalizedString(data={
-                        "ru": "на картинке типо дилдак с полосами, разделяющими зоны, и юзер типо расписывает, - (кнот мягкий, кончик и основание средние)",
-                        "en": "The picture shows a dildo with stripes dividing zones, and the user can specify, for example: (knot - soft, the rest are medium)."
-                    }),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.FirmnessGradation.description"),
                     price=LocalizedMoney.from_keys(RUB=400.00, USD=6.00)
-
                 )
             }
         ),
         "color": ConfigurationOption(
-            name=LocalizedString(data={
-                "ru": "Окрас",
-                "en": "Color"
-            }),
-            text=LocalizedString(data={
-                "ru": "Что вы хотите сделать?",
-                "en": "What do you want to do?"
-            }),
-            chosen="sel_existing",
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.text"),
+            chosen_key="existing",
             choices={
-                "sel_existing": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Существующий", "en": "Existing one"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                # "standart": ConfigurationChoice(
+                #     label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.label"),
+                #     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.description")
+                # ),
+                "existing": ConfigurationChoice(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.label"),
+                    media=MediaPlaceholderLink(placeholder_key="existing_color_choice"),
                     existing_presets=True,
-                    existing_presets_chosen=1,
-                    existing_presets_quantity=3,
+                    existing_presets_pattern="K|D,T|P,M,N|int",
 
-                    description=LocalizedString(data={
-                        "ru": "Вы выбрали раскраску под номером {chosen}.",
-                        "en": "You have chosen the color number {chosen}."})
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.description")
                 ),
                 "two-zone": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Двухзонный", "en": "Two-zone"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.label"),
+                    media=MediaPlaceholderLink(placeholder_key="two_zone_color_choice"),
                     is_custom_input=True,
 
-                    description=LocalizedString(data={
-                        "ru": "Выберите цвета для двух зон: кончик и основание. Просто напишите, какой цвет хотите для каждой части. Если хотите шиммер, блёстки, люминофор или градиент (2 зоны) — не забудьте выбрать их в разделе «Дополнительно».",
-                        "en": "Choose colors for the two zones: tip and base. Just write which color you want for each part. If you want shimmer, glitter, phosphor, or a gradient for one of the zones — don't forget to select them in the 'Additional' section."
-                    })
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.description"),
                 ),
                 "three-zone": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Трёхзонный", "en": "Three-zone"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.label"),
+                    media=MediaPlaceholderLink(placeholder_key="three_zone_color_choice"),
                     is_custom_input=True,
 
-                    description=LocalizedString(data={
-                        "ru": "Выберите цвета для каждой из трёх зон: кончик, узел и основание. Просто напишите, какой цвет хотите для каждой части. Если хотите шиммер, блёстки, люминофор или градиент (2 зоны) — не забудьте выбрать их в разделе «Дополнительно».",
-                        "en": "Choose colors for each of the three zones: tip, knot, and base. Just write which color you want for each part. If you want shimmer, glitter, or phosphor, don't forget to select them in the 'Additional' section."
-                    })
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.description")
                 ),
-                "swirl": ConfigurationChoice( # вихревая, пользователю надо уточнить до трех цветов для этого
-                    label=LocalizedString(data={"ru": "Вихрь", "en": "Swirl"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                "swirl": ConfigurationChoice(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.label"),
+                    media=MediaPlaceholderLink(placeholder_key="swirl_color_choice"),
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
-                    price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
+                    price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
 
-                    description=LocalizedString(data={
-                        "ru": "Выберите до трёх цветов для вихревой раскраски. Просто напишите, какие цвета хотите смешать. Если хотите шиммер, блёстки или люминофор — не забудьте выбрать их в разделе «Дополнительно».",
-                        "en": "Choose up to three colors for the swirl coloring. Just write which colors you want to mix. If you want shimmer, glitter, or phosphor, don't forget to select them in the 'Additional' section."
-                    })
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.description"),
                 ),
-                "own_colors": ConfigurationChoice(
-                    label=LocalizedString(data={"ru": "Своя раскраска", "en": "Custom colors"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
+                "custom": ConfigurationChoice(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.label"),
                     is_custom_input=True,
                     blocks_price_determination=True,
+                    price=LocalizedMoney.from_keys(RUB=2000.00, USD=30.00),
 
-                    description=LocalizedString(data={
-                        "ru": "Здесь типо текст где\nэээээ\nну типо тут то что можно менять/какие цвета, цены на них же ээ да",
-                        "en": "Here's like a text where\nuhhhhh\n I'm like here's what you can change/what colors, the prices for them are the same, uh yes"})
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.description"),
                 ),
-                "additional": ConfigurationSwitches(
-                    label=LocalizedString(data={"ru": "Дополнительно", "en": "Additional"}),
-                    media=SavedMedia(
-                        media_type=MediaType.video,
-                        media_id="BAACAgIAAxkDAAIEtGgc93O_W9FxMWJ7D859YU2tP9fxAAJGdwAC4TjpSKfM23poBFmlNgQ"
-                    ),
-                    description=LocalizedString(data={
-                        "ru": "Тут чисто инфа про сами свитчи",
-                        "en": "Тут чисто инфа про сами свитчи"}),
-                    switches=[
-                        ConfigurationSwitch(
-                            name=LocalizedString(data={"ru": "Градиент", "en": "Gradient"}),
-                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
+                "additionals": ConfigurationSwitches(
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.description"),
+                    switches={
+                        "gradient": ConfigurationSwitch(
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.name"),
+                            description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.description"),
+                            price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00)
                         ),
-                        ConfigurationSwitch(
-                            name=LocalizedString(data={"ru": "Блёстки", "en": "Glitter"}),
-                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
+                        "glitter": ConfigurationSwitch(
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Glitter.name"),
+                            description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Glitter.description"),
+                            price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00)
                         ),
-                        ConfigurationSwitch(
-                            name=LocalizedString(data={"ru": "Шиммер", "en": "Shimmer"}),
-                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
+                        "shimmer": ConfigurationSwitch(
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Shimmer.name"),
+                            description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Shimmer.description"),
+                            price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),
-                        ConfigurationSwitch(
-                            name=LocalizedString(data={"ru": "Люминофор", "en": "Phosphor"}),
-                            price=LocalizedMoney.from_keys(RUB=100.00, USD=6.00)
+                        "phosphors": ConfigurationSwitchesGroup(
+                            label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.label"),
+                            description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.description"),
+                            switches={
+                                "blue": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Blue.name"),
+                                    price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00)
+                                ),
+                                "cyan": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Cyan.name"),
+                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00)
+                                ),
+                                "green": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Green.name"),
+                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00)
+                                ),
+                                "red": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Red.name"),
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                ),
+                                "purple": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Purple.name"),
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                ),
+                                "white": ConfigurationSwitch(
+                                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.White.name"),
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                )
+                                
+                                    
+                            }
                         )
-                    ]
+                    }
+                ),
+                "available_colors": ConfigurationAnnotation(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.label"),
+                    text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.text"),
+                    media=MediaPlaceholderLink(placeholder_key="available_colors"),
                 )
             }
         )
@@ -665,9 +749,9 @@ async def image_saving_handler(_, ctx: Context) -> None:
             "ru":"Заглушка хд",
             "en":"Заглушка хд"}
         ),
-        short_description_media=SavedMedia(
+        short_description_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+            media_id="AgACAgIAAxkDAAJTEGjg-95UQ3KNkZC3wl39AAEskcuddAACSPcxGyhGCEvJAWVkMglOTgEAAwIAA3cAAzYE"
         ),
         long_description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
@@ -675,18 +759,23 @@ async def image_saving_handler(_, ctx: Context) -> None:
 Его кончик нежно входит в тебя, заставляя постанывать и дрожать еще сильнее. Постепенно расширяясь, мягко входят сплетения, доходя до окончательно добивающего узла... 
 Сильный и нежный, дракон Хайден будет идеальным партнёром, дарящим мягкие ласки и доминирущее превосходство, ведь все бурные фантазии, воплощаемые в жизнь, зависят только от твоего желания~</blockquote>
 
-Присоска идет в комплекте!""",
-            "en":"Hiden Dragon"}
+<b>К заказу будет приложен ламинированный плакат А5!</b>""",
+            "en":"""<blockquote expandable>The tender gleam of purple dragon scales under the rays of the scarlet sunset. Hayden always knows how to take care of his beloved partner. Gently holding you with his experienced paws, sensitively caressing your sensitive zones, he draws closer and closer, making your body tremble lightly with excitement. He catches your ragged breath, smiling slightly with pleasure...
+
+His tip gently enters you, making you moan and tremble even more. Gradually expanding, the soft knots slip in, reaching the final, overwhelming knot...
+Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft caresses and dominant superiority, for all the wild fantasies brought to life depend only on your desire~</blockquote>
+
+<b>An A5 laminated poster will be included with the order!</b>"""}
         ),
-        long_description_media=SavedMedia(
+        long_description_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+            media_id="AgACAgIAAxkDAAJTE2jhHT2XXoE2jfFZT-LaTW6m6oZAAAIf-TEbKEYISzw33MYbwxlOAQADAgADdwADNgQ"
         ),
-        base_price=LocalizedMoney.from_keys(RUB=5000.00, USD=100.00),
+        base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=configuration,
-        configuration_media=SavedMedia(
+        configuration_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAIEvmgdCZ7FHIjc4ZWxlEr1-RKo4mamAALx8zEb4TjpSMnWZTFndXzfAQADAgADeQADNgQ"
+            media_id="AgACAgIAAxkDAAJTE2jhHT2XXoE2jfFZT-LaTW6m6oZAAAIf-TEbKEYISzw33MYbwxlOAQADAgADdwADNgQ"
         )
     )
 

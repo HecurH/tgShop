@@ -2,6 +2,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardRemove
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union, List
 
+from schemas.types import MediaPlaceholderLink
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import *
 from ui.keyboards import *
@@ -98,6 +99,9 @@ class AdminStates(StatesGroup):
             CreatingLangs = State()
             EditKey = State()
             EditLangs = State()
+            
+        class GlobalMediaPlaceholders(StatesGroup):
+            SettingLocalizedMedia = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -198,7 +202,15 @@ async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeh
         if not await ctx.fsm.get_value(lang):
             await ctx.message.answer(f"Было: {placeholder.value.get(lang)}\nВведите новое значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
             return
-
+        
+@state_handlers.register(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia)
+async def handle_admin_set_localized_media(ctx: Context, **_):
+    for lang in SUPPORTED_LANGUAGES_TEXT.values():
+        if not await ctx.fsm.get_value(lang):
+            await ctx.message.answer(f"Отправьте файл для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+            return
+    
+        
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
     await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
@@ -318,12 +330,21 @@ async def entry_option_select_handler(ctx: Context,
                                       product: Product,
                                       delete_prev: bool = False,
                                       option: ConfigurationOption = None,
+                                      annotation: ConfigurationAnnotation = None,
                                       **_):
     chosen = option.get_chosen()
     text = AssortmentTextGen.generate_choice_text(option, ctx)
     kb = AssortmentKBs.generate_choice_kb(product, option, ctx)
+    
+    if annotation:
+        annotation_media = await annotation.media.resolve(ctx) if annotation.media and isinstance(annotation.media, MediaPlaceholderLink) else annotation.media
 
-    await send_media_response(ctx.message, chosen.media, text, kb)
+        await send_media_response(ctx.message, annotation_media, annotation.text.get(ctx), kb)
+        await asyncio.sleep(2)
+    
+    media = await chosen.media.resolve(ctx) if chosen.media and isinstance(chosen.media, MediaPlaceholderLink) else chosen.media
+
+    await send_media_response(ctx.message, media, text, kb)
     if delete_prev: await ctx.message.delete()
 
 @state_handlers.register(AssortmentStates.ChoiceEditValue)

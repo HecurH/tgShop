@@ -1,5 +1,5 @@
 import re
-from typing import TYPE_CHECKING, List, Optional, Literal
+from typing import TYPE_CHECKING, List, Optional
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
@@ -9,7 +9,7 @@ from schemas.enums import MediaType
 
 
 if TYPE_CHECKING:
-    from schemas.types import SavedMedia
+    from schemas.types import LocalizedSavedMedia
 
 
 async def clear_keyboard_effect(message: Message) -> None:
@@ -136,7 +136,7 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
     return result
 async def send_media_response(
     message: Message,
-    media: Optional["SavedMedia"] = None,
+    media: Optional["LocalizedSavedMedia"] = None,
     caption: str = "",
     keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None
 ) -> None:

@@ -1,13 +1,10 @@
 import asyncio
 import datetime
-import json
 import re
 from typing import Optional
 
 from aiogram import Router
-from aiogram.filters import CommandObject, Command
-from aiogram.types import BufferedInputFile
-from pydantic import ValidationError
+from aiogram.filters import Command
 from pydantic_mongo import PydanticObjectId
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
@@ -15,10 +12,10 @@ from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
-from core.states import AdminStates, CommonStates, call_state_handler
+from core.states import AdminStates, call_state_handler
 from schemas.enums import DiscountType, OrderStateKey
 from schemas.types import Discount, LocalizedMoney, LocalizedString
-from ui.message_tools import list_commands, split_message
+from ui.message_tools import split_message
 from ui.texts import AdminTextGen
 from ui.translates import EnumTranslates
 

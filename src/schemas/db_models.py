@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import logging
+import re
 from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
@@ -61,7 +62,22 @@ class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
     async def get_all(self) -> List[Placeholder]:
         return list(await self.find_by({}))
 
+class MediaPlaceholder(AppBaseModel):
+    id: Optional[PydanticObjectId] = None
+    
+    key: str
+    value: LocalizedSavedMedia
+    
+class MediaPlaceholdersRepository(AppAbstractRepository[MediaPlaceholder]):
+    class Meta:
+        collection_name = 'media_placeholders'
         
+    async def find_by_key(self, key: str) -> Optional[MediaPlaceholder]:
+        return await self.find_one_by({'key': key})
+    
+    async def get_all(self) -> List[MediaPlaceholder]:
+        return list(await self.find_by({}))
+
 class OrderPriceDetails(AppBaseModel):
     products_price: Money  # сумма товаров без скидок и доставки
     promocode_discount: Optional[Money] = None  # скидка по промокоду
@@ -307,7 +323,9 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         return await self.find_by(query)
 
 class ConfigurationSwitch(AppBaseModel):
-    name: LocalizedString
+    name: LocalizedEntry
+    description: Optional[LocalizedEntry] = None
+    
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
 
     enabled: bool = False
@@ -315,48 +333,77 @@ class ConfigurationSwitch(AppBaseModel):
     def update(self, base_sw: "ConfigurationSwitch"):
         self.name=base_sw.name
         self.price=base_sw.price
-
-class ConfigurationSwitches(AppBaseModel):
-    label: LocalizedString
-    description: LocalizedString
-    media: Optional[SavedMedia] = None
-
-    switches: list[ConfigurationSwitch]
-
+        
+class ConfigurationSwitchesGroup(AppBaseModel):
+    label: LocalizedEntry
+    description: LocalizedEntry
+    switches: Dict[str, ConfigurationSwitch]
+    
+    def get_all(self):
+        return self.switches.values()
+    
     def get_enabled(self):
         """Возвращает список включённых переключателей из списка switches."""
-        return [switch for switch in self.switches if switch.enabled]
+        return [switch for switch in self.switches.values() if switch.enabled]
+    
+    def update(self, base_grp: "ConfigurationSwitchesGroup"):
+        self.label=base_grp.label
+        self.description=base_grp.description
+        
+        for key, switch in base_grp.switches.items():
+            if key not in self.switches:
+                self.switches[key] = switch
+                continue
+            self.switches[key].update(switch)
+        
 
-    @staticmethod
-    def calculate_price(switches: list[ConfigurationSwitch]):
-        """Возвращает сумму цен всех переданных переключателей."""
-        return sum((switch.price for switch in switches), LocalizedMoney())
+class ConfigurationSwitches(AppBaseModel):
+    label: LocalizedEntry
+    description: LocalizedEntry
+    media: Optional[LocalizedSavedMedia] = None
+
+    switches: Dict[str, ConfigurationSwitch | ConfigurationSwitchesGroup]
+
+    def get_all(self):
+        return self.switches.values()
+    
+    def get_enabled(self):
+        """Возвращает список включённых переключателей из списка switches."""
+        enabled_switches = []
+        for switch in self.switches.values():
+            if isinstance(switch, ConfigurationSwitch) and switch.enabled:
+                enabled_switches.append(switch)
+            elif isinstance(switch, ConfigurationSwitchesGroup):
+                enabled_switches.extend(switch.get_enabled())
+        return enabled_switches
+    
+    def calculate_price_for_enabled(self):
+        """Возвращает сумму цен всех включённых переключателей."""
+        return sum((switch.price for switch in self.get_enabled()), LocalizedMoney())
 
     def update(self, update_from_switches: "ConfigurationSwitches"):
         self.label = update_from_switches.label
         self.description = update_from_switches.description
         self.media = update_from_switches.media
         
-        for i, switch in enumerate(update_from_switches.switches):
-            if len(self.switches) <= i:
-                self.switches.append(switch)
+        for key, updated_switch_or_group in update_from_switches.switches.items():
+            switch_or_group = self.switches[key]
+            if key not in self.switches:
+                switch_or_group = updated_switch_or_group
                 continue
-            self.switches[i].update(switch)
-    
-    def toggle_by_localized_name(self, name, lang):
-        for switch in self.switches:
-            if switch.name.get(lang) == name:
-                switch.enabled = not switch.enabled
-                break 
+            if type(switch_or_group) == type(updated_switch_or_group):
+                switch_or_group.update(updated_switch_or_group)
+            else:
+                self.switches[key] = updated_switch_or_group
 
 class ConfigurationChoice(AppBaseModel):
-    label: LocalizedString
-    description: LocalizedString
-    media: Optional[SavedMedia] = None
+    label: LocalizedEntry
+    description: LocalizedEntry
+    media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
 
     existing_presets: bool = Field(default=False)
-    existing_presets_chosen: int = 1
-    existing_presets_quantity: int = 0
+    existing_presets_pattern: str = "int"
+    existing_presets_chosen: str = ""
 
     is_custom_input: bool = Field(default=False)
     custom_input_text: Optional[str] = None
@@ -368,12 +415,28 @@ class ConfigurationChoice(AppBaseModel):
         self.label=base_choice.label
         self.description=base_choice.description
         self.media=base_choice.media
+        self.existing_presets_pattern=base_choice.existing_presets_pattern
         self.existing_presets=base_choice.existing_presets
-        self.existing_presets_quantity=base_choice.existing_presets_quantity
         self.is_custom_input=base_choice.is_custom_input
         self.blocks_price_determination=base_choice.blocks_price_determination
         self.price=base_choice.price
-    
+        
+    def validate_existing_preset(self, text) -> bool:
+        parts = self.existing_presets_pattern.split('|')
+        regex_parts = []
+
+        for part in parts:
+            if part == 'int':
+                regex_parts.append(r'\d+')
+            elif ',' in part:
+                options = part.split(',')
+                regex_parts.append(f"[{''.join(options)}]")
+            else:
+                regex_parts.append(re.escape(part))
+
+        pattern = '^' + ''.join(regex_parts) + '$'
+
+        return bool(re.compile(pattern).match(text))
     def check_blocked_all(self, options: Dict[str, Any]) -> bool:
         return any(
             self.check_blocked_path(path, options)
@@ -390,47 +453,62 @@ class ConfigurationChoice(AppBaseModel):
             None
         )
     
-    def check_blocked_path(self, path, options: Dict[str, Any]) -> bool:
-        *opt_keys, last_key = path.split("/")
+    def check_blocked_path(self, path: str, options: Dict[str, Any]) -> bool:
+        keys = path.split("/")
         
-        option = options.get(opt_keys[0]) if opt_keys else None
+        option = options.get(keys[0]) if keys else None
+        if not option: raise Exception("BPath: No such option")
+        
+        chosen_key = option.chosen
+        if chosen_key == keys[1] and len(keys) == 2:
+            return True
         
         chosen = option.get_chosen()
-        if option.choices.get(last_key) == chosen and len(opt_keys) == 1:
-            return True
-        if isinstance(chosen, ConfigurationSwitches) and len(opt_keys) > 1:
-            enabled_names = [sw.name.get("en") for sw in chosen.get_enabled()]
-            if opt_keys[1] in enabled_names:
-                return True
+        if isinstance(chosen, ConfigurationSwitches) and len(keys) > 2:
+            keys = keys[2:]
+            
+            switch_or_group = chosen.switches.get(keys[0])
+            if not switch_or_group: raise Exception("BPath: No such switch")
+            if isinstance(switch_or_group, ConfigurationSwitch): return switch_or_group.enabled
+            elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                if len(keys) != 2: raise Exception("BPath: Wrong switch group path")
+                switch = switch_or_group.switches.get(keys[1])
+                if not switch: raise Exception("BPath: No such switch")
+                return switch.enabled
         return False
 
-class ConfigurationOption(AppBaseModel):
-    name: LocalizedString
-    text: LocalizedString
-    chosen: str # ConfigurationSwitches нельзя выбрать, это лишь группа выключателей относящейся к целевой опции
+class ConfigurationAnnotation(AppBaseModel):
+    name: LocalizedEntry
+    text: LocalizedEntry
+    media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
 
-    choices: Dict[str, ConfigurationChoice | ConfigurationSwitches]
+class ConfigurationOption(AppBaseModel):
+    name: LocalizedEntry
+    text: LocalizedEntry
+    chosen_key: str # ConfigurationSwitches нельзя выбрать, это лишь группа выключателей относящейся к целевой опции
+
+    choices: Dict[str, ConfigurationChoice | ConfigurationSwitches | ConfigurationAnnotation]
     
     def get_chosen(self) -> Optional[ConfigurationChoice]:
-        return self.choices.get(self.chosen)
+        return self.choices.get(self.chosen_key)
     
     def set_chosen(self, choice: ConfigurationChoice):
-        self.chosen = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen)
+        self.chosen_key = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen_key)
     
-    def get_key_by_label(self, label: str, lang: str) -> Optional[str]:
+    def get_key_by_label(self, label: str, ctx: Context) -> Optional[str]:
         for key, choice in self.choices.items():
-            if hasattr(choice, "label") and choice.label.get(lang) == label:
+            if hasattr(choice, "label") and choice.label.get(ctx) == label:
                 return key
     
-    def get_by_label(self, label: str, lang: str) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
+    def get_by_label(self, label: str, ctx: Context) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
         for choice in self.choices.values():
-            if hasattr(choice, "label") and choice.label.get(lang) == label:
+            if hasattr(choice, "label") and choice.label.get(ctx) == label:
                 return choice
 
     def calculate_price(self):
         conf_choice = self.get_chosen().model_copy(deep=True)
         price = conf_choice.price.model_copy(deep=True) if isinstance(conf_choice, ConfigurationChoice) else LocalizedMoney()
-        price += sum((choice.calculate_price(choice.get_enabled()) for choice in self.choices.values() if isinstance(choice, ConfigurationSwitches)), LocalizedMoney())
+        price += sum((choice.calculate_price_for_enabled() for choice in self.choices.values() if isinstance(choice, ConfigurationSwitches)), LocalizedMoney())
         return price
     
     def get_switches(self):
@@ -524,36 +602,32 @@ class ProductConfiguration(AppBaseModel):
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
     
-    def get_localized_names_by_path(self, path, lang) -> List[str]:
-        *opt_keys, last_key = path.split("/")
+    def get_localized_names_by_path(self, path, ctx: Context) -> List[str]:
+        keys = path.split("/")
         result = []
         # Получаем опцию
-        option = self.options.get(opt_keys[0]) if opt_keys else None
+        option = self.options.get(keys[0]) if keys else None
         if not option:
-            return result
+            raise Exception("BPath: No such option")
         # Добавляем имя опции
-        result.append(option.name.get(lang))
+        result.append(option.name.get(ctx))
         # Получаем выбор
-        choice = option.choices.get(opt_keys[1]) if len(opt_keys) > 1 else option.choices.get(last_key)
+        choice = option.choices.get(keys[1]) if len(keys) > 1 else None
         if not choice:
-            return result
+            raise Exception("BPath: Where is my choice")
         # Добавляем имя выбора
-        if hasattr(choice, "label"):
-            result.append(choice.label.get(lang))
+        if isinstance(choice, ConfigurationChoice): result.append(choice.label.get(ctx))
         # Если есть переключатель (switch)
-        if len(opt_keys) > 2 and hasattr(choice, "switches"):
+        else:
             if switch := next(
                 (
                     sw
-                    for sw in choice.switches
-                    if sw.name.get(
-                        "ru", next(iter(sw.name.values()), "")
-                    )
-                    == last_key
+                    for key, sw in choice.switches.items()
+                    if key == keys[2]
                 ),
                 None,
             ):
-                result.append(switch.name.get(lang))
+                result.append(switch.name.get(ctx))
         return result
         
     def calculate_additionals_price(self):
@@ -573,10 +647,10 @@ class Product(AppBaseModel):
     category: str
 
     short_description: LocalizedString
-    short_description_media: Optional[SavedMedia] = None
+    short_description_media: Optional[LocalizedSavedMedia] = None
 
     long_description: LocalizedString
-    long_description_media: Optional[SavedMedia] = None
+    long_description_media: Optional[LocalizedSavedMedia] = None
     
     base_price: LocalizedMoney
     discount: Optional[Discount] = None
@@ -587,7 +661,7 @@ class Product(AppBaseModel):
         
 
     configuration: ProductConfiguration
-    configuration_media: Optional[SavedMedia] = None
+    configuration_media: Optional[LocalizedSavedMedia] = None
     
     
     # def calculate_price(self, configuration: ProductConfiguration = None) -> LocalizedPrice:
@@ -928,6 +1002,8 @@ __all__ = [
     "AppBaseModel",
     "Placeholder",
     "PlaceholdersRepository",
+    "MediaPlaceholder",
+    "MediaPlaceholdersRepository",
     "OrderPriceDetails",
     "Order",
     "OrdersRepository",
@@ -935,7 +1011,9 @@ __all__ = [
     "CartEntriesRepository",
     "ConfigurationSwitch",
     "ConfigurationSwitches",
+    "ConfigurationSwitchesGroup",
     "ConfigurationChoice",
+    "ConfigurationAnnotation",
     "ConfigurationOption",
     "ProductConfiguration",
     "Product",

@@ -10,7 +10,7 @@ from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
-from ui.translates import EnumTranslates, ReplyButtonsTranslates
+from ui.translates import EnumTranslates
 
 class CommonKBs:
 
@@ -259,26 +259,43 @@ class AssortmentKBs:
 
     @staticmethod
     def generate_choice_kb(product: Product, option: ConfigurationOption, ctx: Context) -> types.ReplyKeyboardMarkup:
-        builder = ReplyKeyboardBuilder()
-
+        main_builder = ReplyKeyboardBuilder()
+        
+        choices: list[ConfigurationChoice] = []
+        switches: list[ConfigurationSwitches] = []
+        annotations: list[ConfigurationAnnotation] = []
         for choice in option.choices.values():
-            price_text = f" {choice.price.to_text(ctx.customer.currency)}" if isinstance(choice, ConfigurationChoice) and choice.price.get_amount(ctx.customer.currency) != 0 else ""
+            if isinstance(choice, ConfigurationChoice): choices.append(choice)
+            elif isinstance(choice, ConfigurationSwitches): switches.append(choice)
+            elif isinstance(choice, ConfigurationAnnotation): annotations.append(choice)
+            
+        for choice in choices:
+            price_text = f" {choice.price.to_text(ctx.customer.currency)}" if choice.price.get_amount(ctx.customer.currency) != 0 else ""
 
-            is_blocked = choice.check_blocked_all(product.configuration.options) if isinstance(choice, ConfigurationChoice) else False
+            is_blocked = choice.check_blocked_all(product.configuration.options)
 
             label = f"{strike(choice.label.get(ctx) + price_text)} 🔒" if is_blocked else f"{choice.label.get(ctx)}{price_text}"
-            builder.add(types.KeyboardButton(text=f">{label}<"
+            main_builder.add(types.KeyboardButton(text=f">{label}<"
                                             if option.get_chosen().label == choice.label
                                             else label))
+        main_builder.adjust(3)
+        
+        second_builder = ReplyKeyboardBuilder()
+        for switch in switches:
+            second_builder.add(types.KeyboardButton(text=switch.label.get(ctx)))
+        
+        for ann in annotations:
+            second_builder.add(types.KeyboardButton(text=ann.name.get(ctx)))
+            
+        second_builder.adjust(2)
+        main_builder.attach(second_builder)
 
-        builder.adjust(3)
-
-        builder.attach(ReplyKeyboardBuilder([
+        main_builder.attach(ReplyKeyboardBuilder([
             [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]
         ]
         ))
 
-        return builder.as_markup(
+        return main_builder.as_markup(
             resize_keyboard=True,
             # one_time_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
@@ -286,22 +303,36 @@ class AssortmentKBs:
     @staticmethod
     def generate_switches_kb(switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
-
-        for switch in switches.switches:
-            label = switch.name.get(ctx)
-            builder.add(types.KeyboardButton(text=f"{label} ✅"
-                                            if switch.enabled
-                                            else label))
-        builder.adjust(3)
-
-        builder.attach(ReplyKeyboardBuilder([
-            [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]
-        ]
-        ))
-
+        def gen_label(switch: ConfigurationSwitch):
+            return f"{switch.name.get(ctx)} ✅" if switch.enabled else switch.name.get(ctx)
+        
+        current_row = []
+        
+        for switch_or_group in switches.get_all():
+            if isinstance(switch_or_group, ConfigurationSwitch):
+                current_row.append(types.KeyboardButton(text=gen_label(switch_or_group)))
+                if len(current_row) == 3:
+                    builder.row(*current_row)
+                    current_row = []
+            elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                if current_row:
+                    builder.row(*current_row)
+                    current_row = []
+                
+                builder.row(types.KeyboardButton(text=f"-- {switch_or_group.label.get(ctx)} --"))
+                for switch in switch_or_group.get_all():
+                    current_row.append(types.KeyboardButton(text=gen_label(switch)))
+                    if len(current_row) == 3:
+                        builder.row(*current_row)
+                        current_row = []
+        
+        if current_row:
+            builder.row(*current_row)
+        
+        builder.row(types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back))
+        
         return builder.as_markup(
             resize_keyboard=True,
-            # one_time_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod

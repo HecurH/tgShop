@@ -1,16 +1,17 @@
 from aiogram import Dispatcher, Router
 from aiogram.filters import StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
 from core.helper_classes import Context
-from core.services.db import *
 from core.states import call_state_handler, CommonStates
 
 router = Router(name="bottom")
 
-# Если нет состояния
 @router.message(StateFilter(None))
 async def base_handler(_, ctx: Context):
     await ctx.fsm.clear()
-    await call_state_handler(CommonStates.MainMenu, ctx)
+    if ctx.customer:
+        await call_state_handler(CommonStates.MainMenu, ctx)
+    else:
+        await ctx.message.answer("Enter /start.")
 
 @router.message()
 async def real_base_handler(_, ctx: Context):

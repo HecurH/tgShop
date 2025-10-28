@@ -1,10 +1,9 @@
 from aiogram import Router
 from configs.payments import SUPPORTED_PAYMENT_METHODS
-from schemas.db_models import CartEntry, Order, OrderPriceDetails, Promocode
+from schemas.db_models import CartEntry, Order, Promocode
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, ProfileStates, call_state_handler
 from schemas.enums import OrderStateKey, PromocodeCheckResult
-from schemas.types import OrderState
 from ui.translates import *
 
 router = Router(name="cart")

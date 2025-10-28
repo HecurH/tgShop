@@ -164,14 +164,14 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         return
     
     text = message.text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip()
-    choice = changing_option.get_by_label(text, ctx.lang) or changing_option.get_by_label(text.rsplit(" ", 1)[0], ctx.lang)
+    choice = changing_option.get_by_label(text, ctx) or changing_option.get_by_label(text.rsplit(" ", 1)[0], ctx)
 
 
     if isinstance(choice, ConfigurationChoice):
         if choice.check_blocked_all(product.configuration.options):
             await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
-                                    send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)), 1),
+                                    send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx)), 1),
                                     product=product,
                                     option=changing_option)
             return
@@ -203,6 +203,12 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         await call_state_handler(AssortmentStates.SwitchesEditing,
                                     ctx,
                                     switches=choice)
+    elif isinstance(choice, ConfigurationAnnotation):
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
+                                    ctx,
+                                    product=product,
+                                    option=changing_option,
+                                    annotation=choice)
     else:
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
@@ -231,7 +237,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
-        key = option.get_key_by_label(switches.label.get(ctx), ctx.lang)
+        key = option.get_key_by_label(switches.label.get(ctx), ctx)
         option.choices[key] = switches
         
         product.configuration.update_price()
@@ -304,15 +310,14 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
     if not text: return
     
     product: Product = await Product.from_fsm_context(ctx, "product")
-    changing_option = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
+    changing_option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
     chosen = changing_option.get_chosen() # ССЫЛКА на объект, не надо дополнительно переприсваивать дочерних тварей
 
     if chosen.existing_presets:
-        if not (text.isdigit() and 
-                1 <= int(text) <= chosen.existing_presets_quantity):
+        if not chosen.validate_existing_preset(text):
             await message.delete()
             return
-        chosen.existing_presets_chosen = int(text)
+        chosen.existing_presets_chosen = text
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option

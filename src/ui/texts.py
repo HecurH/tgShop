@@ -253,18 +253,27 @@ class AssortmentTextGen:
 
     @staticmethod
     def generate_switches_text(conf_switches: ConfigurationSwitches, ctx: Context):
-        switches = conf_switches.switches
-        if not switches:
+        switches_and_groups = conf_switches.get_all()
+        if not switches_and_groups:
             return (
                 f"{conf_switches.description.get(ctx)}\n\n"
                 + ctx.t.AssortmentTranslates.switches_enter
             )
-        switches_info = "\n".join([f"{switch.name.get(ctx)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )" for switch in switches])
-        return (
-            f"{conf_switches.description.get(ctx)}\n\n{switches_info}\n\n"
-            + ctx.t.AssortmentTranslates.switches_enter
-        )
         
+        text = f"{conf_switches.description.get(ctx)}\n\n"
+        for switch_or_group in switches_and_groups:
+            if isinstance(switch_or_group, ConfigurationSwitch):
+                text += f"{switch_or_group.name.get(ctx)} — {switch_or_group.price.to_text(ctx.customer.currency)} ( {'✅' if switch_or_group.enabled else '❌'} )\n"
+                text += f"    {switch_or_group.description.get(ctx)}\n\n" if switch_or_group.description else "\n\n"
+            elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                text += f"{switch_or_group.name.get(ctx)}:\n"
+                for switch in switch_or_group.get_all():
+                    text += f"    {switch.name.get(ctx)} — {switch.price.to_text(ctx.customer.currency)} ( {'✅' if switch.enabled else '❌'} )\n"
+                    text += f"        {switch.description.get(ctx)}\n\n" if switch.description else "\n\n"
+        
+        
+        return text + ctx.t.AssortmentTranslates.switches_enter
+
     @staticmethod
     def generate_additionals_text(available: list[ProductAdditional], additionals: list[ProductAdditional], ctx: Context):
         additionals_info = "\n".join([f"{additional.name.get(ctx)} — {additional.price.to_text(ctx.customer.currency)} ( {'✅' if additional in additionals else '❌'} )\n    {additional.short_description.get(ctx)}\n" for additional in available])
@@ -301,8 +310,8 @@ class AssortmentTextGen:
         return f"{product.name.get(ctx)}\n\n{section}\n{price_text}"
     
     @staticmethod
-    def gen_blocked_choice_path_text(choice: ConfigurationChoice, configuration: ProductConfiguration, lang):
-        return " —> ".join(configuration.get_localized_names_by_path(choice.get_blocking_path(configuration.options), lang))
+    def gen_blocked_choice_path_text(choice: ConfigurationChoice, configuration: ProductConfiguration, ctx: Context):
+        return " —> ".join(configuration.get_localized_names_by_path(choice.get_blocking_path(configuration.options), ctx))
 
 class ProfileTextGen:
     

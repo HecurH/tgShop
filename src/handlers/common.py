@@ -6,7 +6,6 @@ from aiogram.types import CallbackQuery, ErrorEvent
 from aiogram.utils.formatting import as_list, Bold, BlockQuote, Text
 
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
-from core.services.db import *
 from core.helper_classes import Context
 from ui.keyboards import CommonKBs
 from core.states import CommonStates, NewUserStates, call_state_handler

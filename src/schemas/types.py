@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Union
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context, Cryptography
 
@@ -182,20 +182,49 @@ class LocalizedString(BaseModel):
     def raw(self, lang: str) -> str: return self.data.get(lang) or self.data.get("en")
     
     def get(self, lang_or_context: str | Context, pm: "PlaceholderManager" = None) -> str:
-        if isinstance(lang_or_context, Context): return lang_or_context.services.placeholders.process(self.raw(lang_or_context.lang), lang_or_context.lang)
+        if isinstance(lang_or_context, Context): return lang_or_context.services.placeholders.process_text(self.raw(lang_or_context.lang), lang_or_context.lang)
         
         raw = self.raw(lang_or_context)
         if pm is not None:
-            return pm.process(raw, lang_or_context)
+            return pm.process_text(raw, lang_or_context)
         return raw
+    
+class LocalizedEntry(BaseModel):
+    """Класс для хранения динамических и распространненых данных в БД"""
+    path: str
+    
+    def get(self, ctx: Context) -> str:
+        current_obj = ctx.t.DBEntryTranslates
+        for attr in self.path.split("."):
+            if hasattr(current_obj, attr):
+                current_obj = getattr(current_obj, attr)
+            else:
+                current_obj = "Could not find localized attribute {attr}"
+        
+        return current_obj
 
 class SavedTMessage(BaseModel):
     chat_id: int
     message_id: int
 
-class SavedMedia(BaseModel):
+class LocalizedSavedMedia(BaseModel):
     media_type: MediaType
-    media_id: str
+    media_id: Union[dict[str, str], str]
+    
+    @classmethod
+    def from_keys(cls, media_type: MediaType, **kwargs):
+        return cls(media_type=media_type, media_id={key: kwargs[key] for key in kwargs})
+    
+    def get(self, lang: str) -> str:
+        if isinstance(self.media_id, str): return self.media_id
+        return self.media_id.get(lang, self.media_ids.get("en"))
+
+
+class MediaPlaceholderLink(BaseModel):
+    placeholder_key: str
+    
+    async def resolve(self, ctx: Context) -> Optional[LocalizedSavedMedia]:
+        return await ctx.services.placeholders.resolve_media(self.placeholder_key)
 
 class OrderState(BaseModel):
     key: OrderStateKey
@@ -244,4 +273,4 @@ class Discount(BaseModel):
         return Money(currency=amount.currency, amount=0.0)
 
 
-__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "SavedMedia", "OrderState", "Discount", "SavedTMessage"]
+__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "LocalizedEntry", "LocalizedSavedMedia", "MediaPlaceholderLink", "OrderState", "Discount", "SavedTMessage"]
