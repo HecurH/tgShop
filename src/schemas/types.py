@@ -228,7 +228,7 @@ class MediaPlaceholderLink(BaseModel):
     placeholder_key: str
     
     async def resolve(self, ctx: Context) -> Optional[LocalizedSavedMedia]:
-        return await ctx.services.placeholders.resolve_media(self.placeholder_key)
+        return ctx.services.placeholders.resolve_media(self.placeholder_key)
 
 class OrderState(BaseModel):
     key: OrderStateKey

@@ -606,24 +606,24 @@ async def image_saving_handler(_, ctx: Context) -> None:
             chosen_key="medium",
             choices={
                 "soft": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Soft.label"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Soft.description"),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.description"),
                 ),
                 "medium": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.label"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description"),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Medium.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Medium.description"),
                 ),
                 "firm": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Firm.label"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Firm.description"),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Firm.label"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Firm.description"),
                 ),
                 "firmness_gradation": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.FirmnessGradation.label"),
+                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.FirmnessGradation.label"),
                     media=MediaPlaceholderLink(placeholder_key="firmness_gradation_choice"),
                     is_custom_input=True,
                     can_be_blocked_by=["color/swirl"],
 
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.FirmnessGradation.description"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.FirmnessGradation.description"),
                     price=LocalizedMoney.from_keys(RUB=400.00, USD=6.00)
                 )
             }
