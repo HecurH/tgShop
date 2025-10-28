@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, Dict, Optional, Union
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context, Cryptography
@@ -195,11 +196,14 @@ class LocalizedEntry(BaseModel):
     
     def get(self, ctx: Context) -> str:
         current_obj = ctx.t.DBEntryTranslates
+        logging.getLogger(__name__).debug(f"Getting localized attribute {self.path}")
         for attr in self.path.split("."):
             if hasattr(current_obj, attr):
                 current_obj = getattr(current_obj, attr)
             else:
                 current_obj = "Could not find localized attribute {attr}"
+                
+        logging.getLogger(__name__).debug(f"Localized attribute {self.path} is {current_obj}")
         
         return current_obj
 
