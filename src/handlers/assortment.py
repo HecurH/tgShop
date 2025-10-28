@@ -131,8 +131,8 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 product=product,
                                 allowed_additionals=allowed_additionals)
-    elif text in product.configuration.get_all_options_localized_names(ctx.lang):
-        idx, option = product.configuration.get_option_by_name(text, ctx.lang)
+    elif text in product.configuration.get_all_options_localized_names(ctx):
+        idx, option = product.configuration.get_option_by_name(text, ctx)
         # \/\/\/\/\/\/\/\/ ВАЖНО, тк 0 == False
         if idx is not None: await ctx.fsm.update_data(current_option_key=idx)
         
@@ -227,11 +227,11 @@ async def switches_handler(message: Message, ctx: Context) -> None:
 
         return
 
-    switches = await ConfigurationSwitches.from_fsm_context(ctx, "switches")
+    switches: ConfigurationSwitches = await ConfigurationSwitches.from_fsm_context(ctx, "switches")
     
     if text := message.text:
         clean_text = text.replace(" ✅", "")
-        switches.toggle_by_localized_name(clean_text, ctx.lang)
+        switches.toggle_by_localized_name(clean_text, ctx)
         
         product: Product = await Product.from_fsm_context(ctx, "product")
         current_option_key = await ctx.fsm.get_value("current_option_key")
@@ -265,7 +265,7 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
     allowed_additionals = await ctx.services.db.additionals.get(product)
     if text:
         text = ctx.message.text.replace(" ✅", "")
-        additional = ctx.services.db.additionals.get_by_name(text, allowed_additionals, ctx.lang)
+        additional = ctx.services.db.additionals.get_by_name(text, allowed_additionals, ctx)
         if not additional:
             await call_state_handler(AssortmentStates.AdditionalsEditing,
                                     ctx, 

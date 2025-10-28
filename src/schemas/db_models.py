@@ -380,6 +380,17 @@ class ConfigurationSwitches(AppBaseModel):
     def calculate_price_for_enabled(self):
         """Возвращает сумму цен всех включённых переключателей."""
         return sum((switch.price for switch in self.get_enabled()), LocalizedMoney())
+    
+    def toggle_by_localized_name(self, name, ctx):
+        for switch in self.get_all():
+            if isinstance(switch, ConfigurationSwitchesGroup):
+                for sw in switch.get_all():
+                    if sw.name.get(ctx) == name:
+                        switch.enabled = not switch.enabled
+                        break
+            elif switch.name.get(ctx) == name:
+                switch.enabled = not switch.enabled
+                break 
 
     def update(self, update_from_switches: "ConfigurationSwitches"):
         self.label = update_from_switches.label
@@ -589,12 +600,12 @@ class ProductConfiguration(AppBaseModel):
         
         self._sync_price_confirmation_flag()
 
-    def get_all_options_localized_names(self, lang):
-        return [option.name.get(lang) for option in self.options.values()]
+    def get_all_options_localized_names(self, ctx: Context):
+        return [option.name.get(ctx) for option in self.options.values()]
     
-    def get_option_by_name(self, name, lang) -> Optional[tuple[str, ConfigurationOption]]:
+    def get_option_by_name(self, name, ctx: Context) -> Optional[tuple[str, ConfigurationOption]]:
         return next(((key, option) for key, option in self.options.items() 
-                     if option.name.get(lang) == name), None)
+                     if option.name.get(ctx) == name), None)
         
     def get_price_blocking_options(self) -> dict[str, ConfigurationOption]:
         return {key: option for key, option in self.options.items() if option.get_chosen().blocks_price_determination}
@@ -722,8 +733,8 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
         """Возвращает все additionals в категории, которые разрешены для данного продукта."""
         return await self.find_by({"category": product.category, "disallowed_products": {"$nin": [product.id]}})
     
-    def get_by_name(self, name, allowed_additionals, lang):
-        return next((a for a in allowed_additionals if a.name.get(lang) == name), None)
+    def get_by_name(self, name, allowed_additionals, ctx: Context):
+        return next((a for a in allowed_additionals if a.name.get(ctx) == name), None)
 
 class Promocode(AppBaseModel):
     id: Optional[PydanticObjectId] = None
