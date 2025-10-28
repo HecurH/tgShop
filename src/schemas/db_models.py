@@ -358,7 +358,7 @@ class ConfigurationSwitchesGroup(AppBaseModel):
         
 
 class ConfigurationSwitches(AppBaseModel):
-    label: LocalizedEntry
+    name: LocalizedEntry
     description: LocalizedEntry
     media: Optional[LocalizedSavedMedia] = None
 
@@ -393,7 +393,7 @@ class ConfigurationSwitches(AppBaseModel):
                 break 
 
     def update(self, update_from_switches: "ConfigurationSwitches"):
-        self.label = update_from_switches.label
+        self.name = update_from_switches.name
         self.description = update_from_switches.description
         self.media = update_from_switches.media
         
@@ -408,7 +408,7 @@ class ConfigurationSwitches(AppBaseModel):
                 self.switches[key] = updated_switch_or_group
 
 class ConfigurationChoice(AppBaseModel):
-    label: LocalizedEntry
+    name: LocalizedEntry
     description: LocalizedEntry
     media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
 
@@ -423,7 +423,7 @@ class ConfigurationChoice(AppBaseModel):
     blocks_price_determination: bool = Field(default=False)
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
     def update(self, base_choice: "ConfigurationChoice"):
-        self.label=base_choice.label
+        self.name=base_choice.name
         self.description=base_choice.description
         self.media=base_choice.media
         self.existing_presets_pattern=base_choice.existing_presets_pattern
@@ -511,14 +511,14 @@ class ConfigurationOption(AppBaseModel):
     def set_chosen(self, choice: ConfigurationChoice):
         self.chosen_key = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen_key)
     
-    def get_key_by_label(self, label: str, ctx: Context) -> Optional[str]:
+    def get_key_by_name(self, name: str, ctx: Context) -> Optional[str]:
         for key, choice in self.choices.items():
-            if (hasattr(choice, "label") and choice.label.get(ctx) == label) or (hasattr(choice, "name") and choice.name.get(ctx) == label):
+            if hasattr(choice, "name") and choice.name.get(ctx) == name:
                 return key
     
-    def get_by_label(self, label: str, ctx: Context) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
+    def get_by_name(self, name: str, ctx: Context) -> Optional[ConfigurationChoice | ConfigurationSwitches]:
         for choice in self.choices.values():
-            if (hasattr(choice, "label") and choice.label.get(ctx) == label) or (hasattr(choice, "name") and choice.name.get(ctx) == label):
+            if hasattr(choice, "name") and choice.name.get(ctx) == name:
                 return choice
 
     def calculate_price(self):
@@ -637,7 +637,7 @@ class ProductConfiguration(AppBaseModel):
         if not choice:
             raise Exception("BPath: Where is my choice")
         # Добавляем имя выбора
-        if isinstance(choice, ConfigurationChoice): result.append(choice.label.get(ctx))
+        if isinstance(choice, ConfigurationChoice): result.append(choice.name.get(ctx))
         # Если есть переключатель (switch)
         else:
             if switch := next(

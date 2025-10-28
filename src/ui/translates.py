@@ -306,7 +306,7 @@ class DBEntryTranslates(Translatable):
                 
                 class Choices(Translatable):
                     class Small(Translatable):
-                        label = {
+                        name = {
                             "ru": "Маленький",
                             "en": "Small"
                         }
@@ -316,7 +316,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class Medium(Translatable):
-                        label = {
+                        name = {
                             "ru": "Средний",
                             "en": "Medium"
                         }
@@ -326,7 +326,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class Large(Translatable):
-                        label = {
+                        name = {
                             "ru": "Большой",
                             "en": "Large"
                         }
@@ -348,7 +348,7 @@ class DBEntryTranslates(Translatable):
                 
                 class Choices(Translatable):
                     class Soft(Translatable):
-                        label = {
+                        name = {
                             "ru": "Мягкий",
                             "en": "Soft"
                         }
@@ -359,7 +359,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class Medium(Translatable):
-                        label = {
+                        name = {
                             "ru": "Средняя",
                             "en": "Medium"
                         }
@@ -370,7 +370,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class Firm(Translatable):
-                        label = {
+                        name = {
                             "ru": "Твёрдый",
                             "en": "Firm"
                         }
@@ -381,7 +381,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class FirmnessGradation(Translatable):
-                        label = {
+                        name = {
                             "ru": "Градация жёсткости",
                             "en": "Firmness gradation"
                         }
@@ -405,7 +405,7 @@ class DBEntryTranslates(Translatable):
                 class Choices(Translatable):
                     
                     class Standart(Translatable):
-                        label = {
+                        name = {
                             "ru": "Стандартный",
                             "en": "Standard"
                         }
@@ -416,7 +416,7 @@ class DBEntryTranslates(Translatable):
                         }
                             
                     class Existing(Translatable):
-                        label = {
+                        name = {
                             "ru": "Существующий",
                             "en": "Existing One"
                         }
@@ -427,7 +427,7 @@ class DBEntryTranslates(Translatable):
                         }
                     
                     class TwoZone(Translatable):
-                        label = {
+                        name = {
                             "ru": "Двухзонный",
                             "en": "Two-zone"
                         }
@@ -457,7 +457,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
                         }
                     
                     class ThreeZone(Translatable):
-                        label = {
+                        name = {
                             "ru": "Трёхзонный",
                             "en": "Three-zone"
                         }
@@ -487,7 +487,7 @@ Add-ons are charged separately."""
                         }
                     
                     class Swirl(Translatable):
-                        label = {
+                        name = {
                             "ru": "Вихрь",
                             "en": "Swirl"
                         }
@@ -515,7 +515,7 @@ Add-ons are charged separately."""
                         }
                     
                     class Custom(Translatable):
-                        label = {
+                        name = {
                             "ru": "Свой",
                             "en": "Custom"
                         }
@@ -543,7 +543,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
                     
                     class Additionals(Translatable):
-                        label = {
+                        name = {
                             "ru": "Дополнения",
                             "en": "Additionals"
                         }
@@ -632,7 +632,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     
                         
                     class AvailableColors(Translatable):
-                        label = {
+                        name = {
                             "ru": "Доступные цвета",
                             "en": "Available colors"
                         }

@@ -571,7 +571,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
             chosen_key="medium",
             choices={
                 "small": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
                         media_id="AgACAgIAAxkDAAJTFmjhH0XzDUPMlbiirkzSzK08JSZTAAIs-TEbKEYIS5N_kpftMhc7AQADAgADeQADNgQ"
@@ -581,7 +581,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     price=LocalizedMoney.from_keys(RUB=-1500.00, USD=-30.00)
                 ),
                 "medium": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
                         media_id="AgACAgIAAxkDAAJTGWjhH1tl4-D7zyWf_E01I37KKsWWAAIt-TEbKEYISxpvT1mJjCaUAQADAgADeQADNgQ"
@@ -589,7 +589,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description")
                 ),
                 "large": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
                         media_id="AgACAgIAAxkDAAJTHGjhH4sb4bbdOgjhxIdCuwanphioAAIu-TEbKEYIS88pbDq-UqvXAQADAgADeQADNgQ"
@@ -606,19 +606,19 @@ async def image_saving_handler(_, ctx: Context) -> None:
             chosen_key="medium",
             choices={
                 "soft": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.description"),
                 ),
                 "medium": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Medium.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Medium.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Medium.description"),
                 ),
                 "firm": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Firm.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Firm.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Firm.description"),
                 ),
                 "firmness_gradation": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.FirmnessGradation.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.FirmnessGradation.name"),
                     media=MediaPlaceholderLink(placeholder_key="firmness_gradation_choice"),
                     is_custom_input=True,
                     can_be_blocked_by=["color/swirl"],
@@ -634,11 +634,11 @@ async def image_saving_handler(_, ctx: Context) -> None:
             chosen_key="existing",
             choices={
                 # "standart": ConfigurationChoice(
-                #     label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.label"),
+                #     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.name"),
                 #     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.description")
                 # ),
                 "existing": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.name"),
                     media=MediaPlaceholderLink(placeholder_key="existing_color_choice"),
                     existing_presets=True,
                     existing_presets_pattern="K|D,T|P,M,N|int",
@@ -646,21 +646,21 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.description")
                 ),
                 "two-zone": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.name"),
                     media=MediaPlaceholderLink(placeholder_key="two_zone_color_choice"),
                     is_custom_input=True,
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.description"),
                 ),
                 "three-zone": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.name"),
                     media=MediaPlaceholderLink(placeholder_key="three_zone_color_choice"),
                     is_custom_input=True,
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.description")
                 ),
                 "swirl": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.name"),
                     media=MediaPlaceholderLink(placeholder_key="swirl_color_choice"),
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
@@ -669,7 +669,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.description"),
                 ),
                 "custom": ConfigurationChoice(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.name"),
                     is_custom_input=True,
                     blocks_price_determination=True,
                     price=LocalizedMoney.from_keys(RUB=2000.00, USD=30.00),
@@ -677,7 +677,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.description"),
                 ),
                 "additionals": ConfigurationSwitches(
-                    label=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.description"),
                     switches={
                         "gradient": ConfigurationSwitch(
@@ -730,7 +730,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     }
                 ),
                 "available_colors": ConfigurationAnnotation(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.label"),
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.name"),
                     text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.text"),
                     media=MediaPlaceholderLink(placeholder_key="available_colors"),
                 )

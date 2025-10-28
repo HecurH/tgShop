@@ -27,7 +27,7 @@ def gen_product_configurable_info_text(
         conf_choice = option.get_chosen()
         # price = option.calculate_price()
         
-        label = conf_choice.label.get(ctx)
+        name = conf_choice.name.get(ctx)
         
         presets = f" ({conf_choice.existing_presets_chosen})" if conf_choice.existing_presets and conf_choice.existing_presets_chosen else ""
         
@@ -37,7 +37,7 @@ def gen_product_configurable_info_text(
             
         custom = f" — \n<blockquote expandable>{html.quote(conf_choice.custom_input_text)}</blockquote>" if conf_choice.is_custom_input and conf_choice.custom_input_text else ""
         
-        value = f"{label}{presets}{price_info}{custom}"
+        value = f"{name}{presets}{price_info}{custom}"
         selected_options = f"{option.name.get(ctx)}: {value}"
         
         for choice in option.choices.values():

@@ -274,15 +274,15 @@ class AssortmentKBs:
 
             is_blocked = choice.check_blocked_all(product.configuration.options)
 
-            label = f"{strike(choice.label.get(ctx) + price_text)} 🔒" if is_blocked else f"{choice.label.get(ctx)}{price_text}"
-            main_builder.add(types.KeyboardButton(text=f">{label}<"
-                                            if option.get_chosen().label == choice.label
-                                            else label))
+            name = f"{strike(choice.name.get(ctx) + price_text)} 🔒" if is_blocked else f"{choice.name.get(ctx)}{price_text}"
+            main_builder.add(types.KeyboardButton(text=f">{name}<"
+                                            if option.get_chosen().name == choice.name
+                                            else name))
         main_builder.adjust(3)
         
         second_builder = ReplyKeyboardBuilder()
         for switch in switches:
-            second_builder.add(types.KeyboardButton(text=switch.label.get(ctx)))
+            second_builder.add(types.KeyboardButton(text=switch.name.get(ctx)))
         
         for ann in annotations:
             second_builder.add(types.KeyboardButton(text=ann.name.get(ctx)))
@@ -303,14 +303,14 @@ class AssortmentKBs:
     @staticmethod
     def generate_switches_kb(switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
-        def gen_label(switch: ConfigurationSwitch):
+        def gen_name(switch: ConfigurationSwitch):
             return f"{switch.name.get(ctx)} ✅" if switch.enabled else switch.name.get(ctx)
         
         current_row = []
         
         for switch_or_group in switches.get_all():
             if isinstance(switch_or_group, ConfigurationSwitch):
-                current_row.append(types.KeyboardButton(text=gen_label(switch_or_group)))
+                current_row.append(types.KeyboardButton(text=gen_name(switch_or_group)))
                 if len(current_row) == 3:
                     builder.row(*current_row)
                     current_row = []
@@ -321,7 +321,7 @@ class AssortmentKBs:
                 
                 builder.row(types.KeyboardButton(text=f"-- {switch_or_group.name.get(ctx)} --"))
                 for switch in switch_or_group.get_all():
-                    current_row.append(types.KeyboardButton(text=gen_label(switch)))
+                    current_row.append(types.KeyboardButton(text=gen_name(switch)))
                     if len(current_row) == 3:
                         builder.row(*current_row)
                         current_row = []
@@ -340,10 +340,10 @@ class AssortmentKBs:
         builder = ReplyKeyboardBuilder()
 
         for additional in available_additionals:
-            label = additional.name.get(ctx)
-            builder.add(types.KeyboardButton(text=f"{label} ✅"
+            name = additional.name.get(ctx)
+            builder.add(types.KeyboardButton(text=f"{name} ✅"
                                             if additional in additionals
-                                            else label))
+                                            else name))
 
         builder.attach(ReplyKeyboardBuilder([
             [types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)]

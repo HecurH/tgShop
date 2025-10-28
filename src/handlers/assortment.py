@@ -164,7 +164,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         return
     
     text = message.text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip()
-    choice = changing_option.get_by_label(text, ctx) or changing_option.get_by_label(text.rsplit(" ", 1)[0], ctx)
+    choice = changing_option.get_by_name(text, ctx) or changing_option.get_by_name(text.rsplit(" ", 1)[0], ctx)
 
 
     if isinstance(choice, ConfigurationChoice):
@@ -239,7 +239,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
-        key = option.get_key_by_label(switches.label.get(ctx), ctx)
+        key = option.get_key_by_name(switches.name.get(ctx), ctx)
         option.choices[key] = switches
         
         product.configuration.update_price()
