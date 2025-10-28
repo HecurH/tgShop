@@ -745,10 +745,6 @@ async def image_saving_handler(_, ctx: Context) -> None:
         ),
         name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Хайден\"",
         category="dildos",
-        short_description=LocalizedString(data={
-            "ru":"Заглушка хд",
-            "en":"Заглушка хд"}
-        ),
         short_description_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
             media_id="AgACAgIAAxkDAAJTEGjg-95UQ3KNkZC3wl39AAEskcuddAACSPcxGyhGCEvJAWVkMglOTgEAAwIAA3cAAzYE"

@@ -233,7 +233,7 @@ class AdminTextGen:
 class AssortmentTextGen:
     @staticmethod
     def generate_viewing_entry_caption(product: Product, ctx: Context):
-        return f"{product.name.get(ctx)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx)}"
+        return f"{product.name.get(ctx)} — {product.price.to_text(ctx.customer.currency)}\n\n{product.short_description.get(ctx)}" if product.short_description else f"{product.name.get(ctx)} — {product.price.to_text(ctx.customer.currency)}"
     
     @staticmethod
     def generate_product_detailed_caption(product: Product, ctx: Context):

@@ -646,7 +646,7 @@ class Product(AppBaseModel):
     
     category: str
 
-    short_description: LocalizedString
+    short_description: Optional[LocalizedString] = None
     short_description_media: Optional[LocalizedSavedMedia] = None
 
     long_description: LocalizedString
