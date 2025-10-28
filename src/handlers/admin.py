@@ -39,7 +39,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
         
     media_type = args[0]
     key = args[1]
-    is_localized = args[1] == "true"
+    is_localized = args[2] == "true"
     
     if media_type not in ["photo","video","document"]:
         await ctx.message.answer(f"Неправильный тип медиа.")
@@ -69,14 +69,14 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
 
 @router.message(Command("edit_media_placeholder"))
 async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject):
-    """/edit_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Добавить медиаплэйсхолдер"""
+    """/edit_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Изменить медиаплэйсхолдер"""
     args = command.args.split("|")
     if len(args) < 3:
         await ctx.message.answer(f"Недостаточно аргументов.")
         
     media_type = args[0]
     key = args[1]
-    is_localized = args[1] == "true"
+    is_localized = args[2] == "true"
     
     if media_type not in ["photo","video","document"]:
         await ctx.message.answer(f"Неправильный тип медиа.")
