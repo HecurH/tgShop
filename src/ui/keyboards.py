@@ -10,7 +10,7 @@ from schemas.types import LocalizedMoney
 from ui.message_tools import strike
 
 from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
-from ui.translates import EnumTranslates
+from ui.translates import EnumTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
 class CommonKBs:
 
@@ -523,18 +523,19 @@ class ProfileKBs:
         def menu(ctx: Context) -> types.ReplyKeyboardMarkup:
             kb = [
                 [
-                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Settings.lang),
-                    types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Profile.Settings.currency)
+                    types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Settings.lang.translate(ctx.lang)),
+                    types.KeyboardButton(text=ReplyButtonsTranslates.Profile.Settings.currency.translate(ctx.lang))
                 ],
                 [
-                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                    types.KeyboardButton(text=UncategorizedTranslates.back.translate(ctx.lang))
                 ]
                 
             ]
+            #.translate(ctx.lang) тк ctx.t не обновляется сам
             return types.ReplyKeyboardMarkup(
                 keyboard=kb,
                 resize_keyboard=True,
-                input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+                input_field_placeholder=ReplyButtonsTranslates.choose_an_item.translate(ctx.lang)
             )
         
         @staticmethod

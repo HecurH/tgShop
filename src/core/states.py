@@ -6,6 +6,7 @@ from schemas.types import MediaPlaceholderLink
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import *
 from ui.keyboards import *
+from ui.translates import ProfileTranslates
 
 
 class StateHandlerRegistry:
@@ -503,8 +504,8 @@ async def profile_menu_handler(ctx: Context, **_):
 @state_handlers.register(ProfileStates.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ctx.t.ProfileTranslates.Settings.menu,
-        reply_markup=ProfileKBs.Settings.menu(ctx)
+        ProfileTranslates.Settings.menu.translate(ctx.lang), #.translate(ctx.lang) тк ctx.t не обновляется сам
+        reply_markup=ProfileKBs.Settings.menu(ctx) 
     )
 
 @state_handlers.register(ProfileStates.Settings.ChangeLanguage)
