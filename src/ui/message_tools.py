@@ -5,11 +5,13 @@ from aiogram.filters import Command
 from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
+
 from schemas.enums import MediaType
 
 
 if TYPE_CHECKING:
     from schemas.types import LocalizedSavedMedia
+    from core.helper_classes import Context
 
 
 async def clear_keyboard_effect(message: Message) -> None:
@@ -135,27 +137,27 @@ def list_commands(router: Router) -> list[tuple[str, str]]:
                 result.append((", ".join(flt.callback.commands), doc.strip()))
     return result
 async def send_media_response(
-    message: Message,
+    ctx: "Context",
     media: Optional["LocalizedSavedMedia"] = None,
     caption: str = "",
     keyboard: Optional[InlineKeyboardMarkup | ReplyKeyboardMarkup] = None
 ) -> None:
     if not media:
-        await message.answer(caption, reply_markup=keyboard)
+        await ctx.message.answer(caption, reply_markup=keyboard)
         return
     
     media_handlers = {
-        MediaType.photo: message.answer_photo,
-        MediaType.video: message.answer_video,
-        MediaType.document: message.answer_document
+        MediaType.photo: ctx.message.answer_photo,
+        MediaType.video: ctx.message.answer_video,
+        MediaType.document: ctx.message.answer_document
     }
     
-    handler = media_handlers.get(media.media_type, message.answer)
+    handler = media_handlers.get(media.media_type, ctx.message.answer)
     
-    if handler == message.answer:
+    if handler == ctx.message.answer:
         await handler(caption, reply_markup=keyboard)
     else:
-        await handler(media.media_id, caption=caption, reply_markup=keyboard)
+        await handler(media.media_id if isinstance(media.media_id, str) else media.media_id.get(ctx.lang), caption=caption, reply_markup=keyboard)
 
 async def edit_media_message(
     message: Message,

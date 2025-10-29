@@ -293,7 +293,7 @@ async def viewing_assortment_handler(ctx: Context,
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                                 product.short_description_media,
                                 caption,
                                 AssortmentKBs.gen_assortment_view_kb(current, amount, ctx))
@@ -304,7 +304,7 @@ async def viewing_product_details_handler(ctx: Context,
                                           **_):
     caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx)
 
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                                 product.long_description_media,
                                 caption,
                                 AssortmentKBs.detailed_view(ctx)
@@ -320,7 +320,7 @@ async def forming_order_entry_handler(ctx: Context,
     
     additionals = await ctx.services.db.additionals.get(product)
 
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                                 product.configuration_media,
                                 AssortmentTextGen.generate_product_configurating_main(product, ctx),
                                 AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx))
@@ -339,12 +339,12 @@ async def entry_option_select_handler(ctx: Context,
     if annotation:
         annotation_media = await annotation.media.resolve(ctx) if annotation.media and isinstance(annotation.media, MediaPlaceholderLink) else annotation.media
 
-        await send_media_response(ctx.message, annotation_media, annotation.text.get(ctx), kb)
+        await send_media_response(ctx, annotation_media, annotation.text.get(ctx), kb)
         return
     
     media = await chosen.media.resolve(ctx) if chosen.media and isinstance(chosen.media, MediaPlaceholderLink) else chosen.media
 
-    await send_media_response(ctx.message, media, text, kb)
+    await send_media_response(ctx, media, text, kb)
     if delete_prev: await ctx.message.delete()
 
 @state_handlers.register(AssortmentStates.ChoiceEditValue)
@@ -358,7 +358,7 @@ async def choice_edit_value_handler(ctx: Context,
     
     media = await choice.media.resolve(ctx) if choice.media and isinstance(choice.media, MediaPlaceholderLink) else choice.media
 
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                               media,
                               text,
                               kb)
@@ -371,7 +371,7 @@ async def switches_editing_handler(ctx: Context,
     text = AssortmentTextGen.generate_switches_text(switches, ctx)
     kb = AssortmentKBs.generate_switches_kb(switches, ctx)
 
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                               switches.media,
                               text,
                               kb)
@@ -423,7 +423,7 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
                                             entry.configuration,
                                             ctx)
     
-    await send_media_response(ctx.message,
+    await send_media_response(ctx,
                             product.short_description_media,
                             caption,
                             await CartKBs.cart_view(entry, current, amount, total_price, ctx))

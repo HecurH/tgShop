@@ -225,7 +225,7 @@ class LocalizedSavedMedia(BaseModel):
 class MediaPlaceholderLink(BaseModel):
     placeholder_key: str
     
-    async def resolve(self, ctx: Context) -> Optional[LocalizedSavedMedia]:
+    async def resolve(self, ctx: Context) -> Optional[str]:
         return ctx.services.placeholders.resolve_media(self.placeholder_key)
 
 class OrderState(BaseModel):
