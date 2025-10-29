@@ -582,7 +582,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "ru": "Представляет собой порошковый краситель с металлическим сиянием, придающий поверхности интересный перелив и игру света. Является самостоятельным цветом для покраски. (см. Доступные цвета)",
                                     "en": "It is a fine powder with a metallic sheen, giving the surface an interesting iridescence and a play of light. It is an independent color for painting. (see Available colors)"
                                 }
-                            
+
                             class NeonColors(Translatable):
                                 name = {
                                     "ru": "Неоновые цвета",

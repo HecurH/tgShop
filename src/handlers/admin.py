@@ -134,7 +134,7 @@ async def setting_localized_media_handler(_, ctx: Context):
         await ctx.fsm.update_data(**{remaining_langs[0]: media_id})
         
         if len(remaining_langs) > 1:
-            await call_state_handler(AdminStates.Main.GlobalPlaceholders.CreatingLangs, ctx)
+            await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
             return
     
     langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
