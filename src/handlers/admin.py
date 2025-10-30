@@ -642,7 +642,18 @@ async def image_saving_handler(_, ctx: Context) -> None:
                                               media_id={"ru": "AgACAgIAAxkDAAJXK2kDWq6qrkeDbf-n0tUOu7F6WJEuAALr_jEbnKUYSIM398yR4RbrAQADAgADdwADNgQ",
                                                         "en": "AgACAgIAAxkDAAJXLmkDWtgY6bKpNM-aIpqh0OhoNmT3AALu_jEbnKUYSH7VmztnVIWPAQADAgADdwADNgQ"
                                                         }),
-                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                    can_be_blocked_by=["color/additionals/gradient",
+                                       "color/additionals/glitter",
+                                       "color/additionals/shimmer",
+                                       "color/additionals/neon_colors",
+                                       "color/additionals/phosphors/blue",
+                                       "color/additionals/phosphors/cyan",
+                                       "color/additionals/phosphors/green",
+                                       "color/additionals/phosphors/red",
+                                       "color/additionals/phosphors/purple",
+                                       "color/additionals/phosphors/white",
+                                       ],
                 ),
                 "existing_set": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.name"),
@@ -654,7 +665,9 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "P": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
                         "N": LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         },
-                    can_be_blocked_by=["color/additionals/neon_colors",
+                    can_be_blocked_by=["color/additionals/glitter",
+                                       "color/additionals/shimmer",
+                                       "color/additionals/neon_colors",
                                        "color/additionals/phosphors/blue",
                                        "color/additionals/phosphors/cyan",
                                        "color/additionals/phosphors/green",
