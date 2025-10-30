@@ -940,8 +940,8 @@ class OrdersTranslates(Translatable):
     }
     
     menu = {
-        "ru": "текст над\n\n{orders_info}\n\nвведите номер заказа бла-бла:",
-        "en": "text above\n\n{orders_info}\n\nenter order number bla-bla:"
+        "ru": "Связанные с Вами заказы:\n\n{orders_info}\n\nВведите номер заказа с которым Вы хотите взаимодействовать:",
+        "en": "Orders related to you:\n\n{orders_info}\n\nEnter the order number you want to interact with:"
     }
     
     order_viewing_menu = {
@@ -994,8 +994,8 @@ Total cost of goods: {products_price}
     
     class Infos(Translatable):
         any_question = {
-            "ru": "ну тут ответ на него лол",
-            "en": "lol"
+            "ru": "Если Вы считаете, что что-то идет не так, напишите @TechnoZmeyka.",
+            "en": "If you think something is going wrong, write to @TechnoZmeyka."
         }
 
 class ProfileTranslates(Translatable):
@@ -1068,8 +1068,32 @@ class ProfileTranslates(Translatable):
         }
         
         what_is_this = {
-            "ru": "Тут должно быть описание реферальной системы для пользователя.",
-            "en": "Here should be a description of the referral system for the user."
+            "ru": """🎁 Реферальная система
+
+Зарабатывай бонусы или реальные выплаты, приглашая друзей или подписчиков!
+
+👤 Для пользователей:
+Просто вступи в программу и получи свою персональную ссылку.
+  — Пригласи друга
+  — С его первого заказа ты получишь 5% на бонусный счёт
+  — Бонусами можно оплатить часть следующего заказа
+
+📢 Для владельцев каналов:
+После вступления напиши @TechnoZmeyka — он активирует партнёрский статус.
+Ты будешь получать выплаты за заказы по договорённости.""",
+            "en": """🎁 Referral system
+
+Earn bonuses or real payouts by inviting friends or subscribers!
+
+👤 For users:
+Just join the program and get your personal link.
+  — Invite a friend
+  — From his first order, you will receive 5% to the bonus account
+  — You can use bonuses to pay for part of the next order.
+
+📢 For channel owners:
+After joining, write to @TechnoZmeyka — he will activate the partner status.
+You will receive payments for orders by agreement."""
         }
         
         menu_customer = {
@@ -1078,14 +1102,14 @@ class ProfileTranslates(Translatable):
 Вы пригласили: {invited_customers} {people}
 Из них сделали хотя бы один заказ: {ordered_once}
 
-Приглашайте друзей и получайте бонусы за их заказы! 🎁
+Приглашайте друзей и получайте бонус за их первый заказ! 🎁
 Сейчас у Вас {bonus_balance} на бонусном счету.""",
             "en": """👥 Referral program
 
 You invited: {invited_customers} {people}
 Of them made at least one order: {ordered_once}
 
-Invite friends and get bonuses for their orders! 🎁
+Invite your friends and get a bonus for their first order! 🎁
 Now you have {bonus_balance} on your bonus account."""
         }
         
@@ -1169,7 +1193,7 @@ You can change the delivery information using the buttons below:"""
         }
         
         send_to_manual_confirmation_text = {
-            "ru": "Вы уверены что бла-бла-бла доставка бла-бла ручное подтверждение стоимости?",
+            "ru": "Вы уверены что хотите отправить доставку на ручное подтверждение стоимости?",
             "en": "Are you sure you want to send the delivery to manual confirmation?"
         }
       
@@ -1183,6 +1207,7 @@ class NotificatorTranslates(Translatable):
         
         inviter_reward = {
             "ru": "Вам было начислено {reward} за первый заказ приглашённого Вами пользователя.\nТеперь у Вас {balance} на бонусном счету.",
+            "en": "You have been awarded {reward} for the first order of the user you invited.\nNow you have {balance} in your bonus account."
         }
     
     class Delivery(Translatable):
