@@ -718,7 +718,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.name"),
                             description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.description"),
                             price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
-                            can_be_blocked_by=["color/existing_set"]
+                            can_be_blocked_by=["color/canonical"]
                         ),
                         "glitter": ConfigurationSwitch(
                             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Glitter.name"),
