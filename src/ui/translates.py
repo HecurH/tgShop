@@ -743,8 +743,8 @@ class AssortmentTranslates(Translatable):
     }
 
     choose_the_preset = {
-        "ru": "Введите номер готового пресета:",
-        "en": "Select the preset number:"
+        "ru": "Введите номер готового пресета (латиница):",
+        "en": "Select the preset number (Latin alphabet):"
     }
 
     enter_custom = {
