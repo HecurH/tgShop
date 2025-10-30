@@ -577,7 +577,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAJTFmjhH0XzDUPMlbiirkzSzK08JSZTAAIs-TEbKEYIS5N_kpftMhc7AQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAMnaQO9pmz7m-ygxnI1BNGvP7FtoHEAAhoFMhuHLSBIN73TQfbZTMABAAMCAAN5AAM2BA"
                     ),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.description"),
 
@@ -587,7 +587,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAJTGWjhH1tl4-D7zyWf_E01I37KKsWWAAIt-TEbKEYISxpvT1mJjCaUAQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAMqaQO9thReF1LgxZQ8FIpJH3HnzhwAAhsFMhuHLSBIIaPS4-7Vxd0BAAMCAAN5AAM2BA"
                     ),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description")
                 ),
@@ -595,7 +595,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.name"),
                     media=LocalizedSavedMedia(
                         media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAJTHGjhH4sb4bbdOgjhxIdCuwanphioAAIu-TEbKEYIS88pbDq-UqvXAQADAgADeQADNgQ"
+                        media_id="AgACAgIAAxkDAAMtaQO9yVk9QKXrhzxvJtBaf4lJ-EcAAhwFMhuHLSBIYTDE_oitamIBAAMCAAN5AAM2BA"
                     ),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.description"),
 
@@ -640,8 +640,8 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.description"),
                     media=LocalizedSavedMedia(media_type=MediaType.photo, 
-                                              media_id={"ru": "AgACAgIAAxkDAAJXK2kDWq6qrkeDbf-n0tUOu7F6WJEuAALr_jEbnKUYSIM398yR4RbrAQADAgADdwADNgQ",
-                                                        "en": "AgACAgIAAxkDAAJXLmkDWtgY6bKpNM-aIpqh0OhoNmT3AALu_jEbnKUYSH7VmztnVIWPAQADAgADdwADNgQ"
+                                              media_id={"ru": "AgACAgIAAxkDAAM2aQO-fg3Anx3Sa1tL8ccry-Lim_EAAiIFMhuHLSBIPwf7eqM0xUYBAAMCAAN3AAM2BA",
+                                                        "en": "AgACAgIAAxkDAAM5aQO-jZm4zRcldXLf_xNMeT-mRpsAAiMFMhuHLSBIcybdSYdcmF4BAAMCAAN3AAM2BA"
                                                         }),
                     price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
                     can_be_blocked_by=["color/additionals/gradient",
@@ -806,7 +806,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
         category="dildos",
         short_description_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAJTEGjg-95UQ3KNkZC3wl39AAEskcuddAACSPcxGyhGCEvJAWVkMglOTgEAAwIAA3cAAzYE"
+            media_id="AgACAgIAAxkDAAMhaQO9QWtmr-kYeTnZ19vJ-MN4j4wAAhYFMhuHLSBItbZmbg0sU5ABAAMCAAN3AAM2BA"
         ),
         long_description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
@@ -824,13 +824,13 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
         ),
         long_description_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAJTE2jhHT2XXoE2jfFZT-LaTW6m6oZAAAIf-TEbKEYISzw33MYbwxlOAQADAgADdwADNgQ"
+            media_id="AgACAgIAAxkDAAMkaQO9h8CJpyYTPdsJbXIYxwQn1FEAAhgFMhuHLSBI9M6B5_SAJUwBAAMCAAN3AAM2BA"
         ),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=configuration,
         configuration_media=LocalizedSavedMedia(
             media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAJTE2jhHT2XXoE2jfFZT-LaTW6m6oZAAAIf-TEbKEYISzw33MYbwxlOAQADAgADdwADNgQ"
+            media_id="AgACAgIAAxkDAAMkaQO9h8CJpyYTPdsJbXIYxwQn1FEAAhgFMhuHLSBI9M6B5_SAJUwBAAMCAAN3AAM2BA"
         )
     )
 
