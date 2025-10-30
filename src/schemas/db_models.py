@@ -529,19 +529,17 @@ class ConfigurationChoice(AppBaseModel):
         if chosen_key == keys[1] and len(keys) == 2:
             return True
         
-        chosen = option.get_chosen()
-        if isinstance(chosen, ConfigurationSwitches) and len(keys) > 2:
+        if len(keys) > 2:
             keys = keys[2:]
-            print(keys)
-            
-            switch_or_group = chosen.switches.get(keys[0])
-            if not switch_or_group: raise Exception("BPath: No such switch")
-            if isinstance(switch_or_group, ConfigurationSwitch): return switch_or_group.enabled
-            elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
-                if len(keys) != 2: raise Exception("BPath: Wrong switch group path")
-                switch = switch_or_group.switches.get(keys[1])
-                if not switch: raise Exception("BPath: No such switch")
-                return switch.enabled
+            for switches in [val.switches for val in option.choices.values() if isinstance(val, ConfigurationSwitches)]:
+                switch_or_group = switches.get(keys[0])
+                if not switch_or_group: raise Exception("BPath: No such switch")
+                if isinstance(switch_or_group, ConfigurationSwitch): return switch_or_group.enabled
+                elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                    if len(keys) != 2: raise Exception("BPath: Wrong switch group path")
+                    switch = switch_or_group.switches.get(keys[1])
+                    if not switch: raise Exception("BPath: No such switch")
+                    return switch.enabled
         return False
 
 class ConfigurationAnnotation(AppBaseModel):
