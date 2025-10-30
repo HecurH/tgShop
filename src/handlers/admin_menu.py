@@ -142,11 +142,11 @@ async def order_menu_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.ChangeStatusChoice)
 async def order_change_status_choice_handler(_, ctx: Context):
     text = ctx.message.text
+    order: Order = await Order.from_fsm_context(ctx, "order")
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx)
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
         return
 
-    order: Order = await Order.from_fsm_context(ctx, "order")
     attr_name = EnumTranslates.OrderStateKey.get_attribute(text, ctx.lang)
     if not attr_name:
         await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx)
@@ -160,11 +160,11 @@ async def order_change_status_choice_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.SetChangeStatusComment)
 async def order_set_change_status_comment_handler(_, ctx: Context):
     text = ctx.message.text
+    order: Order = await Order.from_fsm_context(ctx, "order")
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx)
+        await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
         return
 
-    order: Order = await Order.from_fsm_context(ctx, "order")
     customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
     if text.isdigit() and text == '0':
         await ctx.services.db.orders.save(order)
