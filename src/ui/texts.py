@@ -148,10 +148,15 @@ class AdminTextGen:
 Суммарная стоимость товаров: {products_price}
 {price_info}
 """
-        
+
+        entries_description = ""
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        entries_description = await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries))
-        entries_description = build_list(entries_description, before="▫️")
+        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products_dict = {product.id: product for product in products}
+
+        for idx, entry in enumerate(entries):
+            if product := products_dict.get(entry.product_id):
+                text += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
         
         delivery_info = order.delivery_info
         delivery_description = ""
