@@ -648,8 +648,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
 
                         text = {
-                            "ru": "На прикрепленном медиафайле отображены все исходные цвета, доступные для смешения.",
-                            "en": "The attached media file displays all the original colors used for mixing."
+                            "ru": "На прикрепленном медиафайле отображены стандартные цвета для ознакомления.",
+                            "en": "The attached media file displays standard colors for review."
                         }
             
 class UncategorizedTranslates(Translatable):
