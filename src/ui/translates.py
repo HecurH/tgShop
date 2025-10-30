@@ -743,7 +743,7 @@ class AssortmentTranslates(Translatable):
     }
 
     choose_the_preset = {
-        "ru": "Выберите номер готового пресета:",
+        "ru": "Введите номер готового пресета:",
         "en": "Select the preset number:"
     }
 

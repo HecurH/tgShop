@@ -709,7 +709,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                             price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),
                         "neon_colors": ConfigurationSwitch(
-                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.ффффффффффффффффффффф.name"),
+                            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.name"),
                             description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.description"),
                             price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         ),

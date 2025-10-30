@@ -314,6 +314,7 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
     chosen = changing_option.get_chosen() # ССЫЛКА на объект, не надо дополнительно переприсваивать дочерних тварей
 
     if chosen.existing_presets:
+        text = text.upper()
         if not chosen.validate_existing_preset(text):
             await message.delete()
             return
