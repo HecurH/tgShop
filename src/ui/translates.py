@@ -415,10 +415,10 @@ class DBEntryTranslates(Translatable):
                             "en": "Selected <b>canonical</b> color.\n\nYou can see an example in the attached media."
                         }
                             
-                    class Existing(Translatable):
+                    class ExistingSet(Translatable):
                         name = {
-                            "ru": "Существующий",
-                            "en": "Existing One"
+                            "ru": "Существующий набор",
+                            "en": "Existing set"
                         }
 
                         description = {

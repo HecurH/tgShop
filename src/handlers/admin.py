@@ -644,8 +644,8 @@ async def image_saving_handler(_, ctx: Context) -> None:
                                                         }),
                     price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
                 ),
-                "existing": ConfigurationChoice(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.name"),
+                "existing_set": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.name"),
                     media=MediaPlaceholderLink(placeholder_key="existing_color_choice"),
                     existing_presets=True,
                     existing_presets_pattern="K|D,T|P,M,N|int",
@@ -655,7 +655,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "N": LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         },
 
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.description")
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.description")
                 ),
                 "two-zone": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.name"),
