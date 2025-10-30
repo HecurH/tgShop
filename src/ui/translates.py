@@ -404,15 +404,15 @@ class DBEntryTranslates(Translatable):
                 
                 class Choices(Translatable):
                     
-                    class Standart(Translatable):
+                    class Canonical(Translatable):
                         name = {
-                            "ru": "Стандартный",
-                            "en": "Standard"
+                            "ru": "Каноничный",
+                            "en": "Canonical"
                         }
 
                         description = {
-                            "ru": "Выбран <b>стандартный</b> окрас.\n\nПример можете увидеть в прикрепленном к сообщению медиа.",
-                            "en": "Selected <b>standard</b> color.\n\nYou can see an example in the attached media."
+                            "ru": "Выбран <b>каноничный</b> окрас.\n\nПример можете увидеть в прикрепленном к сообщению медиа.",
+                            "en": "Selected <b>canonical</b> color.\n\nYou can see an example in the attached media."
                         }
                             
                     class Existing(Translatable):
@@ -549,7 +549,7 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
                         description = {
                             "ru": "Используйте меню ниже, чтобы добавить к окраске дополнительные элементы.",
-                            "en": "todo"
+                            "en": "Use the menu below to add additional elements to the coloring."
                         }
                         
                         class Switches(Translatable):

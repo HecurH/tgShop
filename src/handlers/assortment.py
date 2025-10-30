@@ -317,7 +317,7 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
         if not chosen.validate_existing_preset(text):
             await message.delete()
             return
-        chosen.existing_presets_chosen = text
+        chosen.set_chosen_preset(text)
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option

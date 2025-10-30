@@ -415,6 +415,7 @@ class ConfigurationChoice(AppBaseModel):
     existing_presets: bool = Field(default=False)
     existing_presets_pattern: str = "int"
     existing_presets_chosen: str = ""
+    price_by_preset: Optional[Dict[str, LocalizedMoney]] = None
 
     is_custom_input: bool = Field(default=False)
     custom_input_text: Optional[str] = None
@@ -431,7 +432,17 @@ class ConfigurationChoice(AppBaseModel):
         self.is_custom_input=base_choice.is_custom_input
         self.blocks_price_determination=base_choice.blocks_price_determination
         self.price=base_choice.price
-        
+    
+    def set_chosen_preset(self, preset: str):
+        self.existing_presets_chosen = preset
+        if self.price_by_preset:
+            total_price = LocalizedMoney.empty_base()
+            for let, price in self.price_by_preset.items():
+                if let in preset:
+                    total_price += price
+            self.price = total_price
+                    
+    
     def validate_existing_preset(self, text) -> bool:
         parts = self.existing_presets_pattern.split('|')
         regex_parts = []

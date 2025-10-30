@@ -633,17 +633,27 @@ async def image_saving_handler(_, ctx: Context) -> None:
         "color": ConfigurationOption(
             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.name"),
             text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.text"),
-            chosen_key="existing",
+            chosen_key="canonical",
             choices={
-                # "standart": ConfigurationChoice(
-                #     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.name"),
-                #     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Standart.description")
-                # ),
+                "canonical": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.description"),
+                    media=LocalizedSavedMedia(media_type=MediaType.photo, 
+                                              media_id={"ru": "AgACAgIAAxkDAAJXK2kDWq6qrkeDbf-n0tUOu7F6WJEuAALr_jEbnKUYSIM398yR4RbrAQADAgADdwADNgQ",
+                                                        "en": "AgACAgIAAxkDAAJXLmkDWtgY6bKpNM-aIpqh0OhoNmT3AALu_jEbnKUYSH7VmztnVIWPAQADAgADdwADNgQ"
+                                                        }),
+                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                ),
                 "existing": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.name"),
                     media=MediaPlaceholderLink(placeholder_key="existing_color_choice"),
                     existing_presets=True,
                     existing_presets_pattern="K|D,T|P,M,N|int",
+                    price_by_preset={
+                        "T": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                        "P": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                        "N": LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
+                        },
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Existing.description")
                 ),
@@ -658,6 +668,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.name"),
                     media=MediaPlaceholderLink(placeholder_key="three_zone_color_choice"),
                     is_custom_input=True,
+                    price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.description")
                 ),
