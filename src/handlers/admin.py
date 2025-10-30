@@ -499,7 +499,6 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
 @router.message(Command("save_photo"))
 async def photo_saving_handler(_, ctx: Context):
     raw = await ctx.message.bot.download(ctx.message.document)
-    print(ctx.message.document.file_id)
 
     msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
         raw.read(),

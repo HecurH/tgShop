@@ -60,7 +60,8 @@ async def cart_viewer_handler(_, ctx: Context):
             await ctx.fsm.update_data(back_to_cart_after_delivery=True)
             await call_state_handler(ProfileStates.Delivery.Menu,
                                      ctx,
-                                     send_before=(ctx.t.CartTranslates.delivery_not_configured, 1))
+                                     #send_before=(ctx.t.CartTranslates.delivery_not_configured, 1)
+                                    )
             return
         
         products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
