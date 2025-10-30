@@ -332,7 +332,7 @@ class ConfigurationSwitch(AppBaseModel):
     enabled: bool = False
     
     def toggle(self):
-        self.enabled = not switch.enabled
+        self.enabled = not self.enabled
     
     def update(self, base_sw: "ConfigurationSwitch"):
         self.name=base_sw.name
