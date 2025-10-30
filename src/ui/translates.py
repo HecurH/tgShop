@@ -1268,6 +1268,11 @@ class ReplyButtonsTranslates(Translatable):
             "ru": "Добавить в корзину",
             "en": "Add to cart"
         }
+        
+        extra_options = {
+            "ru": "Доп. опции",
+            "en": "Ext. Options"
+        }
     
     class Cart(Translatable):
         place = {

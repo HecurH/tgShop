@@ -239,7 +239,7 @@ class AssortmentKBs:
         if has_additionals:
             btns.append(
                 types.KeyboardButton(
-                    text="+"
+                    text=ctx.t.ReplyButtonsTranslates.Assortment.extra_options
                 )
             )
         btns.append(
