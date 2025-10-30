@@ -314,8 +314,8 @@ class AssortmentTextGen:
         return f"{product.name.get(ctx)}\n\n{section}\n{price_text}"
     
     @staticmethod
-    def gen_blocked_choice_path_text(choice: ConfigurationChoice, configuration: ProductConfiguration, ctx: Context):
-        return " —> ".join(configuration.get_localized_names_by_path(choice.get_blocking_path(configuration.options), ctx))
+    def gen_blocked_choice_path_text(choice_or_switch: ConfigurationChoice | ConfigurationSwitch, configuration: ProductConfiguration, ctx: Context):
+        return " —> ".join(configuration.get_localized_names_by_path(choice_or_switch.get_blocking_path(configuration.options), ctx))
 
 class ProfileTextGen:
     

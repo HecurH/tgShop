@@ -367,10 +367,11 @@ async def choice_edit_value_handler(ctx: Context,
 @state_handlers.register(AssortmentStates.SwitchesEditing)
 async def switches_editing_handler(ctx: Context,
                                    switches: ConfigurationSwitches,
+                                   configuration: ProductConfiguration,
                                    **_):
 
     text = AssortmentTextGen.generate_switches_text(switches, ctx)
-    kb = AssortmentKBs.generate_switches_kb(switches, ctx)
+    kb = AssortmentKBs.generate_switches_kb(configuration, switches, ctx)
 
     await send_media_response(ctx,
                               switches.media,

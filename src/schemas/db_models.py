@@ -327,12 +327,56 @@ class ConfigurationSwitch(AppBaseModel):
     description: Optional[LocalizedEntry] = None
     
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
+    can_be_blocked_by: List[str] = Field(default_factory=list)
 
     enabled: bool = False
+    
+    def toggle(self):
+        self.enabled = not switch.enabled
     
     def update(self, base_sw: "ConfigurationSwitch"):
         self.name=base_sw.name
         self.price=base_sw.price
+        
+    def check_blocked_all(self, options: Dict[str, Any]) -> bool:
+        return any(
+            self.check_blocked_path(path, options)
+            for path in self.can_be_blocked_by
+        )
+        
+    def get_blocking_path(self, options: Dict[str, Any]) -> Optional[str]:
+        return next(
+            (
+                path
+                for path in self.can_be_blocked_by
+                if self.check_blocked_path(path, options)
+            ),
+            None
+        )
+    
+    def check_blocked_path(self, path: str, options: Dict[str, "ConfigurationOption"]) -> bool:
+        keys = path.split("/")
+        
+        option = options.get(keys[0]) if keys else None
+        if not option: raise Exception("BPath: No such option")
+        
+        chosen_key = option.chosen_key
+        if chosen_key == keys[1] and len(keys) == 2:
+            return True
+        
+        chosen = option.get_chosen()
+        if isinstance(chosen, ConfigurationSwitches) and len(keys) > 2:
+            keys = keys[2:]
+            
+            switch_or_group = chosen.switches.get(keys[0])
+            if not switch_or_group: raise Exception("BPath: No such switch")
+            if isinstance(switch_or_group, ConfigurationSwitch): return switch_or_group.enabled
+            elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                if len(keys) != 2: raise Exception("BPath: Wrong switch group path")
+                switch = switch_or_group.switches.get(keys[1])
+                if not switch: raise Exception("BPath: No such switch")
+                return switch.enabled
+        return False
         
 class ConfigurationSwitchesGroup(AppBaseModel):
     name: LocalizedEntry
@@ -381,16 +425,14 @@ class ConfigurationSwitches(AppBaseModel):
         """Возвращает сумму цен всех включённых переключателей."""
         return sum((switch.price for switch in self.get_enabled()), LocalizedMoney())
     
-    def toggle_by_localized_name(self, name, ctx):
+    def get_by_localized_name(self, name, ctx):
         for switch in self.get_all():
             if isinstance(switch, ConfigurationSwitchesGroup):
                 for sw in switch.get_all():
                     if sw.name.get(ctx) == name:
-                        sw.enabled = not sw.enabled
-                        break
+                        return sw
             elif switch.name.get(ctx) == name:
-                switch.enabled = not switch.enabled
-                break 
+                return switch
 
     def update(self, update_from_switches: "ConfigurationSwitches"):
         self.name = update_from_switches.name
@@ -640,29 +682,33 @@ class ProductConfiguration(AppBaseModel):
     def get_localized_names_by_path(self, path, ctx: Context) -> List[str]:
         keys = path.split("/")
         result = []
+        option_key = keys[0] if keys else None
+        choice_key = keys[1] if len(keys) > 1 else None
+        switch_or_group_key = keys[2] if len(keys) > 2 else None
+        group_switch_key = keys[3] if len(keys) == 4 else None
+        
         # Получаем опцию
-        option = self.options.get(keys[0]) if keys else None
+        option = self.options.get(option_key) if option_key else None
         if not option:
             raise Exception("BPath: No such option")
         # Добавляем имя опции
         result.append(option.name.get(ctx))
         # Получаем выбор
-        choice = option.choices.get(keys[1]) if len(keys) > 1 else None
+        choice = option.choices.get(choice_key) if choice_key else None
         if not choice:
             raise Exception("BPath: Where is my choice")
         # Добавляем имя выбора
         if isinstance(choice, ConfigurationChoice): result.append(choice.name.get(ctx))
         # Если есть переключатель (switch)
         else:
-            if switch := next(
-                (
-                    sw
-                    for key, sw in choice.switches.items()
-                    if key == keys[2]
-                ),
-                None,
-            ):
-                result.append(switch.name.get(ctx))
+            switch_or_group = choice.switches.get(switch_or_group_key)
+            if switch_or_group is not None:
+                if isinstance(switch_or_group, ConfigurationSwitch):
+                    result.append(switch_or_group.name.get(ctx))
+                elif isinstance(switch_or_group, ConfigurationSwitchesGroup):
+                    if switch := switch_or_group.switches.get(group_switch_key):
+                        result.append(switch.name.get(ctx))
+                
         return result
         
     def calculate_additionals_price(self):

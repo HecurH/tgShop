@@ -301,10 +301,15 @@ class AssortmentKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def generate_switches_kb(switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def generate_switches_kb(configuration: ProductConfiguration, switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
         def gen_name(switch: ConfigurationSwitch):
-            return f"{switch.name.get(ctx)} ✅" if switch.enabled else switch.name.get(ctx)
+            blocked = switch.check_blocked_all(configuration.options)
+            is_blocked = "🔒" if blocked else ""
+            is_enabled = "✅" if switch.enabled else ""
+            name = strike(switch.name.get(ctx)) if blocked else switch.name.get(ctx)
+            
+            return f"{name} {is_enabled}{is_blocked}".strip()
         
         current_row = []
         

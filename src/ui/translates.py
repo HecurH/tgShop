@@ -559,8 +559,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                                     "en": "Gradient"
                                 }
                                 description = {
-                                    "ru": "Создаёт плавный и естественный переход от одного цвета к другому.",
-                                    "en": "Creates a smooth and natural transition from one color to another."
+                                    "ru": "Создаёт плавный и естественный переход от одного цвета к другому. Если использован набор цветов, то градиент будет от верхнего ко второму цвету",
+                                    "en": "Creates a smooth and natural transition from one color to another. If a set of colors is used, the gradient will be from the top to the second color."
                                 }
                             
                             class Glitter(Translatable):

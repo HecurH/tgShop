@@ -654,6 +654,14 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "P": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
                         "N": LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
                         },
+                    can_be_blocked_by=["color/additionals/neon_colors",
+                                       "color/additionals/phosphors/blue",
+                                       "color/additionals/phosphors/cyan",
+                                       "color/additionals/phosphors/green",
+                                       "color/additionals/phosphors/red",
+                                       "color/additionals/phosphors/purple",
+                                       "color/additionals/phosphors/white",
+                                       ],
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.description")
                 ),
@@ -711,7 +719,8 @@ async def image_saving_handler(_, ctx: Context) -> None:
                         "neon_colors": ConfigurationSwitch(
                             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.name"),
                             description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.description"),
-                            price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
+                            price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                            can_be_blocked_by=["color/existing_set"]
                         ),
                         "phosphors": ConfigurationSwitchesGroup(
                             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.name"),
@@ -719,27 +728,33 @@ async def image_saving_handler(_, ctx: Context) -> None:
                             switches={
                                 "blue": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Blue.name"),
-                                    price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00)
+                                    price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 ),
                                 "cyan": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Cyan.name"),
-                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00)
+                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 ),
                                 "green": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Green.name"),
-                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00)
+                                    price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 ),
                                 "red": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Red.name"),
-                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 ),
                                 "purple": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Purple.name"),
-                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 ),
                                 "white": ConfigurationSwitch(
                                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.White.name"),
-                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00)
+                                    price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                    can_be_blocked_by=["color/existing_set"]
                                 )
                                 
                                     

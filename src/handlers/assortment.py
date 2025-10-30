@@ -202,7 +202,8 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
         await choice.save_in_fsm(ctx, "switches")
         await call_state_handler(AssortmentStates.SwitchesEditing,
                                     ctx,
-                                    switches=choice)
+                                    switches=choice,
+                                    configuration=product.configuration)
     elif isinstance(choice, ConfigurationAnnotation):
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
@@ -230,8 +231,25 @@ async def switches_handler(message: Message, ctx: Context) -> None:
     switches: ConfigurationSwitches = await ConfigurationSwitches.from_fsm_context(ctx, "switches")
     
     if text := message.text:
-        clean_text = text.replace(" ✅", "")
-        switches.toggle_by_localized_name(clean_text, ctx)
+        clean_text = text.strip("\u0336🔒✅ ").replace("\u0336", "").replace("\u00a0", " ").strip()
+        switch = switches.get_by_localized_name(clean_text, ctx)
+        if switch is None:
+            await call_state_handler(AssortmentStates.SwitchesEditing,
+                                ctx,
+                                switches=switches,
+                                configuration=product.configuration)
+            return
+        
+        if switch.check_blocked_all(product.configuration.options):
+            await call_state_handler(AssortmentStates.SwitchesEditing,
+                                ctx,
+                                switches=switches,
+                                configuration=product.configuration,
+                                send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(switch, product.configuration, ctx)), 1))
+
+            return
+        
+        switch.toggle()
         
         product: Product = await Product.from_fsm_context(ctx, "product")
         current_option_key = await ctx.fsm.get_value("current_option_key")
@@ -248,7 +266,8 @@ async def switches_handler(message: Message, ctx: Context) -> None:
 
     await call_state_handler(AssortmentStates.SwitchesEditing,
                                 ctx,
-                                switches=switches)
+                                switches=switches,
+                                configuration=product.configuration)
 
 @router.message(AssortmentStates.AdditionalsEditing)
 async def additionals_handler(message: Message, ctx: Context) -> None:
