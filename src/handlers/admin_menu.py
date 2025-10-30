@@ -91,6 +91,7 @@ async def customer_menu_handler(_, ctx: Context):
         
 @router.message(AdminStates.Main.Orders.AskId)
 async def orders_ask_id_handler(_, ctx: Context):
+    print(ctx.message.text)
     text = ctx.message.text
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
