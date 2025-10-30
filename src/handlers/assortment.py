@@ -219,11 +219,13 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
 
 @router.message(AssortmentStates.SwitchesEditing)
 async def switches_handler(message: Message, ctx: Context) -> None:
+    product: Product = await Product.from_fsm_context(ctx, "product")
+    
     if message.text == ctx.t.UncategorizedTranslates.back:
         option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
-                                 product=await Product.from_fsm_context(ctx, "product"),
+                                 product=product,
                                  option=option)
 
         return
@@ -251,7 +253,6 @@ async def switches_handler(message: Message, ctx: Context) -> None:
         
         switch.toggle()
         
-        product: Product = await Product.from_fsm_context(ctx, "product")
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
