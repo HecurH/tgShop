@@ -399,7 +399,6 @@ class ConfigurationSwitchesGroup(AppBaseModel):
                 self.switches[key] = switch
                 continue
             self.switches[key].update(switch)
-        
 
 class ConfigurationSwitches(AppBaseModel):
     name: LocalizedEntry
@@ -533,6 +532,7 @@ class ConfigurationChoice(AppBaseModel):
         chosen = option.get_chosen()
         if isinstance(chosen, ConfigurationSwitches) and len(keys) > 2:
             keys = keys[2:]
+            print(keys)
             
             switch_or_group = chosen.switches.get(keys[0])
             if not switch_or_group: raise Exception("BPath: No such switch")
