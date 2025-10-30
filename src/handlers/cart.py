@@ -165,6 +165,9 @@ async def order_configuration_handler(_, ctx: Context):
         
         
         await call_state_handler(CartStates.OrderConfiguration.PaymentConfirmation, ctx, order=order)
+    else:
+        await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order)
+
 
 @router.message(CartStates.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):

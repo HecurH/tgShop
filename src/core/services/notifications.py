@@ -11,7 +11,7 @@ from schemas.db_models import Customer, Order, DeliveryInfo
 from schemas.types import Money, SavedTMessage
 from ui.keyboards import UncategorizedKBs
 
-from core.helper_classes import Context
+from core.helper_classes import Context, MessageWrapper
 from ui.message_tools import build_list, split_message
 from ui.texts import form_entry_description, gen_product_configurable_info_text
 from ui.translates import NotificatorTranslates
@@ -181,7 +181,7 @@ class TelegramNotificator:
                 
     async def _forward(self, messages: List[Message | SavedTMessage], chat_id: int, as_copy: bool):
         for i, msg in enumerate(messages):
-            if isinstance(msg, Message):
+            if isinstance(msg, Message) or isinstance(msg, MessageWrapper):
                 if not hasattr(msg, "chat") or not hasattr(msg, "message_id"):
                     self.logger.warning("Skipping non-Message element in forward list: %r", msg)
                     continue
@@ -190,7 +190,7 @@ class TelegramNotificator:
                 continue
 
 
-            from_chat_id = msg.chat.id if isinstance(msg, Message) else msg.chat_id
+            from_chat_id = msg.chat.id if isinstance(msg, Message) or isinstance(msg, MessageWrapper) else msg.chat_id
             message_id = msg.message_id
 
             if as_copy:

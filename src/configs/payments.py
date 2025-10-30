@@ -31,8 +31,8 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         }),
         currency="RUB",
         payment_details=LocalizedString(data={
-            "ru": "Перевод на карту Сбербанка 2202205334616056.\nЕсли вы хотите выбрать данный платежный метод, произведите по нему оплату и нажмите на соответствующую кнопку.",
-            "en": "Transfer to Sberbank card 2202205334616056.\nIf you want to select this payment method, make a payment using it and click on the corresponding button."
+            "ru": "Перевод на карту Сбербанка 2202205334616056.",
+            "en": "Transfer to Sberbank card 2202205334616056."
         }),
         enabled=True,
         can_register_receipts=True,
@@ -49,8 +49,8 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         }),
         currency="USD",
         payment_details=LocalizedString(data={
-            "ru": "Для оплаты заказов через PayPal, пожалуйста, свяжитесь с @TechnoZmeyka после нажатия на соответствующую кнопку.",
-            "en": "To pay for orders via PayPal, please contact @TechnoZmeyka after clicking on the appropriate button."
+            "ru": "Для оплаты заказов через PayPal, пожалуйста, свяжитесь с @TechnoZmeyka после нажатия на кнопку.",
+            "en": "To pay for orders via PayPal, please contact @TechnoZmeyka after clicking the button."
         }),
         enabled=True,
         can_register_receipts=False,
