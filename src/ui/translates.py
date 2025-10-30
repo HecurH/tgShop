@@ -274,6 +274,11 @@ class EnumTranslates(Translatable):
             "en": "Accepted"
         }
         
+        waiting_for_photo = {
+            "ru": "Ожидает фотографии",
+            "en": "Waiting for photo"
+        }
+        
         assembled_waiting_for_send = {
             "ru": "Собран, ожидает отправки",
             "en": "Assembled, waiting to be shipped"

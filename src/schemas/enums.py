@@ -30,5 +30,9 @@ class OrderStateKey(str, Enum):
     
     accepted = "accepted"
     
+    waiting_for_photo = "waiting_for_photo"
+    
+    assembled_waiting_for_send = "assembled_waiting_for_send"
+    
     sent = "sent"
     received = "received"

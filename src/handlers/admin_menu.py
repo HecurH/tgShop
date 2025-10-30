@@ -175,6 +175,7 @@ async def order_set_change_status_comment_handler(_, ctx: Context):
         tmsg = order.state.add_comment(ctx.message)
         await ctx.services.db.orders.save(order)
         
+        await order.save_in_fsm(ctx, "order")
         await ctx.services.notificators.UserTelegramNotificator.send_order_state_changed(customer, order, tmsg)
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order, send_before="Успешно.")
         
