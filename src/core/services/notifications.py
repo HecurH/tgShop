@@ -239,8 +239,16 @@ class AdminChatNotificator:
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."
         text += "\nСодержимое заказа:\n"
         
+        ctx.lang = "ru"
+
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        text += "\n".join(await asyncio.gather(*(form_entry_description(entry, ctx) for entry in entries)))
+        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products_dict = {product.id: product for product in products}
+
+        for idx, entry in enumerate(entries):
+            if product := products_dict.get(entry.product_id):
+                text += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+        
         text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
@@ -309,7 +317,6 @@ class UserTelegramNotificator:
                                                  chat_id=customer.user_id)
     
     #-----------
-
 
 class NotificatorHub:
     def __init__(self, bot: Bot, logs_channel_id: Optional[int] = None, admin_chat_id: Optional[int] = None, config: NotificatorConfig = NotificatorConfig()):
