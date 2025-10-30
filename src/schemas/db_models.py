@@ -431,7 +431,10 @@ class ConfigurationChoice(AppBaseModel):
         self.existing_presets=base_choice.existing_presets
         self.is_custom_input=base_choice.is_custom_input
         self.blocks_price_determination=base_choice.blocks_price_determination
-        self.price=base_choice.price
+        self.price_by_preset = base_choice.price_by_preset
+        
+        if not self.price_by_preset:
+            self.price=base_choice.price
     
     def set_chosen_preset(self, preset: str):
         self.existing_presets_chosen = preset
