@@ -496,9 +496,10 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
         
 
-@router.message(Command("save_image"))
-async def image_saving_handler(_, ctx: Context):
+@router.message(Command("save_photo"))
+async def photo_saving_handler(_, ctx: Context):
     raw = await ctx.message.bot.download(ctx.message.document)
+    print(ctx.message.document.file_id)
 
     msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
         raw.read(),
@@ -508,7 +509,7 @@ async def image_saving_handler(_, ctx: Context):
     await ctx.message.answer(msg_id.photo[-1].file_id)
 
 @router.message(Command("save_video"))
-async def image_saving_handler(_, ctx: Context):
+async def video_saving_handler(_, ctx: Context):
     raw = await ctx.message.bot.download(ctx.message.document)
 
     msg_id = await ctx.message.answer_video(video=BufferedInputFile(
@@ -519,7 +520,7 @@ async def image_saving_handler(_, ctx: Context):
     await ctx.message.answer(msg_id.video.file_id)
     
 @router.message(Command("save_file"))
-async def image_saving_handler(_, ctx: Context):
+async def file_saving_handler(_, ctx: Context):
     bot: Bot = ctx.message.bot
     
     raw = await bot.download(ctx.message.document)
