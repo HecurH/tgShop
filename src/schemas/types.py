@@ -217,9 +217,9 @@ class LocalizedSavedMedia(BaseModel):
         return cls(media_id={key: kwargs[key] for key in kwargs})
     
     def get(self, ctx: Context) -> tuple[MediaType, str]:
-        media_id = ctx.services.media_saver.resolve_key(self.media_key)
-        if isinstance(media_id, dict): return media_id.get(ctx.lang)
-        return media_id
+        media_type, media_id = ctx.services.media_saver.resolve_key(self.media_key)
+        if isinstance(media_id, dict): return media_type, media_id.get(ctx.lang)
+        return media_type, media_id
 
 class OrderState(BaseModel):
     key: OrderStateKey
