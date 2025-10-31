@@ -103,27 +103,31 @@ class MediaSaver:
         media_type = self.media_type_by_key(key)
         with open(filepath, "rb") as f:
             file_bytes = f.read()
+        
+        try:
 
-        if media_type == MediaType.photo:
-            msg = await self.bot.send_photo(
-                chat_id=self.admin_chat_id,
-                photo=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
-            )
-            return msg.photo[-1].file_id
-        elif media_type == MediaType.video:
-            msg = await self.bot.send_video(
-                chat_id=self.admin_chat_id,
-                video=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
-            )
-            return msg.video.file_id
-        elif media_type == MediaType.document:
-            msg = await self.bot.send_document(
-                chat_id=self.admin_chat_id,
-                document=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
-            )
-            return msg.document.file_id
-        else:
-            raise ValueError(f"Неизвестный тип медиа: {media_type}")
+            if media_type == MediaType.photo:
+                msg = await self.bot.send_photo(
+                    chat_id=self.admin_chat_id,
+                    photo=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+                )
+                return msg.photo[-1].file_id
+            elif media_type == MediaType.video:
+                msg = await self.bot.send_video(
+                    chat_id=self.admin_chat_id,
+                    video=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+                )
+                return msg.video.file_id
+            elif media_type == MediaType.document:
+                msg = await self.bot.send_document(
+                    chat_id=self.admin_chat_id,
+                    document=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+                )
+                return msg.document.file_id
+            else:
+                raise ValueError(f"Неизвестный тип медиа: {media_type}")
+        except Exception as e:
+            raise RuntimeError(f"Ошибка при загрузке файла {filepath}: {e}")
 
     async def _background_refresh(self):
         while True:
