@@ -8,6 +8,7 @@ services:
     volumes:
       - ./src/:/src/
       - ./ssl/:/ssl/
+      - ./imgs/:/imgs/
       - ./logs/:/gss_logs/
     env_file:
       - .env
