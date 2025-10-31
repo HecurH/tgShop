@@ -74,13 +74,11 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
     text = callback.data
     await callback.answer()
-    print(text)
     
-    if text == ctx.t.UncategorizedTranslates.yes:
+    if text == "yes":
         await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
-    elif text == ctx.t.UncategorizedTranslates.no:
+    elif text == "no":
         ctx.customer.banned = True
-        print(ctx.customer)
         await ctx.services.db.customers.save(ctx.customer)
         await callback.message.delete()
 
