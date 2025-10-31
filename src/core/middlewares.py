@@ -8,6 +8,7 @@ from cachetools import TTLCache
 from core.services.currency_converter import AsyncCurrencyConverter
 from core.services.db import DatabaseService
 from core.helper_classes import Context, ServiceHub
+from core.services.media_saver import MediaSaver
 from core.services.notifications import NotificatorHub
 from core.services.placeholders import PlaceholderManager
 from core.services.tax import TaxSystem
@@ -32,7 +33,8 @@ class ContextMiddleware(BaseMiddleware):
                                         logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
                                         admin_chat_id=int(env_var) if (env_var := getenv("TG_ADMIN_CHAT_ID")) else None),
             placeholders=PlaceholderManager(db.placeholders, db.media_placeholders),
-            currency_converter=AsyncCurrencyConverter()
+            currency_converter=AsyncCurrencyConverter(),
+            media_saver=MediaSaver(bot=bot)
         )
         
         await self.services.db.create_indexes()

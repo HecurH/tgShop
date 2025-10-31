@@ -2,7 +2,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardRemove
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union, List
 
-from schemas.types import MediaPlaceholderLink
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import *
 from ui.keyboards import *
@@ -338,14 +337,10 @@ async def entry_option_select_handler(ctx: Context,
     kb = AssortmentKBs.generate_choice_kb(product, option, ctx)
     
     if annotation:
-        annotation_media = await annotation.media.resolve(ctx) if annotation.media and isinstance(annotation.media, MediaPlaceholderLink) else annotation.media
-
-        await send_media_response(ctx, annotation_media, annotation.text.get(ctx), kb)
+        await send_media_response(ctx, annotation.media, annotation.text.get(ctx), kb)
         return
     
-    media = await chosen.media.resolve(ctx) if chosen.media and isinstance(chosen.media, MediaPlaceholderLink) else chosen.media
-
-    await send_media_response(ctx, media, text, kb)
+    await send_media_response(ctx, chosen.media, text, kb)
     if delete_prev: await ctx.message.delete()
 
 @state_handlers.register(AssortmentStates.ChoiceEditValue)
@@ -357,10 +352,9 @@ async def choice_edit_value_handler(ctx: Context,
     text = AssortmentTextGen.generate_presets_text(ctx) if choice.existing_presets else AssortmentTextGen.generate_custom_input_text(choice, ctx)
     kb = UncategorizedKBs.inline_cancel(ctx)
     
-    media = await choice.media.resolve(ctx) if choice.media and isinstance(choice.media, MediaPlaceholderLink) else choice.media
 
     await send_media_response(ctx,
-                              media,
+                              choice.media,
                               text,
                               kb)
 

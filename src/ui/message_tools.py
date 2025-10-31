@@ -151,13 +151,14 @@ async def send_media_response(
         MediaType.video: ctx.message.answer_video,
         MediaType.document: ctx.message.answer_document
     }
+    media_type, media_id = media.get(ctx)
     
-    handler = media_handlers.get(media.media_type, ctx.message.answer)
+    handler = media_handlers.get(media_type, ctx.message.answer)
     
     if handler == ctx.message.answer:
         await handler(caption, reply_markup=keyboard)
     else:
-        await handler(media.media_id if isinstance(media.media_id, str) else media.media_id.get(ctx.lang), caption=caption, reply_markup=keyboard)
+        await handler(media_id, caption=caption, reply_markup=keyboard)
 
 async def edit_media_message(
     message: Message,

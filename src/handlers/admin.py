@@ -14,7 +14,7 @@ from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
 from schemas.enums import OrderStateKey, MediaType
-from schemas.types import LocalizedMoney, LocalizedString, LocalizedSavedMedia, LocalizedEntry, MediaPlaceholderLink
+from schemas.types import LocalizedMoney, LocalizedString, LocalizedSavedMedia, LocalizedEntry
 from ui.message_tools import list_commands
 
 router = Router(name="admin")
@@ -58,7 +58,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
         
         await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
                                                                        value=LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
-                                                                                                 media_id=media_id)
+                                                                                                 media_key=media_id)
                                                                        )
                                                       )
         await ctx.message.answer(f"Медиаплэйсхолдер добавлен.")
@@ -98,7 +98,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
         media_id = media_id.file_id
         
         placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
-                                                media_id=media_id)
+                                                media_key=media_id)
         
         await ctx.services.db.media_placeholders.save(placeholder)
         await ctx.services.placeholders.update_placeholders()
@@ -143,14 +143,14 @@ async def setting_localized_media_handler(_, ctx: Context):
         placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
         if placeholder:
             placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
-                                                    media_id=langs_dict)
+                                                    media_key=langs_dict)
             
             await ctx.services.db.media_placeholders.save(placeholder)
         else:
         
             await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
                                                                            value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
-                                                                                                     media_id=langs_dict)
+                                                                                                     media_key=langs_dict)
                                                                           )
                                                          )
         
@@ -574,28 +574,19 @@ async def image_saving_handler(_, ctx: Context) -> None:
             choices={
                 "small": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.name"),
-                    media=LocalizedSavedMedia(
-                        media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAMnaQO9pmz7m-ygxnI1BNGvP7FtoHEAAhoFMhuHLSBIN73TQfbZTMABAAMCAAN5AAM2BA"
-                    ),
+                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_small"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.description"),
 
                     price=LocalizedMoney.from_keys(RUB=-1500.00, USD=-30.00)
                 ),
                 "medium": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.name"),
-                    media=LocalizedSavedMedia(
-                        media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAMqaQO9thReF1LgxZQ8FIpJH3HnzhwAAhsFMhuHLSBIIaPS4-7Vxd0BAAMCAAN5AAM2BA"
-                    ),
+                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_medium"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description")
                 ),
                 "large": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.name"),
-                    media=LocalizedSavedMedia(
-                        media_type=MediaType.photo,
-                        media_id="AgACAgIAAxkDAAMtaQO9yVk9QKXrhzxvJtBaf4lJ-EcAAhwFMhuHLSBIYTDE_oitamIBAAMCAAN5AAM2BA"
-                    ),
+                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_large"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.description"),
 
                     price=LocalizedMoney.from_keys(RUB=1500.00, USD=30.00)
@@ -621,7 +612,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "firmness_gradation": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.FirmnessGradation.name"),
-                    media=MediaPlaceholderLink(placeholder_key="firmness_gradation_choice"),
+                    media=LocalizedSavedMedia(media_key="photo_dildos_configuration_firmness_gradation"),
                     is_custom_input=True,
                     can_be_blocked_by=["color/swirl"],
 
@@ -638,10 +629,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 "canonical": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.description"),
-                    media=LocalizedSavedMedia(media_type=MediaType.photo, 
-                                              media_id={"ru": "AgACAgIAAxkDAAM2aQO-fg3Anx3Sa1tL8ccry-Lim_EAAiIFMhuHLSBIPwf7eqM0xUYBAAMCAAN3AAM2BA",
-                                                        "en": "AgACAgIAAxkDAAM5aQO-jZm4zRcldXLf_xNMeT-mRpsAAiMFMhuHLSBIcybdSYdcmF4BAAMCAAN3AAM2BA"
-                                                        }),
+                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_color_canonical"),
                     price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
                     can_be_blocked_by=["color/additionals/gradient",
                                        "color/additionals/glitter",
@@ -657,7 +645,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "existing_set": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.name"),
-                    media=MediaPlaceholderLink(placeholder_key="existing_color_choice"),
+                    media=LocalizedSavedMedia(media_key="photo_configuration_color_existing_set"),
                     existing_presets=True,
                     existing_presets_pattern="K|D,T|P,M,N|int",
                     price_by_preset={
@@ -680,14 +668,14 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "two-zone": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.name"),
-                    media=MediaPlaceholderLink(placeholder_key="two_zone_color_choice"),
+                    media=LocalizedSavedMedia(media_key="photo_configuration_color_two-zone"),
                     is_custom_input=True,
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.TwoZone.description"),
                 ),
                 "three-zone": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ThreeZone.name"),
-                    media=MediaPlaceholderLink(placeholder_key="three_zone_color_choice"),
+                    media=LocalizedSavedMedia(media_key="photo_configuration_color_three-zone"),
                     is_custom_input=True,
                     price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
 
@@ -695,7 +683,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 ),
                 "swirl": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.name"),
-                    media=MediaPlaceholderLink(placeholder_key="swirl_color_choice"),
+                    media=LocalizedSavedMedia(media_key="photo_configuration_color_swirl"),
                     is_custom_input=True,
                     can_be_blocked_by=["firmness/firmness_gradation"],
                     price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
@@ -790,7 +778,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 "available_colors": ConfigurationAnnotation(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.name"),
                     text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.text"),
-                    media=MediaPlaceholderLink(placeholder_key="available_colors"),
+                    media=LocalizedSavedMedia(media_key="photo_configuration_color_available_colors"),
                 )
             }
         )
@@ -803,10 +791,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
         ),
         name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Хайден\"",
         category="dildos",
-        short_description_media=LocalizedSavedMedia(
-            media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAMhaQO9QWtmr-kYeTnZ19vJ-MN4j4wAAhYFMhuHLSBItbZmbg0sU5ABAAMCAAN3AAM2BA"
-        ),
+        short_description_media=LocalizedSavedMedia(media_key="photo_hiden_short_description"),
         long_description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
 
@@ -821,16 +806,10 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
 
 <b>An A5 laminated poster will be included with the order!</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(
-            media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAMkaQO9h8CJpyYTPdsJbXIYxwQn1FEAAhgFMhuHLSBI9M6B5_SAJUwBAAMCAAN3AAM2BA"
-        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_hiden_long_description"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=configuration,
-        configuration_media=LocalizedSavedMedia(
-            media_type=MediaType.photo,
-            media_id="AgACAgIAAxkDAAMkaQO9h8CJpyYTPdsJbXIYxwQn1FEAAhgFMhuHLSBI9M6B5_SAJUwBAAMCAAN3AAM2BA"
-        )
+        configuration_media=LocalizedSavedMedia(media_key="photo_hiden_configuration"),
     )
 
     await ctx.services.db.products.save(product)

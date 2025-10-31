@@ -18,7 +18,6 @@ class PlaceholderManager:
         self.media_repo = media_repo
         
         self._txt_cache: dict[str, "Placeholder"] = {}
-        self._media_cache: dict[str, "LocalizedSavedMedia"] = {}
         
         asyncio.create_task(self._background_refresh())
     
@@ -45,6 +44,3 @@ class PlaceholderManager:
             return localized.get(lang) if localized else f"[[{key}]]"
 
         return re.sub(r"\[\[([a-zA-Z0-9_]+)\]\]", replacer, text)
-    
-    def resolve_media(self, key: str) -> Optional["LocalizedSavedMedia"]:
-        return self._media_cache.get(key)

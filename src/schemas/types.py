@@ -210,23 +210,16 @@ class SavedTMessage(BaseModel):
     message_id: int
 
 class LocalizedSavedMedia(BaseModel):
-    media_type: MediaType
-    media_id: Union[dict[str, str], str]
+    media_key: str
     
     @classmethod
-    def from_keys(cls, media_type: MediaType, **kwargs):
-        return cls(media_type=media_type, media_id={key: kwargs[key] for key in kwargs})
+    def from_keys(cls, **kwargs):
+        return cls(media_id={key: kwargs[key] for key in kwargs})
     
-    def get(self, lang: str) -> str:
-        if isinstance(self.media_id, str): return self.media_id
-        return self.media_id.get(lang, self.media_ids.get("en"))
-
-
-class MediaPlaceholderLink(BaseModel):
-    placeholder_key: str
-    
-    async def resolve(self, ctx: Context) -> Optional[str]:
-        return ctx.services.placeholders.resolve_media(self.placeholder_key)
+    def get(self, ctx: Context) -> tuple[MediaType, str]:
+        media_id = ctx.services.media_saver.resolve_key(self.media_key)
+        if isinstance(media_id, dict): return media_id.get(ctx.lang)
+        return media_id
 
 class OrderState(BaseModel):
     key: OrderStateKey
@@ -275,4 +268,4 @@ class Discount(BaseModel):
         return Money(currency=amount.currency, amount=0.0)
 
 
-__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "LocalizedEntry", "LocalizedSavedMedia", "MediaPlaceholderLink", "OrderState", "Discount", "SavedTMessage"]
+__all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "LocalizedEntry", "LocalizedSavedMedia", "OrderState", "Discount", "SavedTMessage"]

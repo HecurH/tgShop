@@ -451,7 +451,7 @@ class ConfigurationSwitches(AppBaseModel):
 class ConfigurationChoice(AppBaseModel):
     name: LocalizedEntry
     description: LocalizedEntry
-    media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
+    media: Optional[LocalizedSavedMedia] = None
 
     existing_presets: bool = Field(default=False)
     existing_presets_pattern: str = "int"
@@ -545,7 +545,7 @@ class ConfigurationChoice(AppBaseModel):
 class ConfigurationAnnotation(AppBaseModel):
     name: LocalizedEntry
     text: LocalizedEntry
-    media: Optional[LocalizedSavedMedia | MediaPlaceholderLink] = None
+    media: Optional[LocalizedSavedMedia] = None
     
     def update(self, base_annotation: "ConfigurationAnnotation"):
         self.name=base_annotation.name
