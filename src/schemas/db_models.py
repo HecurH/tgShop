@@ -178,7 +178,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
             return await self.find_by({"puid": puid})
 
     async def count_customer_orders(self, customer: "Customer") -> int:
-        return await self.get_collection().count_documents({"customer_id": customer.id})
+        return await self.get_collection().count_documents({"customer_id": customer.id, "state": {"$ne": OrderStateKey.waiting_for_forming}})
     
     async def save(self, order: Order):
         order.number = order.number or await self.dbs.get_next_for_counter(self.Meta.collection_name)
