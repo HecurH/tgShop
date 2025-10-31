@@ -1,40 +1,41 @@
-from aiogram.fsm.context import FSMContext
-
-from aiogram import Router
-from aiogram.filters import CommandObject, StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
-from aiogram.types import Message, CallbackQuery, ChatMemberUpdated
-from src.classes.helper_classes import Context
-from src.classes.db import *
-from src.classes.middlewares import ContextMiddleware
-from src.handlers.common import command_start_handler
+from aiogram import Dispatcher, Router
+from aiogram.filters import StateFilter, ChatMemberUpdatedFilter, MEMBER, KICKED
+from core.helper_classes import Context
+from core.states import call_state_handler, CommonStates
 
 router = Router(name="bottom")
 
-# Если нет состояния
 @router.message(StateFilter(None))
-async def base_handler(message: Message, state: FSMContext, db, lang):
-    await state.clear()
-    #await message.reply(UncategorizedTranslates.oopsie[lang if lang != "?" else "ru"], reply_markup=ReplyKeyboardRemove())
-
-    await command_start_handler(message, CommandObject(), state, db, lang)
+async def base_handler(_, ctx: Context):
+    await ctx.fsm.clear()
+    if ctx.customer:
+        await call_state_handler(CommonStates.MainMenu, ctx)
+    else:
+        await ctx.message.answer("Enter /start.")
 
 @router.message()
-async def real_base_handler(message: Message, state: FSMContext, db, lang):
-    await message.delete()
+async def real_base_handler(_, ctx: Context):
+    await ctx.message.delete()
 
 @router.callback_query()
-async def base_callback_handler(callback: CallbackQuery, state: FSMContext, db: DatabaseService, lang: str, middleware: ContextMiddleware) -> None:
-    await callback.answer()
+async def base_callback_handler(_, ctx: Context) -> None:
+    await ctx.event.answer()
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
 async def user_blocked_bot(_, ctx: Context):
     if ctx.customer:
         ctx.customer.kicked = True
-        await ctx.db.update(ctx.customer)
-
+        await ctx.services.db.customers.save(ctx.customer)
 
 @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=MEMBER))
 async def user_unblocked_bot(_, ctx: Context):
     if ctx.customer:
         ctx.customer.kicked = False
-        await ctx.db.update(ctx.customer)
+        await ctx.services.db.customers.save(ctx.customer)
+
+@router.startup()
+async def on_startup(dispatcher: Dispatcher):
+    await dispatcher.workflow_data.get("context_middleware").start(dispatcher.workflow_data.get("bot"))
+
+@router.shutdown()
+async def on_shutdown(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").stop()

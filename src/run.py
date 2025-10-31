@@ -6,28 +6,36 @@ from os import getenv
 from colorlog import ColoredFormatter
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.fsm.storage.mongo import MongoStorage
+from aiogram.fsm.storage.pymongo import PyMongoStorage
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
+
+from pymongo import AsyncMongoClient
 
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from src.handlers import profile, admin, bottom, cart, common, assortment
-from src.classes import middlewares
+from handlers import admin_menu, profile, admin, bottom, cart, orders, common, assortment
+from core import middlewares
 
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = getenv("BOT_TOKEN")
+def load_env(name: str) -> str:
+    if value := getenv(name): return value
+    else: raise KeyError(f"Missing {name} environment variable.")
 
-# All handlers should be attached to the Router (or Dispatcher)
+BOT_TOKEN = load_env("BOT_TOKEN")
+MONGO_URI = load_env("MONGO_URI")
+MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")
 
-dp = Dispatcher(storage=MongoStorage(AsyncIOMotorClient(getenv("MONGO_URI"))))
+dp = Dispatcher(storage=PyMongoStorage(AsyncMongoClient(MONGO_URI, 
+                                                        tls=True, 
+                                                        tlsAllowInvalidCertificates=True, 
+                                                        tlsCAFile=MONGO_TLS_CA_PATH)))
 
 dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
-dp.update.middleware.register(middlewares.ContextMiddleware())
+context_middleware = middlewares.ContextMiddleware()
+dp.update.middleware.register(context_middleware)
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"
@@ -62,14 +70,13 @@ class AlignedFormatter(ColoredFormatter):
         ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
         return ansi_escape.sub('', text)
 
-
 formatter = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
 stream = logging.StreamHandler()
 stream.setFormatter(formatter)
 
 from logging.handlers import TimedRotatingFileHandler
 
-logs_dir = Path("logs")
+logs_dir = Path("/gss_logs/")
 logs_dir.mkdir(exist_ok=True)
 
 # TimedRotatingFileHandler будет создавать новый файл каждый день
@@ -103,19 +110,22 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    # Initialize Bot instance with default bot properties which will be passed to all API calls
-    bot = Bot(token=TOKEN,
+    bot = Bot(token=BOT_TOKEN,
               default=DefaultBotProperties(parse_mode=ParseMode.HTML)
               )
 
-    dp.include_routers(admin.router,
-                       common.router,
+    dp.include_routers(common.router,
+                       admin_menu.router,
+                       admin.router,
                        assortment.router,
                        cart.router,
+                       orders.router,
                        profile.router,
                        bottom.router)
+    
+    dp.workflow_data["context_middleware"] = context_middleware
+    dp.workflow_data["bot"] = bot
 
-    # And the run events dispatching
     await dp.start_polling(bot)
 
 

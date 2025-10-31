@@ -1,12 +1,16 @@
 services:
-  tg_bot:
-    container_name: tg_bot_container
+  gss_bot:
     build: ./src
-    restart: unless-stopped
+    restart: always
     network_mode: host
 
     command: python /src/run.py
     volumes:
       - ./src/:/src/
+      - ./ssl/:/ssl/
+      - ./logs/:/gss_logs/
     env_file:
       - .env
+    dns:
+      - 8.8.8.8
+      - 8.4.4.8

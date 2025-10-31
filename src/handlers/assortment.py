@@ -3,19 +3,20 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, LabeledPrice, CallbackQuery
 
-from classes.texts import AssortmentTextGen
-from src.classes.helper_classes import Context
-from src.classes.db_models import Product, ConfigurationOption, ConfigurationChoice, ConfigurationSwitches
-from src.classes.states import Assortment, CommonStates, call_state_handler
-from src.classes.translates import *
+from ui.texts import AssortmentTextGen
+from core.helper_classes import Context
+from schemas.db_models import *
+
+from core.states import AssortmentStates, CommonStates, call_state_handler
+from ui.translates import ReplyButtonsTranslates, UncategorizedTranslates
 
 router = Router(name="assortment")
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.assortment.values()) if message.text else False)
 async def assortment_command_handler(_, ctx: Context) -> None:
-    await call_state_handler(Assortment.Menu, ctx)
+    await call_state_handler(AssortmentStates.Menu, ctx)
 
-@router.message(Assortment.Menu)
+@router.message(AssortmentStates.Menu)
 async def assortment_category_handler(message: Message, ctx: Context) -> None:
     if message.text in UncategorizedTranslates.back.values():
         await call_state_handler(CommonStates.MainMenu,
@@ -23,34 +24,34 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
         return
 
     category = next(
-        (category.name for category in await ctx.db.categories.get_all()
-         if category.localized_name.data[ctx.lang] == message.text),
+        (category.name for category in await ctx.services.db.categories.get_all()
+         if category.localized_name.get(ctx) == message.text),
         None  # значение по умолчанию, если ничего не найдено
     )
 
     if not category:
-        await call_state_handler(Assortment.Menu, ctx)
+        await call_state_handler(AssortmentStates.Menu, ctx)
         return
 
     await ctx.fsm.update_data(category=category, current=1)
-    await call_state_handler(Assortment.ViewingAssortment,
+    await call_state_handler(AssortmentStates.ViewingAssortment,
                              ctx,
                              edit=False,
                              category=category,
                              current=1)
 
-@router.message(Assortment.ViewingAssortment)
+@router.message(AssortmentStates.ViewingAssortment)
 async def assortment_viewing_handler(_, ctx: Context) -> None:
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
-        await call_state_handler(Assortment.Menu,
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AssortmentStates.Menu,
                                 ctx)
         return
     
     current = await ctx.fsm.get_value("current") or 1
     category = await ctx.fsm.get_value("category")
-    amount = await ctx.db.products.count_in_category(category)
+    amount = await ctx.services.db.products.count_in_category(category)
     
     if text in ["⬅️", "➡️"]:
         if text == '⬅️':
@@ -59,118 +60,118 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
             new_order = 1 if current == amount else current + 1
             
         await ctx.fsm.update_data(current=new_order, category=category)
-        await call_state_handler(Assortment.ViewingAssortment,
+        await call_state_handler(AssortmentStates.ViewingAssortment,
                                 ctx,
                                 category=category,
                                 current=new_order)
-    elif text == ReplyButtonsTranslates.Assortment.translate("details", ctx.lang):
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.details:
         if amount == 0: 
             await ctx.message.delete()
             return
         
         await ctx.fsm.update_data(product=None)
         
-        product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
-        await call_state_handler(Assortment.ViewingProductDetails,
+        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+        await call_state_handler(AssortmentStates.ViewingProductDetails,
                                 ctx,
                                 product=product)
     else:
-        await call_state_handler(Assortment.ViewingAssortment,
+        await call_state_handler(AssortmentStates.ViewingAssortment,
                                 ctx,
                                 category=category,
                                 current=current)
 
-@router.message(Assortment.ViewingProductDetails)
+@router.message(AssortmentStates.ViewingProductDetails)
 async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     current: int = await ctx.fsm.get_value("current")
     category: int = await ctx.fsm.get_value("category")
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
-        if current > await ctx.db.products.count_in_category(category): 
+    if text == ctx.t.UncategorizedTranslates.back:
+        if current > await ctx.services.db.products.count_in_category(category): 
             await ctx.fsm.update_data(current=1)
             current = 1
         
-        await call_state_handler(Assortment.ViewingAssortment,
+        await call_state_handler(AssortmentStates.ViewingAssortment,
                                 ctx,
                                 category=category,
                                 current=current)
         return
         
-    product: Product = await ctx.db.products.get_by_category_and_index(category, current-1)
-    if text == ReplyButtonsTranslates.Assortment.translate("add_to_cart", ctx.lang):
-        await ctx.fsm.update_data(product=product.model_dump())
-        await call_state_handler(Assortment.FormingOrderEntry,
+    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+    if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
+        await product.save_in_fsm(ctx, "product")
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
                                 ctx,
                                 product=product)
     else:
-        await call_state_handler(Assortment.ViewingProductDetails,
+        await call_state_handler(AssortmentStates.ViewingProductDetails,
                                 ctx,
                                 product=product)
 
-@router.message(Assortment.FormingOrderEntry)
+@router.message(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
+    product: Product = await Product.from_fsm_context(ctx, "product")
     text = ctx.message.text
     
-    if text == UncategorizedTranslates.translate("cancel", ctx.lang):
-        await call_state_handler(Assortment.ViewingProductDetails,
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AssortmentStates.ViewingProductDetails,
                                 ctx,
                                 product=product)
-    elif text == UncategorizedTranslates.translate("finish", ctx.lang):
+    elif text == ctx.t.UncategorizedTranslates.finish:
         
-        await ctx.db.cart_entries.add_to_cart(product, ctx.customer)
+        await ctx.services.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
                                 ctx,
-                                send_before=AssortmentTranslates.translate("add_to_cart_finished", ctx.lang))
+                                send_before=(ctx.t.AssortmentTranslates.add_to_cart_finished, 1))
         
-    elif text == "+":
-        allowed_additionals = await ctx.db.additionals.get(product)
-        await call_state_handler(Assortment.AdditionalsEditing,
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.extra_options:
+        allowed_additionals = await ctx.services.db.additionals.get(product)
+        await call_state_handler(AssortmentStates.AdditionalsEditing,
                                 ctx,
                                 product=product,
                                 allowed_additionals=allowed_additionals)
-    elif text in product.configuration.get_all_options_localized_names(ctx.lang):
-        idx, option = product.configuration.get_option_by_name(text, ctx.lang)
+    elif text in product.configuration.get_all_options_localized_names(ctx):
+        idx, option = product.configuration.get_option_by_name(text, ctx)
         # \/\/\/\/\/\/\/\/ ВАЖНО, тк 0 == False
         if idx is not None: await ctx.fsm.update_data(current_option_key=idx)
         
         
-        await ctx.fsm.update_data(changing_option=option.model_dump())
-        await call_state_handler(Assortment.EntryOptionSelect,
+        await option.save_in_fsm(ctx, "changing_option")
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
                                 ctx,
                                 product=product,
                                 option=option)
     else:
-        await call_state_handler(Assortment.FormingOrderEntry,
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
                                 ctx,
                                 product=product)
 
-@router.message(Assortment.EntryOptionSelect)
+@router.message(AssortmentStates.EntryOptionSelect)
 async def entry_option_select(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
-    changing_option = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
+    product: Product = await Product.from_fsm_context(ctx, "product")
+    changing_option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
 
-    if message.text == UncategorizedTranslates.translate("back", ctx.lang):
-        base_product = await ctx.db.products.find_one_by_id(product.id)
-        product.configuration.update(base_product.configuration, await ctx.db.additionals.get(product))
+    if message.text == ctx.t.UncategorizedTranslates.back:
+        base_product: Product = await ctx.services.db.products.find_one_by_id(product.id)
+        product.configuration.update(base_product.configuration, await ctx.services.db.additionals.get(product))
 
-        await ctx.fsm.update_data(product=product.model_dump())
+        await product.save_in_fsm(ctx, "product")
         
-        await call_state_handler(Assortment.FormingOrderEntry,
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
                                  ctx,
                                  product=product)
         return
     
     text = message.text.strip("\u0336🔒>< ").replace("\u0336", "").replace("\u00a0", " ").strip()
-    choice = changing_option.get_by_label(text, ctx.lang) or changing_option.get_by_label(text.rsplit(" ", 1)[0], ctx.lang)
+    choice = changing_option.get_by_name(text, ctx) or changing_option.get_by_name(text.rsplit(" ", 1)[0], ctx)
 
 
     if isinstance(choice, ConfigurationChoice):
         if choice.check_blocked_all(product.configuration.options):
-            await call_state_handler(Assortment.EntryOptionSelect,
+            await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
-                                    send_before=AssortmentTranslates.translate("cannot_choose", ctx.lang).format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx.lang)),
+                                    send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx)), 1),
                                     product=product,
                                     option=changing_option)
             return
@@ -182,85 +183,111 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
             product.configuration.options[current_option_key] = changing_option
             product.configuration.update_price()
             
-            await ctx.fsm.update_data(product=product.model_dump())
-            await call_state_handler(Assortment.EntryOptionSelect,
+            await product.save_in_fsm(ctx, "product")
+            await call_state_handler(AssortmentStates.EntryOptionSelect,
                                      ctx,
                                      product=product,
                                      option=changing_option)
             return
         else:
-            await ctx.fsm.update_data(before_option=changing_option.model_dump())
+            await changing_option.save_in_fsm(ctx, "before_option")
             changing_option.set_chosen(choice)
-            await ctx.fsm.update_data(changing_option=changing_option.model_dump())
+            await changing_option.save_in_fsm(ctx, "changing_option")
             
-            await call_state_handler(Assortment.ChoiceEditValue,
+            await call_state_handler(AssortmentStates.ChoiceEditValue,
                                      ctx,
                                      choice=choice)
 
     elif isinstance(choice, ConfigurationSwitches):
-        await ctx.fsm.update_data(switches=choice.model_dump())
-        await call_state_handler(Assortment.SwitchesEditing,
+        await choice.save_in_fsm(ctx, "switches")
+        await call_state_handler(AssortmentStates.SwitchesEditing,
                                     ctx,
-                                    switches=choice)
+                                    switches=choice,
+                                    configuration=product.configuration)
+    elif isinstance(choice, ConfigurationAnnotation):
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
+                                    ctx,
+                                    product=product,
+                                    option=changing_option,
+                                    annotation=choice)
     else:
-        await call_state_handler(Assortment.EntryOptionSelect,
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
                                     product=product,
                                     option=changing_option)
 
 
-@router.message(Assortment.SwitchesEditing)
+@router.message(AssortmentStates.SwitchesEditing)
 async def switches_handler(message: Message, ctx: Context) -> None:
-    if message.text == UncategorizedTranslates.translate("back", ctx.lang):
-        option: ConfigurationOption = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
-        await call_state_handler(Assortment.EntryOptionSelect,
+    product: Product = await Product.from_fsm_context(ctx, "product")
+    
+    if message.text == ctx.t.UncategorizedTranslates.back:
+        option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
-                                 product=Product(**await ctx.fsm.get_value("product")),
+                                 product=product,
                                  option=option)
 
         return
 
-    switches = ConfigurationSwitches(**await ctx.fsm.get_value("switches"))
+    switches: ConfigurationSwitches = await ConfigurationSwitches.from_fsm_context(ctx, "switches")
     
     if text := message.text:
-        clean_text = text.replace(" ✅", "")
-        switches.toggle_by_localized_name(clean_text, ctx.lang)
+        clean_text = text.strip("\u0336🔒✅ ").replace("\u0336", "").replace("\u00a0", " ").strip()
+        switch = switches.get_by_localized_name(clean_text, ctx)
+        if switch is None:
+            await call_state_handler(AssortmentStates.SwitchesEditing,
+                                ctx,
+                                switches=switches,
+                                configuration=product.configuration)
+            return
         
-        product = Product(**await ctx.fsm.get_value("product"))
+        if switch.check_blocked_all(product.configuration.options):
+            await call_state_handler(AssortmentStates.SwitchesEditing,
+                                ctx,
+                                switches=switches,
+                                configuration=product.configuration,
+                                send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(switch, product.configuration, ctx)), 1))
+
+            return
+        
+        switch.toggle()
+        
         current_option_key = await ctx.fsm.get_value("current_option_key")
 
         option: ConfigurationOption = product.configuration.options[current_option_key] # ссылка на текущую изменяемую главную опцию
-        key = option.get_key_by_label(switches.label.data[ctx.lang], ctx.lang)
+        key = option.get_key_by_name(switches.name.get(ctx), ctx)
         option.choices[key] = switches
         
         product.configuration.update_price()
 
-        await ctx.fsm.update_data(product=product.model_dump())
-        await ctx.fsm.update_data(changing_option=option.model_dump())
-        await ctx.fsm.update_data(switches=switches.model_dump())
+        await product.save_in_fsm(ctx, "product")
+        await option.save_in_fsm(ctx, "changing_option")
+        await switches.save_in_fsm(ctx, "switches")
 
-    await call_state_handler(Assortment.SwitchesEditing,
+    await call_state_handler(AssortmentStates.SwitchesEditing,
                                 ctx,
-                                switches=switches)
+                                switches=switches,
+                                configuration=product.configuration)
 
-@router.message(Assortment.AdditionalsEditing)
+@router.message(AssortmentStates.AdditionalsEditing)
 async def additionals_handler(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
+    product: Product = await Product.from_fsm_context(ctx, "product")
     text = message.text
 
-    if text == UncategorizedTranslates.translate("back", ctx.lang):
-        await call_state_handler(Assortment.FormingOrderEntry,
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
                                  ctx,
                                  product=product)
 
         return
 
-    allowed_additionals = await ctx.db.additionals.get(product)
+    allowed_additionals = await ctx.services.db.additionals.get(product)
     if text:
         text = ctx.message.text.replace(" ✅", "")
-        additional = ctx.db.additionals.get_by_name(text, allowed_additionals, ctx.lang)
+        additional = ctx.services.db.additionals.get_by_name(text, allowed_additionals, ctx)
         if not additional:
-            await call_state_handler(Assortment.AdditionalsEditing,
+            await call_state_handler(AssortmentStates.AdditionalsEditing,
                                     ctx, 
                                     product=product,
                                     allowed_additionals=allowed_additionals)
@@ -274,14 +301,14 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
             additionals.append(additional)
 
         product.configuration.update_price()
-        await ctx.fsm.update_data(product=product.model_dump())
+        await product.save_in_fsm(ctx, "product")
 
-    await call_state_handler(Assortment.AdditionalsEditing,
+    await call_state_handler(AssortmentStates.AdditionalsEditing,
                                 ctx,
                                 product=product,
                                 allowed_additionals=allowed_additionals)
 
-@router.callback_query(Assortment.ChoiceEditValue)
+@router.callback_query(AssortmentStates.ChoiceEditValue)
 async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
     if callback.data != "cancel": return
 
@@ -289,48 +316,51 @@ async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
     await ctx.fsm.update_data(changing_option=before_option)
     changing_option = ConfigurationOption(**before_option)
 
-    await call_state_handler(Assortment.EntryOptionSelect,
+    await call_state_handler(AssortmentStates.EntryOptionSelect,
                              ctx,
-                             product=Product(**await ctx.fsm.get_value("product")),
+                             product=await Product.from_fsm_context(ctx, "product"),
                              delete_prev=True,
                              option=changing_option)
 
     await callback.answer()
 
-@router.message(Assortment.ChoiceEditValue)
+@router.message(AssortmentStates.ChoiceEditValue)
 async def advanced_edit_value(message: Message, ctx: Context) -> None:
-    product = Product(**await ctx.fsm.get_value("product"))
-    changing_option = ConfigurationOption(**await ctx.fsm.get_value("changing_option"))
+    text = await ctx.parse_user_input()
+    if not text: return
+    
+    product: Product = await Product.from_fsm_context(ctx, "product")
+    changing_option: ConfigurationOption = await ConfigurationOption.from_fsm_context(ctx, "changing_option")
     chosen = changing_option.get_chosen() # ССЫЛКА на объект, не надо дополнительно переприсваивать дочерних тварей
 
     if chosen.existing_presets:
-        if not (message.text.isdigit() and 
-                1 <= int(message.text) <= chosen.existing_presets_quantity):
+        text = text.upper()
+        if not chosen.validate_existing_preset(text):
             await message.delete()
             return
-        chosen.existing_presets_chosen = int(message.text)
+        chosen.set_chosen_preset(text)
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option
 
         product.configuration.update_price()
-        await ctx.fsm.update_data(product=product.model_dump())
-        await call_state_handler(Assortment.EntryOptionSelect,
+        await product.save_in_fsm(ctx, "product")
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
                                  product=product,
                                  option=changing_option)
     elif chosen.is_custom_input:
-        if message.text.isdigit():
+        if text.isdigit():
             await message.delete()
             return
-        chosen.custom_input_text = message.text
+        chosen.custom_input_text = text
 
         current_option_key = await ctx.fsm.get_value("current_option_key")
         product.configuration.options[current_option_key] = changing_option
 
         product.configuration.update_price()
-        await ctx.fsm.update_data(product=product.model_dump())
-        await call_state_handler(Assortment.EntryOptionSelect,
+        await product.save_in_fsm(ctx, "product")
+        await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
                                  product=product,
                                  option=changing_option)
