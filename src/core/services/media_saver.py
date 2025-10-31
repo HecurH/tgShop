@@ -19,6 +19,9 @@ class MediaSaver:
     
     def __init__(self, media_path: str = None, bot: Bot = None):
         self.media_path = media_path or getenv("MEDIA_PATH")
+        if not self.media_path:
+            raise RuntimeError("Не задан MEDIA_PATH")
+        
         self.bot = bot
         
         admin_chat_id = getenv("TG_ADMIN_CHAT_ID")
