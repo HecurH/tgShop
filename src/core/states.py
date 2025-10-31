@@ -99,9 +99,6 @@ class AdminStates(StatesGroup):
             CreatingLangs = State()
             EditKey = State()
             EditLangs = State()
-            
-        class GlobalMediaPlaceholders(StatesGroup):
-            SettingLocalizedMedia = State()
     
     class Customers(StatesGroup):
         AdminMessageSending = State()
@@ -202,14 +199,6 @@ async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeh
         if not await ctx.fsm.get_value(lang):
             await ctx.message.answer(f"Было: {placeholder.value.get(lang)}\nВведите новое значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
             return
-        
-@state_handlers.register(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia)
-async def handle_admin_set_localized_media(ctx: Context, **_):
-    for lang in SUPPORTED_LANGUAGES_TEXT.values():
-        if not await ctx.fsm.get_value(lang):
-            await ctx.message.answer(f"Отправьте файл для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
-            return
-    
         
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):

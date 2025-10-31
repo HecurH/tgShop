@@ -29,136 +29,16 @@ async def help_handler(_, ctx: Context):
     txt = "\n".join(doc for _, doc in list_commands(router))
     
     await ctx.message.answer(txt, parse_mode=None)
-    
-@router.message(Command("add_media_placeholder"))
-async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject):
-    """/add_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Добавить медиаплэйсхолдер"""
-    args = command.args.split("|")
-    if len(args) < 3:
-        await ctx.message.answer(f"Недостаточно аргументов.")
-        
-    media_type = args[0]
-    key = args[1]
-    is_localized = args[2] == "true"
-    
-    if media_type not in ["photo","video","document"]:
-        await ctx.message.answer(f"Неправильный тип медиа.")
-        return
-    if not is_localized:
-        raw = await ctx.message.bot.download(ctx.message.document)
 
-        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
-            raw.read(),
-            filename=ctx.message.document.file_name
-        )
-        )
-        media_id = getattr(msg_id, media_type)
-        media_id = media_id[-1] if isinstance(media_id, list) else media_id
-        media_id = media_id.file_id
-        
-        # await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key,
-        #                                                                value=LocalizedSavedMedia(media_type=getattr(MediaType, media_type),
-        #                                                                                          media_key=media_id)
-        #                                                                )
-        #                                               )
-        await ctx.message.answer(f"Медиаплэйсхолдер добавлен.")
-        return
+@router.message(Command("update_media"))
+async def help_handler(_, ctx: Context):
+    """/update_media - Обновить кэш медиа"""
     
-    await ctx.fsm.update_data(media_type=media_type, key=key, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
-    await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
+    await ctx.services.media_saver.update_cache()
+    
+    await ctx.message.answer("Обновлено!")
 
-@router.message(Command("edit_media_placeholder"))
-async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject):
-    """/edit_media_placeholder <photo/video/document>|<key>|<is_localized: true/false> - Изменить медиаплэйсхолдер"""
-    args = command.args.split("|")
-    if len(args) < 3:
-        await ctx.message.answer(f"Недостаточно аргументов.")
-        
-    media_type = args[0]
-    key = args[1]
-    is_localized = args[2] == "true"
-    
-    if media_type not in ["photo","video","document"]:
-        await ctx.message.answer(f"Неправильный тип медиа.")
-        return
-    if not is_localized:
-        # placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
-        if not placeholder:
-            await ctx.message.answer(f"Медиаплэйсхолдер не найден.")
-        
-        raw = await ctx.message.bot.download(ctx.message.document)
 
-        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
-            raw.read(),
-            filename=ctx.message.document.file_name
-        )
-        )
-        media_id = getattr(msg_id, media_type)
-        media_id = media_id[-1] if isinstance(media_id, list) else media_id
-        media_id = media_id.file_id
-        
-        placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
-                                                media_key=media_id)
-        
-        await ctx.services.db.media_placeholders.save(placeholder)
-        await ctx.services.placeholders.update_placeholders()
-        await ctx.message.answer(f"Медиаплэйсхолдер изменен.")
-        return
-    
-    await ctx.fsm.update_data(media_type=media_type, key=key, **{lang: None for lang in SUPPORTED_LANGUAGES_TEXT.values()})
-    await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
-
-@router.message(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia)
-async def setting_localized_media_handler(_, ctx: Context):
-    text = ctx.message.text
-    if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(CommonStates.MainMenu, ctx)
-        return
-    
-    remaining_langs = [lang for lang in SUPPORTED_LANGUAGES_TEXT.values() 
-                      if not await ctx.fsm.get_value(lang)]
-    
-    if remaining_langs:
-        raw = await ctx.message.bot.download(ctx.message.document)
-
-        msg_id = await ctx.message.answer_photo(photo=BufferedInputFile(
-            raw.read(),
-            filename=ctx.message.document.file_name
-        )
-        )
-        
-        media_id = getattr(msg_id, await ctx.fsm.get_value("media_type"))
-        media_id = media_id[-1] if isinstance(media_id, list) else media_id
-        media_id = media_id.file_id
-        
-        await ctx.fsm.update_data(**{remaining_langs[0]: media_id})
-        
-        if len(remaining_langs) > 1:
-            await call_state_handler(AdminStates.Main.GlobalMediaPlaceholders.SettingLocalizedMedia, ctx)
-            return
-    
-    langs_dict = {lang: await ctx.fsm.get_value(lang) for lang in SUPPORTED_LANGUAGES_TEXT.values()}
-    key = await ctx.fsm.get_value("key")
-    try:
-        placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
-        if placeholder:
-            placeholder.value = LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
-                                                    media_key=langs_dict)
-            
-            await ctx.services.db.media_placeholders.save(placeholder)
-        # else:
-         
-            # await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key,
-            #                                                                value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")),
-            #                                                                                          media_key=langs_dict)
-            #                                                               )
-            #                                              )
-        
-        await ctx.services.placeholders.update_placeholders()
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before="Плейсхолдер установлен.")
-        
-    except Exception as e:
-        raise Exception(f"Не удалось установить плейсхолдер: {e}")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
