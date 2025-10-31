@@ -1,9 +1,8 @@
 import asyncio
 import json
 import os
-from os.path import isfile, join, splitext
-from os import getenv, listdir
-import re
+from os.path import join, splitext, relpath
+from os import getenv
 from typing import Optional, Union
 
 from aiogram import Bot
@@ -15,7 +14,7 @@ from schemas.enums import MediaType
 
 class MediaSaver:
     
-    REFRESH_INTERVAL = 15 * 60 # 15m
+    REFRESH_INTERVAL = 15 * 60  # 15m
     
     def __init__(self, media_path: str = None, bot: Bot = None):
         self.media_path = media_path or getenv("MEDIA_PATH")
@@ -35,7 +34,7 @@ class MediaSaver:
         asyncio.create_task(self._background_refresh())
     
     async def update_cache(self):
-        data_path = os.path.join(self.media_path, "data.json")
+        data_path = join(self.media_path, "data.json")
 
         if not os.path.exists(data_path):
             with open(data_path, "w", encoding="utf-8") as f:
@@ -47,14 +46,19 @@ class MediaSaver:
             except json.JSONDecodeError:
                 data = {}
 
-        onlyfiles = [
-            f for f in listdir(self.media_path)
-            if isfile(join(self.media_path, f)) and f != "data.json"
-        ]
+        # Ищем все файлы рекурсивно
+        all_files = []
+        for root, _, files in os.walk(self.media_path):
+            for f in files:
+                if f == "data.json":
+                    continue
+                all_files.append(join(root, f))
 
         updated = False
 
-        for filename in onlyfiles:
+        for filepath in all_files:
+            rel_file = relpath(filepath, self.media_path)  # путь относительно корня
+            filename = os.path.basename(filepath)
             key_base, _ = splitext(filename)
             lang = key_base.split("_")[-1]
             if lang in self.supported_langs:
@@ -65,25 +69,28 @@ class MediaSaver:
 
             if key not in data:
                 if lang:
-                    data[key] = {lang: await self._generate_id_for_file(key, filename)}
+                    data[key] = {lang: await self._generate_id_for_file(key, filepath)}
                 else:
-                    data[key] = await self._generate_id_for_file(key, filename)
+                    data[key] = await self._generate_id_for_file(key, filepath)
+                await asyncio.sleep(0.3)
 
-            # если нет id для этого языка
             if lang and lang not in data[key]:
-                data[key][lang] = await self._generate_id_for_file(key, filename)
+                data[key][lang] = await self._generate_id_for_file(key, filepath)
                 updated = True
 
         # чистим отсутствующие файлы
-        def gen(text):
-            lang = splitext(text)[0].split("_")[-1]
-            return key_base.replace(f"_{lang}", "") if lang in self.supported_langs else key_base
-                
-        files = [gen(kk) for kk in onlyfiles]
-        removed_keys = [k for k in list(data.keys()) if k not in files] 
-        if removed_keys: 
-            for k in removed_keys: 
-                del data[k] 
+        existing_keys = set()
+        for filepath in all_files:
+            filename = os.path.basename(filepath)
+            key_base, _ = splitext(filename)
+            lang = key_base.split("_")[-1]
+            key = key_base.replace(f"_{lang}", "") if lang in self.supported_langs else key_base
+            existing_keys.add(key)
+
+        removed_keys = [k for k in list(data.keys()) if k not in existing_keys]
+        if removed_keys:
+            for k in removed_keys:
+                del data[k]
                 updated = True
 
         self._media_cache = data
@@ -92,28 +99,28 @@ class MediaSaver:
             with open(data_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
     
-    async def _generate_id_for_file(self, key: str, filename: str) -> str:
+    async def _generate_id_for_file(self, key: str, filepath: str) -> str:
         media_type = self.media_type_by_key(key)
+        with open(filepath, "rb") as f:
+            file_bytes = f.read()
+
         if media_type == MediaType.photo:
-            msg = await self.bot.send_photo(chat_id=self.admin_chat_id, 
-                                      photo=BufferedInputFile(
-                                            open(join(self.media_path, filename), "rb").read(),
-                                            filename=filename
-                                        ))
+            msg = await self.bot.send_photo(
+                chat_id=self.admin_chat_id,
+                photo=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+            )
             return msg.photo[-1].file_id
         elif media_type == MediaType.video:
-            msg = await self.bot.send_video(chat_id=self.admin_chat_id,
-                                      video=BufferedInputFile(
-                                            open(join(self.media_path, filename), "rb").read(),
-                                            filename=filename
-                                        ))
+            msg = await self.bot.send_video(
+                chat_id=self.admin_chat_id,
+                video=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+            )
             return msg.video.file_id
         elif media_type == MediaType.document:
-            msg = await self.bot.send_document(chat_id=self.admin_chat_id,
-                                         document=BufferedInputFile(
-                                            open(join(self.media_path, filename), "rb").read(),
-                                            filename=filename
-                                        ))
+            msg = await self.bot.send_document(
+                chat_id=self.admin_chat_id,
+                document=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
+            )
             return msg.document.file_id
         else:
             raise ValueError(f"Неизвестный тип медиа: {media_type}")
@@ -138,5 +145,4 @@ class MediaSaver:
             return None
 
         media_type = self.media_type_by_key(key)
-
         return media_type, file_data

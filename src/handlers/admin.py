@@ -574,19 +574,19 @@ async def image_saving_handler(_, ctx: Context) -> None:
             choices={
                 "small": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.name"),
-                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_small"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_size_small"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Small.description"),
 
                     price=LocalizedMoney.from_keys(RUB=-1500.00, USD=-30.00)
                 ),
                 "medium": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.name"),
-                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_medium"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_size_medium"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Medium.description")
                 ),
                 "large": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.name"),
-                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_size_large"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_size_large"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.description"),
 
                     price=LocalizedMoney.from_keys(RUB=1500.00, USD=30.00)
@@ -629,7 +629,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
                 "canonical": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.description"),
-                    media=LocalizedSavedMedia(media_key="photo_hiden_configuration_color_canonical"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_color_canonical"),
                     price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
                     can_be_blocked_by=["color/additionals/gradient",
                                        "color/additionals/glitter",
@@ -787,11 +787,11 @@ async def image_saving_handler(_, ctx: Context) -> None:
     product = Product(
         name=LocalizedString(data={
             "ru":"Дракон Хайден",
-            "en":"Hiden Dragon"}
+            "en":"Haiden Dragon"}
         ),
         name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Хайден\"",
         category="dildos",
-        short_description_media=LocalizedSavedMedia(media_key="photo_hiden_short_description"),
+        short_description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
         long_description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
 
@@ -806,10 +806,10 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
 
 <b>An A5 laminated poster will be included with the order!</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_hiden_long_description"),
+        long_description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=configuration,
-        configuration_media=LocalizedSavedMedia(media_key="photo_hiden_configuration"),
+        configuration_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
     )
 
     await ctx.services.db.products.save(product)
