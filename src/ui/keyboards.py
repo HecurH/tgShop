@@ -814,6 +814,19 @@ class UncategorizedKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
         
+    @staticmethod
+    def inline_yes_no(ctx: Context) -> types.InlineKeyboardMarkup:
+        kb = [
+            [
+                types.InlineKeyboardButton(text=ctx.t.UncategorizedTranslates.no, callback_data="no"),
+                types.InlineKeyboardButton(text=ctx.t.UncategorizedTranslates.yes, callback_data="yes")
+            ]
+        ]
+
+        return types.InlineKeyboardMarkup(
+            inline_keyboard=kb
+        )
+        
     
 
     @staticmethod

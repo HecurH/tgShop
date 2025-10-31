@@ -736,6 +736,11 @@ class CommonTranslates(Translatable):
         "en": "Hi!"
     }
     
+    maturity_question = {
+        "ru": "Вам есть 18 лет?",
+        "en": "Are you at least 18 years old?"
+    }
+    
     currency_choosing = {
         "ru": "Выберите валюту (можно изменить в настройках):",
         "en": "Select a currency (you can change it in the settings):"

@@ -225,12 +225,18 @@ async def handle_price_confirmation_cancel(ctx: Context, customer: Customer, **_
     
 class NewUserStates(StatesGroup):
     LangChoosing = State()
+    AskAge = State()
     CurrencyChoosing = State()
 
 @state_handlers.register(NewUserStates.LangChoosing)
 async def handle_lang_choosing(ctx: Context, **_):
     await ctx.message.answer("Выберите язык:\n\nChoose language:",
                              reply_markup=CommonKBs.lang_choose())
+    
+@state_handlers.register(NewUserStates.AskAge)
+async def handle_ask_age(ctx: Context, **_):
+    await ctx.message.answer(ctx.t.CommonTranslates.maturity_question,
+                             reply_markup=UncategorizedKBs.inline_yes_no(ctx))
 
 @state_handlers.register(NewUserStates.CurrencyChoosing)
 async def handle_currency_choosing(ctx: Context, **_):
@@ -488,7 +494,7 @@ async def profile_menu_handler(ctx: Context, **_):
 @state_handlers.register(ProfileStates.Settings.Menu)
 async def settings_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTranslates.Settings.menu.translate(ctx.lang), #.translate(ctx.lang) тк ctx.t не обновляется сам
+        ctx.t.ProfileTranslates.Settings.menu,
         reply_markup=ProfileKBs.Settings.menu(ctx) 
     )
 

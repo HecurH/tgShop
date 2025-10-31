@@ -42,7 +42,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             ctx.t = TranslatorHub.get_for_lang(lang, ctx.services.placeholders)
 
             await ctx.services.db.customers.save(ctx.customer)
-            await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
+            await call_state_handler(NewUserStates.AskAge, ctx)
             return
         
         await call_state_handler(NewUserStates.LangChoosing, 
@@ -67,9 +67,25 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 
     await callback.message.delete()
 
-    await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
+    await call_state_handler(NewUserStates.AskAge, ctx)
 
     await callback.answer()
+    
+@router.callback_query(NewUserStates.AskAge)
+async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
+    text = callback.data
+    await callback.answer()
+    
+    if text == ctx.t.UncategorizedTranslates.yes:
+        await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
+    elif text == ctx.t.UncategorizedTranslates.no:
+        ctx.customer.banned = True
+        await ctx.services.db.customers.save(ctx.customer)
+        await callback.message.delete()
+    else:
+        await callback.message.delete()
+
+    
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:

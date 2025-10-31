@@ -5,7 +5,7 @@ from schemas.db_models import *
 from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, ProfileStates, call_state_handler
-from ui.translates import ProfileTranslates, ReplyButtonsTranslates, UncategorizedTranslates
+from ui.translates import ProfileTranslates, ReplyButtonsTranslates, TranslatorHub, UncategorizedTranslates
 
 router = Router(name="profile")
 
@@ -62,9 +62,11 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
         
         ctx.customer.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
         ctx.lang = SUPPORTED_LANGUAGES_TEXT.get(ctx.message.text)
+        ctx.t = TranslatorHub.get_for_lang(ctx.lang, ctx.services.placeholders)
+        
         await ctx.services.db.customers.save(ctx.customer)
         
-        text = ProfileTranslates.Settings.lang_changed.translate(ctx.lang) # тк тут ctx.t уже В-С-Е
+        text = ctx.t.ProfileTranslates.Settings.lang_changed
         
         await call_state_handler(ProfileStates.Settings.Menu, ctx, send_before=(text, 1))
         return
