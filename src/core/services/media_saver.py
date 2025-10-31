@@ -111,18 +111,21 @@ class MediaSaver:
                     chat_id=self.admin_chat_id,
                     photo=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
                 )
+                await msg.delete()
                 return msg.photo[-1].file_id
             elif media_type == MediaType.video:
                 msg = await self.bot.send_video(
                     chat_id=self.admin_chat_id,
                     video=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
                 )
+                await msg.delete()
                 return msg.video.file_id
             elif media_type == MediaType.document:
                 msg = await self.bot.send_document(
                     chat_id=self.admin_chat_id,
                     document=BufferedInputFile(file_bytes, filename=os.path.basename(filepath))
                 )
+                await msg.delete()
                 return msg.document.file_id
             else:
                 raise ValueError(f"Неизвестный тип медиа: {media_type}")
