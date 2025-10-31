@@ -80,7 +80,7 @@ async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
     elif text == "no":
         ctx.customer.banned = True
         await ctx.services.db.customers.save(ctx.customer)
-        await callback.message.delete()
+    await callback.message.delete()
 
     
 
