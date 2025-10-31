@@ -146,8 +146,8 @@ async def setting_localized_media_handler(_, ctx: Context):
                                                     media_key=langs_dict)
             
             await ctx.services.db.media_placeholders.save(placeholder)
-        else:
-        
+        # else:
+         
             # await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key,
             #                                                                value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")),
             #                                                                                          media_key=langs_dict)

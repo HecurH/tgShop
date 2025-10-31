@@ -155,6 +155,7 @@ cython_debug/
 .idea/
 /.vscode/
 /logs/
+/imgs/*
 *.pem
 profile.json
 src/libs/nalog/test.py
