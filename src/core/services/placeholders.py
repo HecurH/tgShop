@@ -5,17 +5,15 @@ from typing import TYPE_CHECKING, Optional
 
 
 if TYPE_CHECKING:
-    from schemas.db_models import PlaceholdersRepository, MediaPlaceholdersRepository
-    from schemas.types import LocalizedSavedMedia
+    from schemas.db_models import PlaceholdersRepository
     from schemas.db_models import Placeholder
 
 class PlaceholderManager:
     
     REFRESH_INTERVAL = 15 * 60 # 15m
     
-    def __init__(self, txt_repo: "PlaceholdersRepository", media_repo: "MediaPlaceholdersRepository"):
+    def __init__(self, txt_repo: "PlaceholdersRepository"):
         self.txt_repo = txt_repo
-        self.media_repo = media_repo
         
         self._txt_cache: dict[str, "Placeholder"] = {}
         
@@ -23,10 +21,8 @@ class PlaceholderManager:
     
     async def update_placeholders(self):
         txt_placeholders = await self.txt_repo.get_all()
-        media_placeholders = await self.media_repo.get_all()
         
         self._txt_cache = {ph.key: ph for ph in txt_placeholders}
-        self._media_cache = {ph.key: ph.value for ph in media_placeholders}
 
     async def _background_refresh(self):
         while True:

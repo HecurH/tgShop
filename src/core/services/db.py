@@ -14,7 +14,6 @@ class DatabaseService:
 
     def _init_collections(self):
         self.placeholders = PlaceholdersRepository(self)
-        self.media_placeholders = MediaPlaceholdersRepository(self)
         self.orders = OrdersRepository(self)
         self.cart_entries = CartEntriesRepository(self)
         self.delivery_services = DeliveryServicesRepository(self)

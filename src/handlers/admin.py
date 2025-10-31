@@ -56,11 +56,11 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
         media_id = media_id[-1] if isinstance(media_id, list) else media_id
         media_id = media_id.file_id
         
-        await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
-                                                                       value=LocalizedSavedMedia(media_type=getattr(MediaType, media_type), 
-                                                                                                 media_key=media_id)
-                                                                       )
-                                                      )
+        # await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key,
+        #                                                                value=LocalizedSavedMedia(media_type=getattr(MediaType, media_type),
+        #                                                                                          media_key=media_id)
+        #                                                                )
+        #                                               )
         await ctx.message.answer(f"Медиаплэйсхолдер добавлен.")
         return
     
@@ -82,7 +82,7 @@ async def add_media_placeholder_handler(_, ctx: Context, command: CommandObject)
         await ctx.message.answer(f"Неправильный тип медиа.")
         return
     if not is_localized:
-        placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
+        # placeholder = await ctx.services.db.media_placeholders.find_by_key(key)
         if not placeholder:
             await ctx.message.answer(f"Медиаплэйсхолдер не найден.")
         
@@ -148,11 +148,11 @@ async def setting_localized_media_handler(_, ctx: Context):
             await ctx.services.db.media_placeholders.save(placeholder)
         else:
         
-            await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key, 
-                                                                           value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")), 
-                                                                                                     media_key=langs_dict)
-                                                                          )
-                                                         )
+            # await ctx.services.db.media_placeholders.save(MediaPlaceholder(key=key,
+            #                                                                value=LocalizedSavedMedia(media_type=getattr(MediaType, await ctx.fsm.get_value("media_type")),
+            #                                                                                          media_key=langs_dict)
+            #                                                               )
+            #                                              )
         
         await ctx.services.placeholders.update_placeholders()
         await call_state_handler(CommonStates.MainMenu, ctx, send_before="Плейсхолдер установлен.")

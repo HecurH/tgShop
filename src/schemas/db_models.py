@@ -62,22 +62,6 @@ class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
     async def get_all(self) -> List[Placeholder]:
         return list(await self.find_by({}))
 
-class MediaPlaceholder(AppBaseModel):
-    id: Optional[PydanticObjectId] = None
-    
-    key: str
-    value: LocalizedSavedMedia
-    
-class MediaPlaceholdersRepository(AppAbstractRepository[MediaPlaceholder]):
-    class Meta:
-        collection_name = 'media_placeholders'
-        
-    async def find_by_key(self, key: str) -> Optional[MediaPlaceholder]:
-        return await self.find_one_by({'key': key})
-    
-    async def get_all(self) -> List[MediaPlaceholder]:
-        return list(await self.find_by({}))
-
 class OrderPriceDetails(AppBaseModel):
     products_price: Money  # сумма товаров без скидок и доставки
     promocode_discount: Optional[Money] = None  # скидка по промокоду
@@ -1081,8 +1065,6 @@ __all__ = [
     "AppBaseModel",
     "Placeholder",
     "PlaceholdersRepository",
-    "MediaPlaceholder",
-    "MediaPlaceholdersRepository",
     "OrderPriceDetails",
     "Order",
     "OrdersRepository",

@@ -32,7 +32,7 @@ class ContextMiddleware(BaseMiddleware):
             notificators=NotificatorHub(bot=bot,
                                         logs_channel_id=int(env_var) if (env_var := getenv("TG_LOGS_CHANNEL_ID")) else None,
                                         admin_chat_id=int(env_var) if (env_var := getenv("TG_ADMIN_CHAT_ID")) else None),
-            placeholders=PlaceholderManager(db.placeholders, db.media_placeholders),
+            placeholders=PlaceholderManager(db.placeholders),
             currency_converter=AsyncCurrencyConverter(),
             media_saver=MediaSaver(bot=bot)
         )
