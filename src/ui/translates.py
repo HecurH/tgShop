@@ -392,8 +392,14 @@ class DBEntryTranslates(Translatable):
                         }
 
                         description = {
-                            "ru": "Представьте, что изделие не однородное, а состоит из нескольких областей с разной мягкостью, которые <i>плавно</i> перетекают друг в друга.\nДля каждой из зон на картинке Вы можете выбрать нужную мягкость.",
-                            "en": "Imagine that the product is not uniform, but consists of several areas with different firmness that <i>smoothly</i> transition into each other.\nFor each of the zones in the picture, you can choose the desired firmness."
+                            "ru": """Представьте, что изделие не однородное, а состоит из нескольких областей с разной мягкостью, которые <i>плавно</i> перетекают друг в друга.
+При выборе двухзонного окраса вы сможете задать только двухзонную градацию жёсткости;
+аналогично для трёхзонного окраса — градация жёсткости должна соответствовать числу зон.
+После выбора, вам необходимо указать какую жёсткость Вы выбираете для каждой из зон.""",
+                            "en": """Imagine that the product is not homogeneous, but consists of several areas with different softness, which <i> smoothly </i> flow into each other.
+When choosing a two-zone color, you can only set a two-zone hardness gradation.;
+similarly, for a three—zone color, the hardness gradation should correspond to the number of zones.
+After selecting, you need to specify which stiffness you choose for each of the zones."""
                         }
 
             class Color(Translatable):
