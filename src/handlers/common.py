@@ -35,7 +35,6 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         
     if ctx.lang == "?":
         lang = ctx.message.from_user.language_code.split("-")[0]
-        print(lang)
         if lang in SUPPORTED_LANGUAGES_TEXT.values():
             ctx.customer.lang = lang
             ctx.lang = lang
@@ -75,14 +74,14 @@ async def lang_changing_handler(callback: CallbackQuery, ctx: Context) -> None:
 async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
     text = callback.data
     await callback.answer()
+    print(text)
     
     if text == ctx.t.UncategorizedTranslates.yes:
         await call_state_handler(NewUserStates.CurrencyChoosing, ctx)
     elif text == ctx.t.UncategorizedTranslates.no:
         ctx.customer.banned = True
+        print(ctx.customer)
         await ctx.services.db.customers.save(ctx.customer)
-        await callback.message.delete()
-    else:
         await callback.message.delete()
 
     
