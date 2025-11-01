@@ -622,7 +622,7 @@ class ProductConfiguration(AppBaseModel):
         super().__setattr__(name, value)
         
         if name in ["options", "price_confirmed_override"]:
-            self._sync_price_confirmation_flag()
+            if self.option: self._sync_price_confirmation_flag()
     
     def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
         """
