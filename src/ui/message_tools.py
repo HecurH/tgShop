@@ -152,6 +152,9 @@ async def send_media_response(
         MediaType.document: ctx.message.answer_document
     }
     media_type, media_id = media.get(ctx)
+    if not media_id:
+        await ctx.message.answer(caption, reply_markup=keyboard)
+        return
     
     handler = media_handlers.get(media_type, ctx.message.answer)
     

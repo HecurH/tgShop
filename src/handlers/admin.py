@@ -871,7 +871,7 @@ The masturbator is made from the softest silicone with an incredible internal te
     await ctx.services.db.products.save(haiden_product)
     await ctx.services.db.products.save(morion_product)
     await ctx.services.db.products.save(avily_product)
-    # await ctx.services.db.products.save(ragnar_product)
+    await ctx.services.db.products.save(ragnar_product)
     # await ctx.services.db.products.save(driana_product)
 
 

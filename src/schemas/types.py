@@ -216,8 +216,10 @@ class LocalizedSavedMedia(BaseModel):
     def from_keys(cls, **kwargs):
         return cls(media_id={key: kwargs[key] for key in kwargs})
     
-    def get(self, ctx: Context) -> tuple[MediaType, str]:
-        media_type, media_id = ctx.services.media_saver.resolve_key(self.media_key)
+    def get(self, ctx: Context) -> tuple[MediaType | None, str | None]:
+        media_type, media_id = ctx.services.media_saver.resolve_key(self.media_key) or (None, None)
+        if media_id is None: return None, None
+        
         if isinstance(media_id, dict): return media_type, media_id.get(ctx.lang)
         return media_type, media_id
 
