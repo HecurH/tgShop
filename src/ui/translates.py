@@ -298,6 +298,38 @@ class EnumTranslates(Translatable):
 class DBEntryTranslates(Translatable):
     class ProductConfigurationTranslates(Translatable):
         class Options(Translatable):
+            class Poster(Translatable):
+                name = {
+                    "ru": "Постер",
+                    "en": "Poster"
+                }
+                
+                text = {
+                    "ru": "Выберите версию постера:",
+                    "en": "Select the poster version:"
+                }
+                
+                class Choices(Translatable):
+                    class SFW(Translatable):
+                        name = {
+                            "ru": "SFW",
+                            "en": "SFW"
+                        }
+                        description = {
+                            "ru": "Выбрана <b>SFW</b> версия.\n\nУвидеть постер можете на прикрепленном фото.",
+                            "en": "The <b>SFW</b> version is selected.\n\nYou can see the poster on the attached photo."
+                        }
+                    
+                    class Medium(Translatable):
+                        name = {
+                            "ru": "NSFW",
+                            "en": "NSFW"
+                        }
+                        description = {
+                            "ru": "Выбрана <b>NSFW</b> версия.\n\nУвидеть постер можете на прикрепленном фото.",
+                            "en": "The <b>NSFW</b> version is selected.\n\nYou can see the poster on the attached photo."
+                        }
+            
             class Size(Translatable):
                 name = {
                     "ru": "Размер",
@@ -328,6 +360,16 @@ class DBEntryTranslates(Translatable):
                         description = {
                             "ru": "Выбран <b>Средний</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                             "en": "Selected <b>Medium</b> size.\n\nYou can see all the size values in the attached picture."
+                        }
+                        
+                    class Standart(Translatable):
+                        name = {
+                            "ru": "Стандартный",
+                            "en": "Standart"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Стандартный</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
+                            "en": "Selected <b>Standart</b> size.\n\nYou can see all the size values in the attached picture."
                         }
                     
                     class Large(Translatable):

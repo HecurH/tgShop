@@ -162,8 +162,6 @@ class AdminKBs:
             return types.ReplyKeyboardMarkup(keyboard=kb,
                                              resize_keyboard=True)
             
-
-
 class AssortmentKBs:
 
     @staticmethod

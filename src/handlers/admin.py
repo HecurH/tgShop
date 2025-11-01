@@ -444,9 +444,9 @@ async def cats_handler(_, ctx: Context) -> None:
     await ctx.services.db.categories.save(cat)
 
 
-@router.message(Command("add_product"))
+@router.message(Command("add_products"))
 async def image_saving_handler(_, ctx: Context) -> None:
-    configuration = ProductConfiguration(options={
+    haiden_configuration = ProductConfiguration(options={
         "size": ConfigurationOption(
             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
             text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.text"),
@@ -664,7 +664,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
         )
     })
 
-    product = Product(
+    haiden_product = Product(
         name=LocalizedString(data={
             "ru":"Дракон Хайден",
             "en":"Haiden Dragon"}
@@ -688,11 +688,191 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
         ),
         long_description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
-        configuration=configuration,
+        configuration=haiden_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
     )
 
-    await ctx.services.db.products.save(product)
+    morion_configuration = haiden_configuration.model_copy(deep=True)
+    morion_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_small")
+    morion_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_medium")
+    morion_configuration.options["size"].choices["large"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_large")
+    
+    
+    morion_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_color_canonical")
+    
+    morion_product = Product(
+        name=LocalizedString(data={
+            "ru":"Конь Морион",
+            "en":"Colt Morion"}
+        ),
+        name_for_tax="Индивидуальная отливка силиконового изделия \"Конь Морион\"",
+        category="dildos",
+        short_description_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""Питончик ещё не притащил описание... подождём, пока он распутает свой хвост 🐍""",
+            "en":"""Питончик ещё не притащил описание... подождём, пока он распутает свой хвост 🐍"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
+        configuration=morion_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
+    )
+    
+    avily_configuration = haiden_configuration.model_copy(deep=True)
+    avily_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_small")
+    avily_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_medium")
+    avily_configuration.options["size"].choices["large"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_large")
+    
+    
+    avily_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_color_canonical")
+    
+    avily_product = Product(
+        name=LocalizedString(data={
+            "ru":"Авали Авили",
+            "en":"Avali Avily"}
+        ),
+        name_for_tax="Индивидуальная отливка силиконового изделия \"Авали Авили\"",
+        category="dildos",
+        short_description_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""<blockquote expandable>Беззвучное движение мягких перьев, едва заметное неловко брошенному взгляду... 
+Пернатый проказник Авили, прославившийся своим умением незаметно подкрадываться со спины, утягивая свою жертву ловким движением лап, обладает очень интересной особенностью: вначале узкий, как течение маленького ручья, затем плавно расширяющийся в небольшую реку, а после превращающийся в мощный водный поток, достигая кульминации, впадающий в объёмное озеро, такое крупное и необъятное, но невероятно манящее...</blockquote>""",
+            "en":"""<blockquote expandable>The soundless motion of soft feathers, barely noticeable to a clumsily cast glance...
+The feathered mischief-maker Avili, famous for his ability to stealthily sneak up from behind and snatch his victim with a deft movement of his paws, possesses a very interesting feature: at first narrow, like the flow of a small stream, then smoothly widening into a small river, and then transforming into a powerful water stream, reaching its climax, it flows into a vast lake, so large and boundless, yet incredibly alluring...</blockquote>"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
+        configuration=avily_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
+    )
+    
+    ragnar_configuration = haiden_configuration.model_copy(deep=True)
+    ragnar_options = {"poster": ConfigurationOption(
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.text"),
+            chosen_key="sfw",
+            choices={
+                "sfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_sfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.description")
+                ),
+                "nsfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_nsfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.description")
+                )
+            }
+        )}
+    ragnar_configuration.options = ragnar_options.update(ragnar_configuration.options)
+    
+    ragnar_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_small")
+    ragnar_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_medium")
+    ragnar_configuration.options["size"].choices["large"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_large")
+    
+    
+    ragnar_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_color_canonical")
+    
+    ragnar_product = Product(
+        name=LocalizedString(data={
+            "ru":"Волк Рагнар",
+            "en":"Wolf Ragnar"}
+        ),
+        name_for_tax="Индивидуальная отливка силиконового изделия \"Волк Рагнар\"",
+        category="dildos",
+        short_description_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""<blockquote expandable>Крупное, мощное тело, стальные мускулы, перекатывающиеся под толстой шкурой с густой серебристой шерстью... Огромный волк с тяжёлым рокотом дышит в твою спину, взгляд его ледяных жёлтых глаз пробивает твоё тело насквозь. Свирепо обнажая ряды блестящих зубов, своей мощной лапой он хватает тебя за талию, заставляя дрожать от лёгкого страха и предвкушения невероятного удовольствия...
+
+Небольшой кончик входит внутрь, давая какое-то время для привычки к этому зверю, а затем ствол входит глубже, давая почувствовать свой плавный изгиб. Заставив подумать, что на этом всё заканчивается, он вводит внутрь мощный узел, добивая окончательно...
+
+Первобытная машина грубой силы и неумолимых желаний, настоящий дикий зверь, сбежавший из северного леса, чтобы доставить вашему телу и разуму безудержное наслаждение. </blockquote>
+
+<b>К заказу будет приложен ламинированный плакат А5 — SFW или NSFW версия на выбор.</b>""",
+            "en":"""<blockquote expandable>A large, powerful body, steel-like muscles rippling beneath thick hide covered in dense, silvery fur... A massive wolf breathes with a low growl against your back, the gaze of its icy yellow eyes piercing right through you. Baring rows of gleaming teeth in a ferocious snarl, its powerful paw grabs you by the waist, making you tremble with a mix of slight fear and anticipation of incredible pleasure...
+
+The small tip enters inside, giving you a moment to grow accustomed to the beast, before the shaft sinks deeper, letting you feel its smooth curve. Just as you think it's over, he pushes the thick knot inside, claiming you completely...
+
+A primal engine of raw force and relentless desire, a true wild beast that escaped the northern forests to deliver untamed ecstasy to your body and mind.</blockquote>
+
+<b>The order will be accompanied by an A5 — SFW laminated poster or an NSFW version to choose from.</b>"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
+        configuration=ragnar_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
+    )
+    
+    driana_configuration = haiden_configuration.model_copy(deep=True)
+    
+    driana_options = {"poster": ConfigurationOption(
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.text"),
+            chosen_key="sfw",
+            choices={
+                "sfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_driana_configuration_poster_sfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.description")
+                ),
+                "nsfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_driana_configuration_poster_nsfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.description")
+                )
+            }
+        )}
+    driana_configuration.options = driana_options.update(driana_configuration.options)
+    
+    driana_configuration.options["size"] = ConfigurationOption(
+        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
+        text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.text"),
+        chosen_key="standart",
+        choices={
+            "standart": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Standart.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_size_standart"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Standart.description")
+            )
+        }
+    )
+    
+    
+    driana_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_driana_configuration_color_canonical")
+    
+    driana_product = Product(
+        name=LocalizedString(data={
+            "ru":"Дракон Дриана",
+            "en":"Dragon Driana"}
+        ),
+        name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Дриана\"",
+        category="masturbators",
+        short_description_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""<blockquote expandable>Лунный свет струился по нежной чешуе, заставляя её сиять и переливаться. Тишина ночного озера, прерываемая лишь рокотом цикад. Плавные, мягкие движения Дрианы, осторожно спускающейся в воду... Она, рождённая от дракона и кобольда, соединила в себе их лучшие черты: изящное тело с тонкой талией, плавно переходящей в сочные и упругие широкие бёдра. 
+
+Хрупкая, но такая привлекательная, она готова подарить вам невообразимые ласки и искреннюю нежность, доставить удовольствие, от которого закатят глаза даже самые искушённые!</blockquote>
+Мастурбатор выполнен из самого мягкого силикона с невероятным внутренним рельефом. Игрушка идеально ложится в руку, что дарит дополнительное удобство использования – даже чешуйки на спине идеально прилегают к вашим пальцам. Приобретая игрушку, вы приобретаете верную спутницу, готовую в любую минуту подарить вам наслаждение ~ 
+
+<b>К заказу будет приложен ламинированный плакат А5 — SFW или NSFW версия на выбор.</b>""",
+            "en":"""<blockquote expandable>Moonlight streamed over her delicate scales, making them shimmer and glisten. The silence of the night lake was broken only by the chirring of cicadas. The smooth, gentle movements of Dryana, carefully descending into the water... Born of a dragon and a kobold, she combined the best traits of both: an elegant body with a slender waist that gracefully curved into lush, firm, and wide hips.
+
+Fragile yet so alluring, she is ready to grant you unimaginable caresses and sincere tenderness, to deliver a pleasure that will make even the most experienced roll their eyes!</blockquote>
+The masturbator is made from the softest silicone with an incredible internal texture. The toy fits perfectly in your hand, providing additional comfort during use—even the scales on its back fit snugly against your fingers. When you purchase this toy, you acquire a faithful companion, ready at any moment to bestow upon you bliss ~
+
+<b>The order will be accompanied by an A5 — SFW laminated poster or an NSFW version to choose from.</b>"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
+        configuration=driana_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
+    )
+    
+    await ctx.services.db.products.save(haiden_product)
+    await ctx.services.db.products.save(morion_product)
+    await ctx.services.db.products.save(avily_product)
+    # await ctx.services.db.products.save(ragnar_product)
+    # await ctx.services.db.products.save(driana_product)
 
 
 @router.message(Command("add_additionals"))
