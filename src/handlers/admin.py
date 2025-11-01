@@ -764,7 +764,8 @@ The feathered mischief-maker Avili, famous for his ability to stealthily sneak u
                 )
             }
         )}
-    ragnar_configuration.options = ragnar_options.update(ragnar_configuration.options)
+    ragnar_options.update(ragnar_configuration.options)
+    ragnar_configuration.options = ragnar_options
     
     ragnar_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_small")
     ragnar_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_medium")
@@ -822,7 +823,8 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
                 )
             }
         )}
-    driana_configuration.options = driana_options.update(driana_configuration.options)
+    driana_options.update(driana_configuration.options)
+    driana_configuration.options = driana_options
     
     driana_configuration.options["size"] = ConfigurationOption(
         name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
