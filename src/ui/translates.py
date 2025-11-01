@@ -320,7 +320,7 @@ class DBEntryTranslates(Translatable):
                             "en": "The <b>SFW</b> version is selected.\n\nYou can see the poster on the attached photo."
                         }
                     
-                    class Medium(Translatable):
+                    class NSFW(Translatable):
                         name = {
                             "ru": "NSFW",
                             "en": "NSFW"

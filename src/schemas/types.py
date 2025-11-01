@@ -200,7 +200,7 @@ class LocalizedEntry(BaseModel):
             if hasattr(current_obj, attr):
                 current_obj = getattr(current_obj, attr)
             else:
-                current_obj = "Could not find localized attribute {attr}"
+                current_obj = f"Could not find localized attribute {attr}"
                 
         
         return current_obj
