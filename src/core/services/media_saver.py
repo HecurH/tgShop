@@ -72,11 +72,12 @@ class MediaSaver:
                     data[key] = {lang: await self._generate_id_for_file(key, filepath)}
                 else:
                     data[key] = await self._generate_id_for_file(key, filepath)
-                await asyncio.sleep(0.5)
-
+                await asyncio.sleep(0.4)
+                    
             if lang and lang not in data[key]:
                 data[key][lang] = await self._generate_id_for_file(key, filepath)
                 updated = True
+                await asyncio.sleep(0.4)
 
         # чистим отсутствующие файлы
         existing_keys = set()
@@ -129,6 +130,7 @@ class MediaSaver:
                 return msg.document.file_id
             else:
                 raise ValueError(f"Неизвестный тип медиа: {media_type}")
+            
         except Exception as e:
             raise RuntimeError(f"Ошибка при загрузке файла {filepath}: {e}")
 
