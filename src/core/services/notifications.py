@@ -22,7 +22,7 @@ MediaItem = Tuple[str, Union[InputFile, URLInputFile]]
 class NotificatorConfig:
     retry_attempts: int = 4
     base_backoff: float = 0.5
-    between_messages_delay: float = 0.3
+    between_messages_delay: float = 0.4
     use_queue: bool = True
     queue_workers: int = 2
 

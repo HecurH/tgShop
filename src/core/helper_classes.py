@@ -47,7 +47,7 @@ class MessageWrapper:
             else:
                 result = await self._message.answer(part, *args, **kwargs)
             if not is_last:
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.4)
             
             result_messages.append(result)
         
@@ -83,7 +83,7 @@ class MessageWrapper:
                 result = await self._message.answer(part)
                 
             if not is_last:
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.4)
             
             result_messages.append(result)
         
@@ -120,7 +120,7 @@ class MessageWrapper:
                 result = await self._message.answer(part)
                 
             if not is_last:
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.4)
             
             result_messages.append(result)
         
