@@ -643,6 +643,7 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                         "ru": """Опция позволяет окрасить изделие в два разных цвета — каждая зона окрашивается отдельно, с чёткой границей перехода (граница указана на изображении).
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
@@ -654,6 +655,7 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                             "en": """The option allows you to color the product in two different shades — each zone is painted separately, with a clear dividing line (the boundary is shown in the image).
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – white</i>), and optionally add comments about transition details or special effects.
+Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
@@ -673,6 +675,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
                         "ru": """Опция позволяет окрасить изделие в три разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
@@ -684,6 +687,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
                             "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — white</i>), and optionally add comments about transition details or special effects.
+Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
@@ -704,6 +708,7 @@ Add-ons are charged separately."""
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий</i>, <i>2 — розовый</i>, <i>3 — красный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 Если Вы хотите использовать подзону 1.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
+Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
@@ -715,6 +720,7 @@ Add-ons are charged separately."""
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue</i>, <i>2 — pink</i>, <i>3 — red</i>), and optionally add comments about transition details or special effects.
 If you want to use subzone 1.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
+Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
@@ -886,8 +892,8 @@ The final cost for a custom paint job is calculated individually and depends on 
                         }
 
                         text = {
-                            "ru": "На прикрепленном медиафайле отображены стандартные цвета для ознакомления.",
-                            "en": "The attached media file displays standard colors for review."
+                            "ru": "В данной палитре изображены стандартные цвета, которые могут быть использованы непосредственно для окраса, а если нет подходящего оттенка — мы всегда можем смешать его из доступных цветов.",
+                            "en": "This palette shows standard colors that can be used directly for coloring, and if there is no suitable shade, we can always mix it from the available colors."
                         }
             
 class UncategorizedTranslates(Translatable):
