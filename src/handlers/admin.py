@@ -922,12 +922,12 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
 
                 description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.description")
             ),
-            "four-zone": ConfigurationChoice(
-                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaFourZone.name"),
+            "three-zone": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaThreeZone.name"),
                 media=LocalizedSavedMedia(media_key="photo_driana_configuration_color_four_zone"),
                 is_custom_input=True,
 
-                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaFourZone.description"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaThreeZone.description"),
             ),
             "swirl": ConfigurationChoice(
                 name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.name"),

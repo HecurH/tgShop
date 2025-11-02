@@ -697,7 +697,7 @@ If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or 
 Add-ons are charged separately."""
                         }
                     
-                    class DrianaFourZone(Translatable):
+                    class DrianaThreeZone(Translatable):
                         name = {
                             "ru": "Четырёхзонный",
                             "en": "Four-zone"
@@ -884,7 +884,6 @@ The final cost for a custom paint job is calculated individually and depends on 
                                             "en": "White"
                                         }
                                     
-                        
                     class AvailableColors(Translatable):
                         name = {
                             "ru": "Доступные цвета",
@@ -992,7 +991,7 @@ class AssortmentTranslates(Translatable):
     }
 
     choose_the_preset = {
-        "ru": "Введите номер готового пресета (латиница):",
+        "ru": "Если вам нравятся цвета пресета, но не их расположение, выберите зональную окраску и укажите, какой пресет Вы хотите взять за основу. Введите номер готового пресета (латиница):",
         "en": "Select the preset number (Latin alphabet):"
     }
 
