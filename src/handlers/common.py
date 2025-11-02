@@ -99,19 +99,16 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.about.values()) if message.text else False)
 async def about_command_handler(_, ctx: Context) -> None:
-
-    await ctx.message.reply(**as_list(
-        BlockQuote(Bold("PLACEHOLDER")),
-        Text("Lorem ipsum dolor sit amed.")
-    ).as_kwargs(), reply_markup=CommonKBs.main_menu(ctx))
-
-    await ctx.fsm.set_state(CommonStates.MainMenu)
+    await ctx.message.answer(ctx.t.CommonTranslates.about_us)
+    
+    await call_state_handler(CommonStates.MainMenu,
+                             ctx)
     
 @router.error()
 async def global_error_handler(event: ErrorEvent):
     with contextlib.suppress(Exception):
         if hasattr(event.update, "message") and event.update.message:
-            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.\nЕсли ошибка повторяется, напишите @hecurh или смиритесь.")
+            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.\nЕсли ошибка повторяется, напишите @HecurH.")
         elif hasattr(event.update, "callback_query") and event.update.callback_query:
             await event.update.callback_query.answer("Произошла ошибка. Пожалуйста, попробуйте позже.", show_alert=True)
 

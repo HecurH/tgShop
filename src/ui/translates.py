@@ -982,6 +982,21 @@ class CommonTranslates(Translatable):
         "ru": "Вот меню:",
         "en": "Here's the menu:"
     }
+    
+    about_us = {
+        "ru": """Мы — Good Snake, начинающий магазинчик, занимающийся производством нестандартных интимных игрушек, мерча и прочих товаров на тематику фурри! 
+Мы <i>особенно педантичны</i> и преданы своему делу, делая упор на <i>качество</i> продуктов. А ещё в нашем ассортименте можно увидеть <i>единственные в своём роде</i> окрасы, которые вы не найдёте у других СНГ-производителей ^^
+Каждая игрушка изготовлена из качественных и премиальных импортных материалов с применением особых технологий производства. Индивидуальный подход к каждому клиенту и стремление к идеалу — наше призвание! Добро пожаловать в магазин :3
+
+По вопросам магазина — @TechnoZmeyka
+По вопросам работы бота/предложение идей — @HecurH""",
+        "en": """We are Good Snake, a start—up shop engaged in the production of non-standard intimate toys, merch and other furry-themed goods! 
+We are <i>particularly meticulous</i> and dedicated to our work, focusing on <i>the quality of</i> products. And in our assortment you can see <i>one-of-a-kind</i> colors that you will not find in other CIS manufacturers ^^
+Each toy is made of high-quality and premium imported materials using special production technologies. Individual approach to each client and striving for the ideal is our vocation! Welcome to the store :3
+
+For questions about the store — @TechnoZmeyka
+Regarding the work of the bot/suggestion of ideas — @HecurH"""
+    }
 
 class AssortmentTranslates(Translatable):
 
