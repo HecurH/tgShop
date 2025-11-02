@@ -247,9 +247,11 @@ class AdminChatNotificator:
 
         for idx, entry in enumerate(entries):
             if product := products_dict.get(entry.product_id):
-                text += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                text += f"  {idx+1} - {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
         
-        text += f"\n\n<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
+        text += f"\n\nЭто первый заказ пользователя, не забудь вложить пробник!" if await ctx.services.db.orders.count_customer_orders(ctx.customer) < 1 else "\n\n"
+        
+        text += f"<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         

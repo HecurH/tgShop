@@ -427,13 +427,13 @@ async def cats_handler(_, ctx: Context) -> None:
                 "en": "Masturbators"
             }))
     await ctx.services.db.categories.save(cat)
-    cat = Category(
-        name="anal_plugs",
-        localized_name=LocalizedString(data={
-                "ru": "Анальные пробки",
-                "en": "Anal plugs"
-            }))
-    await ctx.services.db.categories.save(cat)
+    # cat = Category(
+    #     name="anal_plugs",
+    #     localized_name=LocalizedString(data={
+    #             "ru": "Анальные пробки",
+    #             "en": "Anal plugs"
+    #         }))
+    # await ctx.services.db.categories.save(cat)
 
     cat = Category(
         name="other",
@@ -839,7 +839,6 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
         }
     )
     
-    
     driana_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_driana_configuration_color_canonical")
     
     driana_product = Product(
@@ -870,11 +869,137 @@ The masturbator is made from the softest silicone with an incredible internal te
         configuration_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
     )
     
-    await ctx.services.db.products.save(haiden_product)
-    await ctx.services.db.products.save(morion_product)
-    await ctx.services.db.products.save(avily_product)
-    await ctx.services.db.products.save(ragnar_product)
+    lube_configuration = ProductConfiguration(options={
+        "weight": ConfigurationOption(
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.text"),
+            chosen_key="10g",
+            choices={
+                "5g": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.FiveGrams.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.FiveGrams.description"),
+                    price=LocalizedMoney.from_keys(RUB=-150.00, USD=-1.50)
+                ),
+                "10g": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.TenGrams.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.TenGrams.description")
+                ),
+                "50g": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.FiftyGrams.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.FiftyGrams.description"),
+                    price=LocalizedMoney.from_keys(RUB=1200.00, USD=12.00)
+                ),
+                "100g": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.HundredGrams.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.HundredGrams.description"),
+                    price=LocalizedMoney.from_keys(RUB=2700.00, USD=27.00)
+                ),
+                "200g": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.TwoHundredGrams.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Weight.Choices.TwoHundredGrams.description"),
+                    price=LocalizedMoney.from_keys(RUB=5700.00, USD=57.00)
+                )
+            }
+        )
+    })
+    
+    lube_product = Product(
+        name=LocalizedString(data={
+            "ru":"Порошковая смазка",
+            "en":"Powder lubricant"}
+        ),
+        name_for_tax="Модификация готовой порошковой смазки для улучшения характеристик хранения",
+        category="other",
+        short_description_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""<b>Плюсы K-Lube:</b>
+  - Инертная и безопасная к игрушкам
+  - Долго высыхает 
+  - Легко смывается водой с мылом
+
+В отличие от J-Lube, который основан на кукурузном сиропе (то есть на органике), K-Lube сделан из неорганического материала. Следовательно, при соблюдении условий хранения готовая смазка может сохранять свои свойства минимум полгода (протестировано лично).
+И чтобы Вы лично попробовали её и поняли, насколько она лучше готовых вариантов, к первому заказу от 5000 рублей будет вложен пробник на пять грамм!
+
+Пяти грамм хватает на 200-400мл готовой смазки.
+
+<b>Инструкция по применению: </b>
+  1) В стерильную ёмкость влейте нужное количество <b>дистиллированной</b> воды.
+  2) Высыпьте порошок в воду, <b>непрерывно помешивая</b> венчиком или вилкой до образования однородной массы.
+  3) Залейте смазку в стерильную тару, дайте настояться несколько часов.
+  4) Приятной игры!""",
+            "en":"""<b>Advantages of K-Lube:</b>
+  - Inert and safe for toys
+  - Takes a long time to dry out
+  - Easy to wash off with soap and water
+
+Unlike J-Lube, which is based on corn syrup (i.e., an organic material), K-Lube is made from an inorganic material. Consequently, if stored properly, the prepared lubricant can retain its properties for at least six months (personally tested).
+And so you can personally try it and see for yourself how much better it is than ready-made options, with your first order over 100 dollars, we will include a 5-gram sample!
+
+Five grams is enough to make 200-400ml of prepared lubricant.
+
+<b>Usage Instructions:</b>
+  1) Pour the desired amount of <b>distilled</b> water into a sterile container.
+  2) Pour the powder into the water, <b>stirring continuously</b> with a whisk or fork until a homogeneous mixture forms.
+  3) Pour the lubricant into a sterile container and let it sit for a few hours.
+  4) Enjoy!"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=300.00, USD=3.00),
+        configuration=lube_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
+    )
+    
+    testers_configuration = ProductConfiguration(options={
+        "firmness_kit": ConfigurationOption(
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.text"),
+            chosen_key="N1",
+            choices={
+                "N1": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N1.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N1.description")
+                ),
+                "N2": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N2.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N2.description")
+                ),
+                "N3": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N3.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N3.description")
+                ),
+            }
+        )
+    })
+    
+    testers_product = Product(
+        name=LocalizedString(data={
+            "ru":"Тестеры мягкости",
+            "en":"Firmness testers"}
+        ),
+        name_for_tax="Индивидуальная отливка силиконовых тестеров",
+        category="other",
+        short_description_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
+        long_description=LocalizedString(data={
+            "ru":"""Силиконовые тестеры мягкости, набор из трёх.
+            
+<b>Учтите, тестеры будут случайного цвета!</b>""",
+            "en":"""Silicone softness testers, a set of three.
+            
+<b>Please note, the testers will be of random color!</b>"""}
+        ),
+        long_description_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
+        base_price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
+        configuration=testers_configuration,
+        configuration_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
+    )
+    
+    # await ctx.services.db.products.save(haiden_product)
+    # await ctx.services.db.products.save(morion_product)
+    # await ctx.services.db.products.save(avily_product)
+    # await ctx.services.db.products.save(ragnar_product)
     # await ctx.services.db.products.save(driana_product)
+    await ctx.services.db.products.save(lube_product)
+    await ctx.services.db.products.save(testers_product)
 
 
 @router.message(Command("add_additionals"))

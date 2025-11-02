@@ -382,6 +382,68 @@ class DBEntryTranslates(Translatable):
                             "en": "Selected <b>Large</b> size.\n\nYou can see all the size values in the attached picture."
                         }
 
+            class Weight(Translatable):
+                name = {
+                    "ru": "Вес",
+                    "en": "Weight"
+                }
+
+                text = {
+                    "ru": "Выберите вес:",
+                    "en": "Choose the weight:"
+                }
+
+                class Choices(Translatable):
+                    class FiveGrams(Translatable):
+                        name = {
+                            "ru": "5 г",
+                            "en": "5 g"
+                        }
+                        description = {
+                            "ru": "Выбран вес <b>5 грамм</b>.",
+                            "en": "Selected <b>5 grams</b> weight."
+                        }
+
+                    class TenGrams(Translatable):
+                        name = {
+                            "ru": "10 г",
+                            "en": "10 g"
+                        }
+                        description = {
+                            "ru": "Выбран вес <b>10 грамм</b>.",
+                            "en": "Selected <b>10 grams</b> weight."
+                        }
+                    
+                    class FiftyGrams(Translatable):
+                        name = {
+                            "ru": "50 г",
+                            "en": "50 g"
+                        }
+                        description = {
+                            "ru": "Выбран вес <b>50 грамм</b>.",
+                            "en": "Selected <b>50 grams</b> weight."
+                        }
+                    
+                    class HundredGrams(Translatable):
+                        name = {
+                            "ru": "100 г",
+                            "en": "100 g"
+                        }
+                        description = {
+                            "ru": "Выбран вес <b>100 грамм</b>.",
+                            "en": "Selected <b>100 grams</b> weight."
+                        }
+                        
+                    class TwoHundredGrams(Translatable):
+                        name = {
+                            "ru": "200 г",
+                            "en": "200 g"
+                        }
+                        description = {
+                            "ru": "Выбран вес <b>200 грамм</b>.",
+                            "en": "Selected <b>200 grams</b> weight."
+                        }
+
             class Firmness(Translatable):
                 name = {
                     "ru": "Мягкость",
@@ -442,6 +504,51 @@ class DBEntryTranslates(Translatable):
 When choosing a two-zone color, you can only set a two-zone hardness gradation.;
 similarly, for a three—zone color, the hardness gradation should correspond to the number of zones.
 After selecting, you need to specify which stiffness you choose for each of the zones."""
+                        }
+            
+            class FirmnessKit(Translatable):
+                name = {
+                    "ru": "Набор мягкостей",
+                    "en": "Firmness kit"
+                }
+
+                text = {
+                    "ru": "Выберите набор мягкостей:",
+                    "en": "Choose the firmness kit:"
+                }
+
+                class Choices(Translatable):
+                    class N1(Translatable):
+                        name = {
+                            "ru": "#1",
+                            "en": "#1"
+                        }
+
+                        description = {
+                            "ru": "Выбран <b>Набор #1</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Мягкой</b>, <b>Средней</b>, <b>Жёсткой</b>.",
+                            "en": "<b>Set #1</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Soft</b>, <b>Medium</b>, <b>Firm</b>."
+                        }
+                    
+                    class N2(Translatable):
+                        name = {
+                            "ru": "#2",
+                            "en": "#2"
+                        }
+
+                        description = {
+                            "ru": "Выбран <b>Набор №2</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Очень мягкой</b>, <b>Мягкой</b>, <b>Жёсткой</b>.",
+                            "en": "<b>Set #2</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Very soft</b>, <b>Soft</b>, <b>Firm</b>."
+                        }
+                    
+                    class N3(Translatable):
+                        name = {
+                            "ru": "#3",
+                            "en": "#3"
+                        }
+
+                        description = {
+                            "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкой</b>, <b>Очень мягкой</b>, <b>Мягкой</b>.",
+                            "en": "<b>Set #3</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."
                         }
 
             class Color(Translatable):
