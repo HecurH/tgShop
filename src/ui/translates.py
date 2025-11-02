@@ -1227,6 +1227,11 @@ class CartTranslates(Translatable):
     #     "ru": "Перед оформлением заказа необходимо настроить доставку.",
     #     "en": "Before placing an order, you need to set up delivery."
     # }
+    
+    waiting_for_delivery_confirm = {
+        "ru": "Вы ожидаете окончания подтверждения доставки.",
+        "en": "You are waiting for the delivery confirmation to end."
+    }
         
     cart_price_confirmation = {
         "ru": "В Вашей корзине есть товары с индивидуальными параметрами, поэтому мы рассчитаем итоговую цену вручную.\n\nОтправьте заказ на подтверждение, и мы пришлем уведомление, как только все будет готово. После этого можно будет перейти к оплате.\n\nБазовая стоимость: {price}",

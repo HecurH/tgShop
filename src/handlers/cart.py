@@ -64,6 +64,13 @@ async def cart_viewer_handler(_, ctx: Context):
                                      #send_before=(ctx.t.CartTranslates.delivery_not_configured, 1)
                                     )
             return
+        if ctx.customer.waiting_for_manual_delivery_info_confirmation:
+            await call_state_handler(CartStates.Menu,
+                                     ctx,
+                                     current=current,
+                                     send_before=(ctx.t.CartTranslates.waiting_for_delivery_confirm, 1)
+                                    )
+            return
         
         products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         
