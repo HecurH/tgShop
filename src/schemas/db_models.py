@@ -544,7 +544,7 @@ class ConfigurationOption(AppBaseModel):
     choices: Dict[str, ConfigurationChoice | ConfigurationSwitches | ConfigurationAnnotation]
     
     def get_chosen(self) -> Optional[ConfigurationChoice]:
-        return self.choices.get(self.chosen_key)
+        return self.choices.get(self.chosen_key) or self.choices.values()[0] if self.choices else None
     
     def set_chosen(self, choice: ConfigurationChoice):
         self.chosen_key = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen_key)
