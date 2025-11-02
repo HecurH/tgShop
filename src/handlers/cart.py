@@ -57,18 +57,18 @@ async def cart_viewer_handler(_, ctx: Context):
                                 ctx,
                                 current=current)
     elif text.rsplit(" ", 1)[0] == ctx.t.ReplyButtonsTranslates.Cart.place.format(price="").strip() or text == ctx.t.ReplyButtonsTranslates.Cart.send_to_check:
-        if not ctx.customer.delivery_info:
-            await ctx.fsm.update_data(back_to_cart_after_delivery=True)
-            await call_state_handler(ProfileStates.Delivery.Menu,
-                                     ctx,
-                                     #send_before=(ctx.t.CartTranslates.delivery_not_configured, 1)
-                                    )
-            return
         if ctx.customer.waiting_for_manual_delivery_info_confirmation:
             await call_state_handler(CartStates.Menu,
                                      ctx,
                                      current=current,
                                      send_before=(ctx.t.CartTranslates.waiting_for_delivery_confirm, 1)
+                                    )
+            return
+        if not ctx.customer.delivery_info:
+            await ctx.fsm.update_data(back_to_cart_after_delivery=True)
+            await call_state_handler(ProfileStates.Delivery.Menu,
+                                     ctx,
+                                     #send_before=(ctx.t.CartTranslates.delivery_not_configured, 1)
                                     )
             return
         
