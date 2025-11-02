@@ -294,7 +294,6 @@ class EnumTranslates(Translatable):
             "en": "Received"
         }
 
-
 class DBEntryTranslates(Translatable):
     class ProductConfigurationTranslates(Translatable):
         class Options(Translatable):
@@ -947,7 +946,7 @@ class UncategorizedTranslates(Translatable):
     }
     
     unit = {
-        "ru": {"one": "Шт.", "few": "Шт.", "other": "Шт."} ,
+        "ru": {"one": "Шт.", "few": "Шт.", "many": "Шт."} ,
         "en": {"one": "Pc.", "other": "Pcs."}  
     }
     
