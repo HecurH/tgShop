@@ -910,8 +910,8 @@ class DeliveryService(AppBaseModel):
     requirements_options: list[DeliveryRequirementsList] # для почты россии, например, можно оформить как по адресу с ФИО, так и просто по номеру до востребования
     selected_option: Optional[DeliveryRequirementsList] = None # для заполнения в будущем при конфигурации
     
-    def index_option_by_name(self, name: LocalizedString) -> int:
-        return next((idx for idx, option in enumerate(self.requirements_options) if option.name.get("en") == name.get("en")), -1)
+    def index_option_by_name(self, name: LocalizedEntry) -> int:
+        return next((idx for idx, option in enumerate(self.requirements_options) if option.name == name), -1)
     
     def get_selected_option_index(self):
         return self.index_option_by_name(self.selected_option.name) if self.selected_option else 0
