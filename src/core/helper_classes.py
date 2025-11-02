@@ -3,6 +3,7 @@ import base64
 import os
 from os import getenv
 from dataclasses import dataclass
+import string
 from typing import TYPE_CHECKING, Optional, Union
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -165,7 +166,16 @@ class Context:
         # \p{P} — пунктуация
         # \p{S} — символы (валюты, мат. знаки, спец. символы)
         # \p{M} — диакритические знаки (акценты и т.п.).
-        text = re.compile(r'[^\p{L}\p{N}\p{P}\p{S}\p{M}\s]+').sub('', text)
+        allowed = (
+            r"[^"
+            r"\w"                     # буквы + цифры + _
+            r"\s"                     # пробелы
+            + re.escape(string.punctuation) +  # стандартные знаки препинания
+            r"№€£¥§±×÷°•–—…„“”«»"     # вручную добавленные часто используемые спецсимволы
+            r"]+"
+        )
+        
+        text = re.sub(allowed, "", text, flags=re.UNICODE)
         
         if len(text) > 1024:
             await self.message.answer(self.t.UncategorizedTranslates.input_message_too_long)
