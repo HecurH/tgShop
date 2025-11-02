@@ -707,7 +707,7 @@ Add-ons are charged separately."""
                         "ru": """Опция позволяет окрасить изделие в три (четыре) разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий</i>, <i>2 — розовый</i>, <i>3 — красный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
-Если Вы хотите использовать подзону 1.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
+Если Вы хотите использовать подзону 2.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
 Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
@@ -719,7 +719,7 @@ Add-ons are charged separately."""
                         "en": """The option allows the product to be painted in three (four) different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue</i>, <i>2 — pink</i>, <i>3 — red</i>), and optionally add comments about transition details or special effects.
-If you want to use subzone 1.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
+If you want to use subzone 2.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
 Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
@@ -1006,8 +1006,8 @@ class AssortmentTranslates(Translatable):
     }
 
     choose_the_preset = {
-        "ru": "Если вам нравятся цвета пресета, но не их расположение, выберите зональную окраску и укажите, какой пресет Вы хотите взять за основу. Введите номер готового пресета (латиница):",
-        "en": "Select the preset number (Latin alphabet):"
+        "ru": "Если вам нравятся цвета пресета, но не их расположение, выберите зональную окраску и укажите, какой пресет Вы хотите взять за основу.\nВведите номер готового пресета (латиница):",
+        "en": "If you like the preset colors, but not their location, select a zonal coloring and specify which preset you want to use as a basis.\nSelect the preset number (Latin alphabet):"
     }
 
     enter_custom = {
