@@ -838,8 +838,199 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
             )
         }
     )
+ 
+    driana_configuration.options["firmness"] = ConfigurationOption(
+        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.name"),
+        text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.text"),
+        chosen_key="medium",
+        choices={
+            "ultra_soft": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.UltraSoft.name"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.UltraSoft.description"),
+            ),
+            "very_soft": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.VerySoft.name"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.VerySoft.description"),
+            ),
+            "soft": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.name"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.Soft.description"),
+            ),
+            "firmness_gradation": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.DrianaFirmnessGradation.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_firmness_gradation"),
+                is_custom_input=True,
+                can_be_blocked_by=["color/swirl"],
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.DrianaFirmnessGradation.description"),
+                price=LocalizedMoney.from_keys(RUB=1000.00, USD=10.00)
+            ),
+            "extended_firmness_gradation": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.DrianaExtendedFirmnessGradation.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_extended_firmness_gradation"),
+                is_custom_input=True,
+                can_be_blocked_by=["color/swirl"],
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.DrianaExtendedFirmnessGradation.description"),
+                price=LocalizedMoney.from_keys(RUB=1800.00, USD=19.00)
+            )
+        }
+    )
+ 
+    driana_configuration.options["color"] = ConfigurationOption(
+        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.name"),
+        text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.text"),
+        chosen_key="canonical",
+        choices={
+            "canonical": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.name"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Canonical.description"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_color_canonical"),
+                price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                can_be_blocked_by=["color/additionals/gradient",
+                                    "color/additionals/glitter",
+                                    "color/additionals/shimmer",
+                                    "color/additionals/neon_colors",
+                                    "color/additionals/phosphors/blue",
+                                    "color/additionals/phosphors/cyan",
+                                    "color/additionals/phosphors/green",
+                                    "color/additionals/phosphors/red",
+                                    "color/additionals/phosphors/purple",
+                                    "color/additionals/phosphors/white",
+                                    ],
+            ),
+            "existing_set": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_color_existing_set"),
+                existing_presets=True,
+                existing_presets_pattern="K|D,T|P,M,N|int",
+                price_by_preset={
+                    "T": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                    "P": LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                    "N": LocalizedMoney.from_keys(RUB=300.00, USD=6.00)
+                    },
+                can_be_blocked_by=["color/additionals/glitter",
+                                    "color/additionals/shimmer",
+                                    "color/additionals/neon_colors",
+                                    "color/additionals/phosphors/blue",
+                                    "color/additionals/phosphors/cyan",
+                                    "color/additionals/phosphors/green",
+                                    "color/additionals/phosphors/red",
+                                    "color/additionals/phosphors/purple",
+                                    "color/additionals/phosphors/white",
+                                    ],
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.ExistingSet.description")
+            ),
+            "four-zone": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaFourZone.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_color_four_zone"),
+                is_custom_input=True,
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.DrianaFourZone.description"),
+            ),
+            "swirl": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.name"),
+                media=LocalizedSavedMedia(media_key="photo_configuration_color_swirl"),
+                is_custom_input=True,
+                can_be_blocked_by=["firmness/firmness_gradation"],
+                price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Swirl.description"),
+            ),
+            "custom": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.name"),
+                is_custom_input=True,
+                blocks_price_determination=True,
+                price=LocalizedMoney.from_keys(RUB=2000.00, USD=30.00),
+
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.description"),
+            ),
+            "additionals": ConfigurationSwitches(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.name"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.description"),
+                switches={
+                    "gradient": ConfigurationSwitch(
+                        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.name"),
+                        description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Gradient.description"),
+                        price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
+                        can_be_blocked_by=["color/canonical"]
+                    ),
+                    "glitter": ConfigurationSwitch(
+                        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Glitter.name"),
+                        description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Glitter.description"),
+                        price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00),
+                        can_be_blocked_by=["color/existing_set",
+                                            "color/canonical"]
+                    ),
+                    "shimmer": ConfigurationSwitch(
+                        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Shimmer.name"),
+                        description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.Shimmer.description"),
+                        price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                        can_be_blocked_by=["color/existing_set",
+                                            "color/canonical"]
+                    ),
+                    "neon_colors": ConfigurationSwitch(
+                        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.name"),
+                        description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.NeonColors.description"),
+                        price=LocalizedMoney.from_keys(RUB=300.00, USD=6.00),
+                        can_be_blocked_by=["color/existing_set",
+                                            "color/canonical"]
+                    ),
+                    "phosphors": ConfigurationSwitchesGroup(
+                        name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.name"),
+                        description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.description"),
+                        switches={
+                            "blue": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Blue.name"),
+                                price=LocalizedMoney.from_keys(RUB=600.00, USD=10.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            ),
+                            "cyan": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Cyan.name"),
+                                price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            ),
+                            "green": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Green.name"),
+                                price=LocalizedMoney.from_keys(RUB=400.00, USD=8.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            ),
+                            "red": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Red.name"),
+                                price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            ),
+                            "purple": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.Purple.name"),
+                                price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            ),
+                            "white": ConfigurationSwitch(
+                                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.Switches.PhosphorsGroup.Switches.White.name"),
+                                price=LocalizedMoney.from_keys(RUB=800.00, USD=12.00),
+                                can_be_blocked_by=["color/existing_set",
+                                                    "color/canonical"]
+                            )
+                            
+                                
+                        }
+                    )
+                }
+            ),
+            "available_colors": ConfigurationAnnotation(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.name"),
+                text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.AvailableColors.text"),
+                media=LocalizedSavedMedia(media_key="photo_configuration_color_available_colors"),
+            )
+        }
+    )
     
-    driana_configuration.options["color"].choices["canonical"].media = LocalizedSavedMedia(media_key="photo_driana_configuration_color_canonical")
     
     driana_product = Product(
         name=LocalizedString(data={
@@ -997,9 +1188,9 @@ Five grams is enough to make 200-400ml of prepared lubricant.
     # await ctx.services.db.products.save(morion_product)
     # await ctx.services.db.products.save(avily_product)
     # await ctx.services.db.products.save(ragnar_product)
-    # await ctx.services.db.products.save(driana_product)
-    await ctx.services.db.products.save(lube_product)
-    await ctx.services.db.products.save(testers_product)
+    await ctx.services.db.products.save(driana_product)
+    # await ctx.services.db.products.save(lube_product)
+    # await ctx.services.db.products.save(testers_product)
 
 
 @router.message(Command("add_additionals"))

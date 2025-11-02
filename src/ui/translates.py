@@ -326,8 +326,8 @@ class DBEntryTranslates(Translatable):
                             "en": "NSFW"
                         }
                         description = {
-                            "ru": "Выбрана <b>NSFW</b> версия.\n\nУвидеть постер можете на прикрепленном фото.",
-                            "en": "The <b>NSFW</b> version is selected.\n\nYou can see the poster on the attached photo."
+                            "ru": "Выбрана <b>NSFW</b> версия.\n\nУвидеть постер можете на прикрепленном фото. Смазано только на превью.",
+                            "en": "The <b>NSFW</b> version is selected.\n\nYou can see the poster on the attached photo. Blurred only on the preview."
                         }
             
             class Size(Translatable):
@@ -456,6 +456,27 @@ class DBEntryTranslates(Translatable):
                 }
                 
                 class Choices(Translatable):
+                    
+                    class UltraSoft(Translatable):
+                        name = {
+                            "ru": "Невероятно мягкий",
+                            "en": "Ultra soft"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Невероятно мягкий</b> силикон.",
+                            "en": "<b>Ultra soft</b> silicone is selected."
+                        }
+                    
+                    class VerySoft(Translatable):
+                        name = {
+                            "ru": "Очень мягкий",
+                            "en": "Very soft"
+                        }
+                        description = {
+                            "ru": "Выбран <b>Очень мягкий</b> силикон.",
+                            "en": "<b>Very soft</b> silicone is selected."
+                        }
+                    
                     class Soft(Translatable):
                         name = {
                             "ru": "Мягкий",
@@ -505,6 +526,32 @@ When choosing a two-zone color, you can only set a two-zone hardness gradation.;
 similarly, for a three—zone color, the hardness gradation should correspond to the number of zones.
 After selecting, you need to specify which stiffness you choose for each of the zones."""
                         }
+                    
+                    class DrianaFirmnessGradation(Translatable):
+                        name = {
+                            "ru": "Градация жёсткости",
+                            "en": "Firmness gradation"
+                        }
+
+                        description = {
+                            "ru": """Делает изделие неоднородным, возможность указать разные мягкости.
+Для каждой из зон Вам нужно выбрать одну из трёх мягкостей: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.""",
+                            "en": """Makes the product heterogeneous, the ability to specify different softness.
+For each of the zones, you need to choose one of three softness levels: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."""
+                        }
+                    
+                    class DrianaExtendedFirmnessGradation(Translatable):
+                        name = {
+                            "ru": "Градация жёсткости",
+                            "en": "Firmness gradation"
+                        }
+
+                        description = {
+                            "ru": """Делает изделие неоднородным, возможность указать разные мягкости. В данном варианте мягкости <i>плавно</i> перетекают друг в друга.
+Для каждой из зон Вам нужно выбрать одну из трёх мягкостей: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.""",
+                            "en": """Makes the product heterogeneous, the ability to specify different softness. In this choice, the softness <i>smoothly</i> flow into each other.
+For each of the zones, you need to choose one of three softness levels: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."""
+                        }
             
             class FirmnessKit(Translatable):
                 name = {
@@ -525,7 +572,7 @@ After selecting, you need to specify which stiffness you choose for each of the 
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор #1</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Мягкой</b>, <b>Средней</b>, <b>Жёсткой</b>.",
+                            "ru": "Выбран <b>Набор #1</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Мягкий</b>, <b>Средний</b>, <b>Жёсткий</b>.",
                             "en": "<b>Set #1</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Soft</b>, <b>Medium</b>, <b>Firm</b>."
                         }
                     
@@ -536,8 +583,8 @@ After selecting, you need to specify which stiffness you choose for each of the 
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор №2</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Очень мягкой</b>, <b>Мягкой</b>, <b>Жёсткой</b>.",
-                            "en": "<b>Set #2</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Very soft</b>, <b>Soft</b>, <b>Firm</b>."
+                            "ru": "Выбран <b>Набор №2</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкий</b>, <b>Мягкий</b>, <b>Жёсткий</b>.",
+                            "en": "<b>Set #2</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Soft</b>, <b>Firm</b>."
                         }
                     
                     class N3(Translatable):
@@ -547,7 +594,7 @@ After selecting, you need to specify which stiffness you choose for each of the 
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкой</b>, <b>Очень мягкой</b>, <b>Мягкой</b>.",
+                            "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.",
                             "en": "<b>Set #3</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."
                         }
 
@@ -558,8 +605,8 @@ After selecting, you need to specify which stiffness you choose for each of the 
                 }
 
                 text = {
-                    "ru": "Выберите окрас изделия:",
-                    "en": "Choose the color of the product:"
+                    "ru": "Учтите, все изображения несут информационный характер, итоговое изделие может иметь незначительные отличия.\nВыберите окрас изделия:",
+                    "en": "Please note that all images are informational in nature, and the final product may have minor differences.\nChoose the color of the product:"
                 }
                 
                 class Choices(Translatable):
@@ -595,7 +642,7 @@ After selecting, you need to specify which stiffness you choose for each of the 
                         description = {
                         "ru": """Опция позволяет окрасить изделие в два разных цвета — каждая зона окрашивается отдельно, с чёткой границей перехода (граница указана на изображении).
 
-В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
@@ -606,7 +653,7 @@ After selecting, you need to specify which stiffness you choose for each of the 
 
                             "en": """The option allows you to color the product in two different shades — each zone is painted separately, with a clear dividing line (the boundary is shown in the image).
 
-In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – transparent</i>), and optionally add comments about transition details or special effects.
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – white</i>), and optionally add comments about transition details or special effects.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
@@ -625,7 +672,7 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
                         description = {
                         "ru": """Опция позволяет окрасить изделие в три разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
-В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — прозрачный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
@@ -636,11 +683,42 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
 
                             "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
-In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — transparent</i>), and optionally add comments about transition details or special effects.
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — white</i>), and optionally add comments about transition details or special effects.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
     <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top — violet with pearlescent effect</i>, <i>middle — pink with glitter</i>, <i>bottom — green with phosphor</i>).
+    <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
+
+Add-ons are charged separately."""
+                        }
+                    
+                    class DrianaFourZone(Translatable):
+                        name = {
+                            "ru": "Четырёхзонный",
+                            "en": "Four-zone"
+                        }
+
+                        description = {
+                        "ru": """Опция позволяет окрасить изделие в четыре разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
+
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий</i>, <i>2 — розовый</i>, <i>3 — красный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+Если Вы хотите использовать подзону 1.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
+
+Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
+
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>1 — коралловый с перламутром</i>, <i>2 — бежевый</i>, <i>3 — под цвет 1, но с люминофором</i>).
+    <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
+    
+Дополнения оплачиваются отдельно.""",
+                        "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
+
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue</i>, <i>2 — pink</i>, <i>3 — red</i>), and optionally add comments about transition details or special effects.
+If you want to use subzone 1.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
+
+If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
+
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>1 — coral with pearlescent effect</i>, <i>2 — beige</i>, <i>3 — matching color 1, but with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
 
 Add-ons are charged separately."""
