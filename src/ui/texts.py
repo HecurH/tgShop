@@ -156,7 +156,7 @@ class AdminTextGen:
 
         for idx, entry in enumerate(entries):
             if product := products_dict.get(entry.product_id):
-                entries_description += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                entries_description += f"{idx+1} ({entry.quantity} шт.): {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
         
         delivery_info = order.delivery_info
         delivery_description = ""

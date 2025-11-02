@@ -66,19 +66,29 @@ class TaxSystem:
         discounts = (price_details.bonuses_applied or Money(currency=price_details.products_price.currency, amount=0.0)) + (price_details.promocode_discount or Money(currency=price_details.products_price.currency, amount=0.0))
         entry_discounts = self.distribute_discounts(cart_entries, discounts)
 
-        entries_list = [
-            [
-                f"ТЕСТОВЫЙ {entry.frozen_product.name_for_tax}",
-                (entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.base_price.get_amount(discounts.currency)) * entry.quantity - entry_discounts[i].amount,
-                entry.quantity
-            ]
-            for i, entry in enumerate(cart_entries)
-        ]
+        entries_list = []
+
+        for i, entry in enumerate(cart_entries):
+            total_price_per_item = entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.base_price.get_amount(discounts.currency)
+            remaining_quantity = entry.quantity
+            discount_per_item = entry_discounts[i].amount / entry.quantity if entry.quantity else 0
+
+            while remaining_quantity > 0:
+                chunk_quantity = min(remaining_quantity, 6)
+                chunk_price = total_price_per_item * chunk_quantity - discount_per_item * chunk_quantity
+                entries_list.append([
+                    f"ТЕСТОВЫЙ {entry.frozen_product.name_for_tax}",
+                    chunk_price,
+                    chunk_quantity
+                ])
+                remaining_quantity -= chunk_quantity
 
         for name, price, quantity in entries_list:
             if price > 0.001: services.append(Service(name=name, amount=price, quantity=quantity))
 
         if len(services) == 0: return None
+        
+        
         if len(services) > 6:
             chunks = [services[i:i + 6] for i in range(0, len(services), 6)]
             receipts = []

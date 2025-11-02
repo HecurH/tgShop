@@ -13,7 +13,7 @@ from ui.keyboards import UncategorizedKBs
 
 from core.helper_classes import Context, MessageWrapper
 from ui.message_tools import build_list, split_message
-from ui.texts import form_entry_description, gen_product_configurable_info_text
+from ui.texts import gen_product_configurable_info_text
 from ui.translates import NotificatorTranslates
 
 MediaItem = Tuple[str, Union[InputFile, URLInputFile]]
@@ -227,7 +227,7 @@ class AdminChatNotificator:
 
         for idx, entry in enumerate(entries):
             if product := products_dict.get(entry.product_id):
-                text += f"{idx+1}: {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                text += f"{idx+1}: {product.name.get('ru')} ({entry.quantity} шт.):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
                 
         text += f"\n\n<code>/msg_to {ctx.customer.user_id}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/confirm_order_price {order.id}</code>"
 
@@ -247,7 +247,7 @@ class AdminChatNotificator:
 
         for idx, entry in enumerate(entries):
             if product := products_dict.get(entry.product_id):
-                text += f"  {idx+1} - {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+                text += f"  {idx+1} - {product.name.get('ru')} ({entry.quantity} шт.):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
         
         text += f"\nЭто первый заказ пользователя, не забудь вложить пробник!\n" if await ctx.services.db.orders.count_customer_orders(ctx.customer) == 1 else "\n\n"
         
