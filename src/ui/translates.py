@@ -699,12 +699,12 @@ Add-ons are charged separately."""
                     
                     class DrianaThreeZone(Translatable):
                         name = {
-                            "ru": "Четырёхзонный",
-                            "en": "Four-zone"
+                            "ru": "Трёхзонный",
+                            "en": "Three-zone"
                         }
 
                         description = {
-                        "ru": """Опция позволяет окрасить изделие в четыре разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
+                        "ru": """Опция позволяет окрасить изделие в три (четыре) разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
 В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий</i>, <i>2 — розовый</i>, <i>3 — красный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 Если Вы хотите использовать подзону 1.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
@@ -716,7 +716,7 @@ Add-ons are charged separately."""
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
     
 Дополнения оплачиваются отдельно.""",
-                        "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
+                        "en": """The option allows the product to be painted in three (four) different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
 In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue</i>, <i>2 — pink</i>, <i>3 — red</i>), and optionally add comments about transition details or special effects.
 If you want to use subzone 1.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
