@@ -72,6 +72,7 @@ class MediaSaver:
                     data[key] = {lang: await self._generate_id_for_file(key, filepath)}
                 else:
                     data[key] = await self._generate_id_for_file(key, filepath)
+                updated = True
                     
             if lang and lang not in data[key]:
                 data[key][lang] = await self._generate_id_for_file(key, filepath)
