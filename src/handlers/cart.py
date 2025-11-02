@@ -16,6 +16,7 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
 @router.message(CartStates.Menu)
 async def cart_viewer_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(CommonStates.MainMenu,
@@ -106,6 +107,7 @@ async def entry_remove_confirm_handler(_, ctx: Context):
 @router.message(CartStates.CartPriceConfirmation)
 async def cart_price_confirmation_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back or text != ctx.t.ReplyButtonsTranslates.Cart.send:
         await ctx.fsm.update_data(order=None)
         await call_state_handler(CartStates.Menu, ctx)
@@ -135,6 +137,7 @@ async def order_configuration_handler(_, ctx: Context):
     proceed_to_payment = ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.proceed_to_payment
     
     text = ctx.message.text
+    if not text: return
     if text == back:
         await call_state_handler(CartStates.Menu, ctx)
         return
@@ -172,6 +175,7 @@ async def order_configuration_handler(_, ctx: Context):
 @router.message(CartStates.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     order: Order = await Order.from_fsm_context(ctx, "order")
     
     if text == ctx.t.UncategorizedTranslates.back:
@@ -202,6 +206,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
 @router.message(CartStates.OrderConfiguration.PaymentMethodSetting)
 async def order_configuration_payment_method_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     order: Order = await Order.from_fsm_context(ctx, "order")
 
     if text == ctx.t.UncategorizedTranslates.back:
@@ -222,6 +227,7 @@ async def order_configuration_payment_method_handler(_, ctx: Context):
 @router.message(CartStates.OrderConfiguration.PaymentConfirmation)
 async def order_configuration_payment_confirmation_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     order: Order = await Order.from_fsm_context(ctx, "order")
 
     if text == ctx.t.UncategorizedTranslates.back:

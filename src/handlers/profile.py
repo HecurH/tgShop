@@ -133,6 +133,8 @@ async def referrals_invitation_link_view_handler(_, ctx: Context) -> None:
 @router.message(ProfileStates.Delivery.Menu)
 async def delivery_command_handler(_, ctx: Context) -> None:
     text = ctx.message.text
+    if not text: return
+    
     delivery_info = ctx.customer.delivery_info
     
     if text == ctx.t.UncategorizedTranslates.back:

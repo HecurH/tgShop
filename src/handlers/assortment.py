@@ -43,6 +43,7 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
 @router.message(AssortmentStates.ViewingAssortment)
 async def assortment_viewing_handler(_, ctx: Context) -> None:
     text = ctx.message.text
+    if not text: return
     
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AssortmentStates.Menu,
@@ -86,6 +87,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     current: int = await ctx.fsm.get_value("current")
     category: int = await ctx.fsm.get_value("category")
     text = ctx.message.text
+    if not text: return
     
     if text == ctx.t.UncategorizedTranslates.back:
         if current > await ctx.services.db.products.count_in_category(category): 
@@ -113,6 +115,7 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
 async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
     product: Product = await Product.from_fsm_context(ctx, "product")
     text = ctx.message.text
+    if not text: return
     
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AssortmentStates.ViewingProductDetails,
@@ -279,6 +282,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
 async def additionals_handler(message: Message, ctx: Context) -> None:
     product: Product = await Product.from_fsm_context(ctx, "product")
     text = message.text
+    if not text: return
 
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AssortmentStates.FormingOrderEntry,
@@ -289,7 +293,7 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
 
     allowed_additionals = await ctx.services.db.additionals.get(product)
     if text:
-        text = ctx.message.text.replace(" ✅", "")
+        text = text.replace(" ✅", "")
         additional = ctx.services.db.additionals.get_by_name(text, allowed_additionals, ctx)
         if not additional:
             await call_state_handler(AssortmentStates.AdditionalsEditing,

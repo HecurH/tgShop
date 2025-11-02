@@ -121,6 +121,7 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
 @router.message(AdminStates.Order.AskGenerateReceipt)
 async def ask_generate_receipt_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text not in [ctx.t.UncategorizedTranslates.yes, ctx.t.UncategorizedTranslates.no]:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
@@ -177,6 +178,7 @@ async def unform_order_handler(_, ctx: Context, command: CommandObject):
 @router.message(AdminStates.Order.UnformAskForComment)
 async def unform_ask_for_comment_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
@@ -222,6 +224,7 @@ async def admin_confirm_price_handler(_, ctx: Context, command: CommandObject):
 @router.message(AdminStates.Order.PriceConfirmationWaiting)
 async def price_confirmation_waiting_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
@@ -360,6 +363,7 @@ async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command:
 @router.message(AdminStates.Delivery.PriceConfirmationCancel)
 async def price_confirmation_cancel_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return

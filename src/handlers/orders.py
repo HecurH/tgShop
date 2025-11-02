@@ -22,6 +22,7 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
 @router.message(OrderStates.Menu)
 async def orders_menu_handler(_, ctx: Context) -> None:
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(CommonStates.MainMenu, ctx)
         return
@@ -42,6 +43,7 @@ async def orders_menu_handler(_, ctx: Context) -> None:
 @router.message(OrderStates.OrderView)
 async def order_view_handler(_, ctx: Context) -> None:
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
         await ctx.fsm.update_data(order=None)
         await call_state_handler(OrderStates.Menu, ctx)

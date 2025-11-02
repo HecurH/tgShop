@@ -34,6 +34,8 @@ async def menu_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Menu)
 async def menu_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
+    
     if text == "Покупатели":
         await call_state_handler(AdminStates.Main.Customers.AskId, ctx)
     elif text == "Товары":
@@ -50,6 +52,8 @@ async def menu_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Customers.AskId)
 async def customers_ask_id_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
+    
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -72,6 +76,8 @@ async def customers_ask_id_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Customers.CustomerMenu)
 async def customer_menu_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
+    
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -92,6 +98,7 @@ async def customer_menu_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.AskId)
 async def orders_ask_id_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -124,6 +131,7 @@ async def orders_ask_id_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.OrderMenu)
 async def order_menu_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -142,6 +150,7 @@ async def order_menu_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.ChangeStatusChoice)
 async def order_change_status_choice_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     order: Order = await Order.from_fsm_context(ctx, "order")
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
@@ -160,13 +169,14 @@ async def order_change_status_choice_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Orders.SetChangeStatusComment)
 async def order_set_change_status_comment_handler(_, ctx: Context):
     text = ctx.message.text
+    
     order: Order = await Order.from_fsm_context(ctx, "order")
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
         return
 
     customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
-    if text.isdigit() and text == '0':
+    if text and text.isdigit() and text == '0':
         await ctx.services.db.orders.save(order)
         
         await ctx.services.notificators.UserTelegramNotificator.send_order_state_changed(customer, order)
@@ -186,6 +196,7 @@ async def order_set_change_status_comment_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Promocodes.Menu)
 async def promocodes_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -213,6 +224,7 @@ async def promocodes_handler(_, ctx: Context):
 @router.message(AdminStates.Main.Promocodes.Creating)
 async def create_promocode_code_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
@@ -303,6 +315,7 @@ async def create_promocode_code_handler(_, ctx: Context):
 @router.message(AdminStates.Main.GlobalPlaceholders.Menu)
 async def global_placeholders_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
@@ -333,6 +346,7 @@ async def global_placeholders_handler(_, ctx: Context):
 @router.message(AdminStates.Main.GlobalPlaceholders.CreatingKey)
 async def global_placeholders_creating_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
@@ -343,6 +357,7 @@ async def global_placeholders_creating_handler(_, ctx: Context):
 @router.message(AdminStates.Main.GlobalPlaceholders.CreatingLangs)
 async def global_placeholders_creating_langs_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
@@ -374,6 +389,7 @@ async def global_placeholders_creating_langs_handler(_, ctx: Context):
 @router.message(AdminStates.Main.GlobalPlaceholders.EditKey)
 async def global_placeholders_edit_request_key_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
@@ -390,6 +406,7 @@ async def global_placeholders_edit_request_key_handler(_, ctx: Context):
 @router.message(AdminStates.Main.GlobalPlaceholders.EditLangs)
 async def global_placeholders_edit_langs_handler(_, ctx: Context):
     text = ctx.message.text
+    if not text: return
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
         return
