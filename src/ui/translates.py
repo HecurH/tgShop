@@ -463,8 +463,8 @@ class DBEntryTranslates(Translatable):
                         }
                         
                         description = {
-                            "ru": "Выбран <b>Мягкий</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                            "en": "<b>Soft</b> silicone is selected.\n\nYou can see an example in the attached video."
+                            "ru": "Выбран <b>Мягкий</b> силикон.",
+                            "en": "<b>Soft</b> silicone is selected."
                         }
                     
                     class Medium(Translatable):
@@ -474,8 +474,8 @@ class DBEntryTranslates(Translatable):
                         }
 
                         description = {
-                            "ru": "Выбран силикон <b>Средней</b> мягкости.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                            "en": "<b>Medium-soft</b> silicone is selected.\n\nYou can see an example in the attached video."
+                            "ru": "Выбран силикон <b>Средней</b> мягкости.",
+                            "en": "<b>Medium-soft</b> silicone is selected."
                         }
                     
                     class Firm(Translatable):
@@ -485,8 +485,8 @@ class DBEntryTranslates(Translatable):
                         }
 
                         description = {
-                            "ru": "Выбран <b>Твёрдый</b> силикон.\n\nПример можно увидеть в прикрепленном к сообщению видео.",
-                            "en": "<b>Firm</b> silicone is selected.\n\nYou can see an example in the attached video."
+                            "ru": "Выбран <b>Твёрдый</b> силикон.",
+                            "en": "<b>Firm</b> silicone is selected."
                         }
                     
                     class FirmnessGradation(Translatable):
