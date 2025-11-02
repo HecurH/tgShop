@@ -119,6 +119,11 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 product=product)
     elif text == ctx.t.UncategorizedTranslates.finish:
+        if await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer) >= 10:
+            await call_state_handler(AssortmentStates.MainMenu,
+                                    ctx,
+                                    send_before=(ctx.t.AssortmentTranslates.cant_add_to_cart_more, 1))
+            return
         
         await ctx.services.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
@@ -366,20 +371,20 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
                                  option=changing_option)
 
 
-@router.message(Command("test"))
-async def cancel_handler(message: Message, state: FSMContext) -> None:
-    await state.clear()
+# @router.message(Command("test"))
+# async def cancel_handler(message: Message, state: FSMContext) -> None:
+#     await state.clear()
 
-    await message.answer_invoice("Плоти денге",
-                                 "описалса",
-                                 "idхуйди",
-                                 currency="rub",
-                                 prices=[
-                                     LabeledPrice(label="Базовая цена", amount=10000),
-                                     LabeledPrice(label="скидка", amount=-1000)
-                                 ],
-                                 provider_token="1744374395:TEST:2c5a6f30c2763af47ad6",
-                                 need_shipping_address=True)
+#     await message.answer_invoice("Плоти денге",
+#                                  "описалса",
+#                                  "idхуйди",
+#                                  currency="rub",
+#                                  prices=[
+#                                      LabeledPrice(label="Базовая цена", amount=10000),
+#                                      LabeledPrice(label="скидка", amount=-1000)
+#                                  ],
+#                                  provider_token="1744374395:TEST:2c5a6f30c2763af47ad6",
+#                                  need_shipping_address=True)
 
 
 # @router.pre_checkout_query()

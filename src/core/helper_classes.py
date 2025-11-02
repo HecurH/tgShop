@@ -11,6 +11,7 @@ from cryptography.hazmat.backends import default_backend
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+import regex
 
 from schemas.db_models import *
 
@@ -157,6 +158,14 @@ class Context:
     async def parse_user_input(self, text: Optional[str] = None):
         if text is None: text = self.message.text
         if not text: return None
+        
+        # Разрешаем:
+        # \p{L} — все буквы (включая славянские, латинские, польские и т.д.)
+        # \p{N} — цифры
+        # \p{P} — пунктуация
+        # \p{S} — символы (валюты, мат. знаки, спец. символы)
+        # \p{M} — диакритические знаки (акценты и т.п.).
+        text = regex.compile(r'[^\p{L}\p{N}\p{P}\p{S}\p{M}\s]+').sub('', text)
         
         if len(text) > 1024:
             await self.message.answer(self.t.UncategorizedTranslates.input_message_too_long)

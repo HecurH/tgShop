@@ -1060,6 +1060,11 @@ class AssortmentTranslates(Translatable):
         "en": "The product has been successfully added to the cart!"
     }
     
+    cant_add_to_cart_more = {
+        "ru": "В корзине не может находиться больше 10 товаров.",
+        "en": "The cart cannot contain more than 10 items."
+    }
+    
 class CartTranslates(Translatable):
     no_products_in_cart = {
         "ru": "В Вашей корзине нет товаров!",
