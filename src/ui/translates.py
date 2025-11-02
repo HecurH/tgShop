@@ -512,15 +512,15 @@ class DBEntryTranslates(Translatable):
                     
                     class FirmnessGradation(Translatable):
                         name = {
-                            "ru": "Градация жёсткости",
+                            "ru": "Градация мягкости",
                             "en": "Firmness gradation"
                         }
 
                         description = {
                             "ru": """Представьте, что изделие не однородное, а состоит из нескольких областей с разной мягкостью, которые <i>плавно</i> перетекают друг в друга.
-При выборе двухзонного окраса вы сможете задать только двухзонную градацию жёсткости;
-аналогично для трёхзонного окраса — градация жёсткости должна соответствовать числу зон.
-После выбора, вам необходимо указать какую жёсткость Вы выбираете для каждой из зон.""",
+При выборе двухзонного окраса вы сможете задать только двухзонную градацию мягкости;
+аналогично для трёхзонного окраса — градация мягкости должна соответствовать числу зон.
+После выбора, вам необходимо указать какую мягкость Вы выбираете для каждой из зон.""",
                             "en": """Imagine that the product is not homogeneous, but consists of several areas with different softness, which <i> smoothly </i> flow into each other.
 When choosing a two-zone color, you can only set a two-zone hardness gradation.;
 similarly, for a three—zone color, the hardness gradation should correspond to the number of zones.
@@ -529,7 +529,7 @@ After selecting, you need to specify which stiffness you choose for each of the 
                     
                     class DrianaFirmnessGradation(Translatable):
                         name = {
-                            "ru": "Градация жёсткости",
+                            "ru": "Градация мягкости",
                             "en": "Firmness gradation"
                         }
 
@@ -542,8 +542,8 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                     
                     class DrianaExtendedFirmnessGradation(Translatable):
                         name = {
-                            "ru": "Градация жёсткости",
-                            "en": "Firmness gradation"
+                            "ru": "Градация мягкости +",
+                            "en": "Firmness gradation +"
                         }
 
                         description = {
@@ -572,7 +572,7 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор #1</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Мягкий</b>, <b>Средний</b>, <b>Жёсткий</b>.",
+                            "ru": "Выбран <b>Набор #1</b> мягкостей.\nСостоит из трёх тестеров с мягкостью: <b>Мягкий</b>, <b>Средний</b>, <b>Жёсткий</b>.",
                             "en": "<b>Set #1</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Soft</b>, <b>Medium</b>, <b>Firm</b>."
                         }
                     
@@ -583,7 +583,7 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор №2</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкий</b>, <b>Мягкий</b>, <b>Жёсткий</b>.",
+                            "ru": "Выбран <b>Набор №2</b> мягкостей.\nСостоит из трёх тестеров с мягкостью: <b>Невероятно мягкий</b>, <b>Мягкий</b>, <b>Жёсткий</b>.",
                             "en": "<b>Set #2</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Soft</b>, <b>Firm</b>."
                         }
                     
@@ -594,7 +594,7 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                         }
 
                         description = {
-                            "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с жёсткостью: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.",
+                            "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с мягкостью: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.",
                             "en": "<b>Set #3</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."
                         }
 
