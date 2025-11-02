@@ -1197,7 +1197,6 @@ Five grams is enough to make 200-400ml of prepared lubricant.
     # await ctx.services.db.products.save(lube_product)
     # await ctx.services.db.products.save(testers_product)
 
-
 @router.message(Command("add_additionals"))
 async def addit(_, ctx: Context) -> None:
     additional = ProductAdditional(
@@ -1225,66 +1224,26 @@ async def addit(_, ctx: Context) -> None:
         ),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По номеру телефона",
-                    "en":"By phone number"
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание того что почта россии может принимать отправления и по номеру телефона блахблах\nСервис доступен при условии разрешения получателем принимать посылки по номеру телефона.\nПодключить функцию можно в Личном кабинете или в мобильном приложении Почты России",
-                    "en":"сначала на русском текст нормально надо написать про почту, а потом уже на английском емае"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumber.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumber.russian_post_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Номер телефона",
-                            "en":"Phone number"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumber.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumber.Requirements.PhoneNumber.description")
                     )
                 ]
             ),
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По ФИО и адресу",
-                    "en":"By full name and address"
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание стандартного метода отправки посылок почтой росиси",
-                    "en":"на русском сначала блин давай"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.russian_post_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"ФИО",
-                            "en":"Full name"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите типо сюда свою Фамилию, Имя и Отчество лол",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.Requirements.FullName.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.Requirements.FullName.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Полный адрес",
-                            "en":"Address"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"При написании адреса не забудьте указать индекс, область, район, наименование населенного пункта и дальше змейка сам пиши я не ибу",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.Requirements.Address.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddress.Requirements.Address.description")
                     )
                 ]
             )           
@@ -1299,40 +1258,16 @@ async def addit(_, ctx: Context) -> None:
         ),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По номеру телефона и адресу ПВЗ",
-                    "en":""
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание чего-то там не знаю чего",
-                    "en":"сначала на русском текст нормально надо"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.cdek_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Номер телефона",
-                            "en":"Phone number"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Полный адрес пункта выдачи",
-                            "en":""
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
                     )
                 ]
             ) 
@@ -1347,43 +1282,19 @@ async def addit(_, ctx: Context) -> None:
         ),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По номеру телефона и адресу ПВЗ",
-                    "en":""
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание чего-то там не знаю чего",
-                    "en":"сначала на русском текст нормально надо"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.boxberry_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Номер телефона",
-                            "en":"Phone number"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Полный адрес пункта выдачи",
-                            "en":""
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
                     )
                 ]
-            ) 
+            )
         ]
     )
     
@@ -1398,59 +1309,26 @@ async def addit(_, ctx: Context) -> None:
         price=LocalizedMoney.empty_base(),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По адресу, номеру и ФИО",
-                    "en":""
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание чего-то там не знаю чего",
-                    "en":"сначала на русском текст нормально надо"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.universal_post_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Адрес доставки",
-                            "en":"Delivery address"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.FullName.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.FullName.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"ФИО",
-                            "en":"Full name"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите типо сюда свою Фамилию, Имя и Отчество лол",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.PhoneNumber.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Номер телефона",
-                            "en":"Phone number"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.Address.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByFullNameAndAddressAndPhoneNumber.Requirements.Address.description")
                     )
                 ]
             )
         ]
     ) 
         
-    
     ya_delivery = DeliveryService(
         name=LocalizedString(data={
             "ru":"Яндекс Доставка",
@@ -1459,43 +1337,19 @@ async def addit(_, ctx: Context) -> None:
         ),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedString(data={
-                    "ru":"По номеру телефона и адресу ПВЗ",
-                    "en":""
-                    }
-                ),
-                description=LocalizedString(data={
-                    "ru":"описание чего-то там не знаю чего",
-                    "en":"сначала на русском текст нормально надо"
-                    }
-                ),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.boxberryyandex_delivery_description_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Номер телефона",
-                            "en":"Phone number"
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"пишите номер в формате +7xxxxxxxxxx",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedString(data={
-                            "ru":"Полный адрес пункта выдачи",
-                            "en":""
-                            }
-                        ),
-                        description=LocalizedString(data={
-                            "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
-                            "en":"на русском сначала блин давай"
-                            }
-                        )
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
                     )
                 ]
-            ) 
+            )
         ]
     )
 
@@ -1549,11 +1403,11 @@ async def addit(_, ctx: Context) -> None:
     )
 
 
-    # await ctx.services.db.delivery_services.save(service)
+    await ctx.services.db.delivery_services.save(service)
     # await ctx.services.db.delivery_services.save(cdek)
-    # await ctx.services.db.delivery_services.save(boxberry)
+    await ctx.services.db.delivery_services.save(boxberry)
     await ctx.services.db.delivery_services.save(universal_international)
-    # await ctx.services.db.delivery_services.save(ya_delivery)
+    await ctx.services.db.delivery_services.save(ya_delivery)
     # await ctx.services.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))

@@ -295,6 +295,149 @@ class EnumTranslates(Translatable):
         }
 
 class DBEntryTranslates(Translatable):
+    class DeliveryServicesTranslates(Translatable):
+        class RequirementLists(Translatable):
+            class ByPhoneNumber(Translatable):
+                name = {
+                    "ru": "По номеру телефона",
+                    "en": "By phone number"
+                }
+                
+                russian_post_description = {
+                    "ru": "Почта России может принимать отправления по номеру телефона — подробнее https://www.pochta.ru/support/popular-questions/parcel-by-phone-number",
+                    "en": "Russian Post can accept shipments by phone number — learn more https://www.pochta.ru/support/popular-questions/parcel-by-phone-number"
+                }
+                
+                class Requirements(Translatable):
+                    class PhoneNumber(Translatable):
+                        name = {
+                            "ru": "Номер телефона",
+                            "en": "Phone number"
+                        }
+
+                        description = {
+                            "ru": "Укажите номер телефона в формате +7xxxxxxxxxx.",
+                            "en": "Enter the phone number in the format +7xxxxxxxxxx."
+                        }
+            
+            class ByPhoneNumberAndPickUpPoint(Translatable):
+                name = {
+                    "ru": "По номеру телефона и адресу ПВЗ",
+                    "en": "By phone number and pick-up point address"
+                }
+
+                cdek_description = {
+                    "ru": "Оформление доставки в один из пунктов выдачи СДЭК.",
+                    "en": "Delivery to one of the CDEK pick-up points."
+                }
+                
+                yandex_delivery_description = {
+                    "ru": "Оформление доставки в один из пунктов выдачи Яндекс Доставки.",
+                    "en": "Delivery to one of the Yandex Delivery pick-up points."
+                }
+
+                class Requirements(Translatable):
+                    class PhoneNumber(Translatable):
+                        name = {
+                            "ru": "Номер телефона",
+                            "en": "Phone number"
+                        }
+
+                        description = {
+                            "ru": "Укажите номер телефона в формате +7xxxxxxxxxx.",
+                            "en": "Enter the phone number in the format +7xxxxxxxxxx."
+                        }
+                    
+                    class PickUpPointAddress(Translatable):
+                        name = {
+                            "ru": "Полный адрес ПВЗ",
+                            "en": "Pick-up point address"
+                        }
+
+                        description = {
+                            "ru": "Укажите адрес ПВЗ.",
+                            "en": "Enter the pick-up point address."
+                        }
+            
+            class ByFullNameAndAddress(Translatable):
+                name = {
+                    "ru": "По ФИО и адресу",
+                    "en": "By full name and address"
+                }
+
+                russian_post_description = {
+                    "ru": "Стандартный метод отправки на Почте России.",
+                    "en": "Standard method of sending at Russian Post."
+                }
+
+                class Requirements(Translatable):
+                    class FullName(Translatable):
+                        name = {
+                            "ru": "ФИО",
+                            "en": "Full name"
+                        }
+
+                        description = {
+                            "ru": "Укажите ФИО получателя.",
+                            "en": "Enter the recipient's full name."
+                        }
+                    
+                    class Address(Translatable):
+                        name = {
+                            "ru": "Полный адрес",
+                            "en": "Address"
+                        }
+
+                        description = {
+                            "ru": "Укажите адрес получателя.",
+                            "en": "Enter the recipient's address."
+                        }
+            
+            class ByFullNameAndAddressAndPhoneNumber(Translatable):
+                name = {
+                    "ru": "По ФИО, адресу и номеру телефона",
+                    "en": "By full name, address and phone number"
+                }
+
+                universal_post_description = {
+                    "ru": "Оформление доставки зарубеж.",
+                    "en": "Delivery abroad."
+                }
+
+                class Requirements(Translatable):
+                    class FullName(Translatable):
+                        name = {
+                            "ru": "ФИО",
+                            "en": "Full name"
+                        }
+
+                        description = {
+                            "ru": "Укажите ФИО получателя.",
+                            "en": "Enter the recipient's full name."
+                        }
+                    
+                    class PhoneNumber(Translatable):
+                        name = {
+                            "ru": "Номер телефона",
+                            "en": "Phone number"
+                        }
+
+                        description = {
+                            "ru": "Укажите номер телефона в формате +7xxxxxxxxxx.",
+                            "en": "Enter the phone number in the format +7xxxxxxxxxx."
+                        }
+                    
+                    class Address(Translatable):
+                        name = {
+                            "ru": "Полный адрес",
+                            "en": "Address"
+                        }
+
+                        description = {
+                            "ru": "Укажите адрес получателя.",
+                            "en": "Enter the recipient's address."
+                        }
+    
     class ProductConfigurationTranslates(Translatable):
         class Options(Translatable):
             class Poster(Translatable):

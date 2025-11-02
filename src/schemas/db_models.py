@@ -848,7 +848,6 @@ class Inviter(AppBaseModel):
         me = await ctx.message.bot.get_me()
         return f"https://t.me/{me.username}?start=inviter_{str(self.id)}"
 
-
 class InvitersRepository(AppAbstractRepository[Inviter]):
     class Meta:
         collection_name = 'inviters'
@@ -892,13 +891,13 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         return inviter
 
 class DeliveryRequirement(AppBaseModel):
-    name: LocalizedString
-    description: LocalizedString
+    name: LocalizedEntry
+    description: LocalizedEntry
     value: SecureValue = SecureValue() # для заполнения в будущем при конфигурации
 
 class DeliveryRequirementsList(AppBaseModel):
-    name: LocalizedString # типо "По номеру", или "По адресу и ФИО"
-    description: LocalizedString
+    name: LocalizedEntry
+    description: LocalizedEntry
     requirements: list[DeliveryRequirement]
 
 class DeliveryService(AppBaseModel):

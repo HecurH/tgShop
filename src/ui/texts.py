@@ -233,8 +233,6 @@ class AdminTextGen:
         
         return text
             
-            
-
 class AssortmentTextGen:
     @staticmethod
     def generate_viewing_entry_caption(product: Product, ctx: Context):
@@ -353,7 +351,6 @@ class ProfileTextGen:
         
         return f"<a href=\"{link}\">@{me.username}</a>"
         
-    
     @staticmethod
     def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):
         if not delivery_info:
