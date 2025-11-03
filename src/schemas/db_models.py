@@ -975,8 +975,11 @@ class Customer(AppBaseModel):
     waiting_for_manual_delivery_info_confirmation: bool = False
     
     def check_can_change_currency(self) -> bool:
-        if self.last_time_changed_currency and self.last_time_changed_currency + datetime.timedelta(days=DAYS_BEFORE_CHANGE_CURRENCY) > datetime.datetime.now(datetime.timezone.utc):
-            return False
+        if self.last_time_changed_currency:
+            if self.last_time_changed_currency.tzinfo is None:
+                self.last_time_changed_currency = self.last_time_changed_currency.replace(tzinfo=datetime.timezone.utc)
+            if self.last_time_changed_currency + datetime.timedelta(days=DAYS_BEFORE_CHANGE_CURRENCY) > datetime.datetime.now(datetime.timezone.utc):
+                return False
         return True
     
     async def change_selected_currency(self, iso: str, ctx: Context):
