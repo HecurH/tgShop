@@ -2,7 +2,7 @@ from typing import Iterable
 from aiogram import Router
 from schemas.db_models import *
 
-from configs.supported import SUPPORTED_LANGUAGES_TEXT
+from configs.supported import DAYS_BEFORE_CHANGE_CURRENCY, SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, ProfileStates, call_state_handler
 from ui.translates import ProfileTranslates, ReplyButtonsTranslates, TranslatorHub, UncategorizedTranslates
@@ -37,14 +37,19 @@ async def profile_command_handler(_, ctx: Context) -> None:
     
 @router.message(ProfileStates.Settings.Menu)
 async def profile_command_handler(_, ctx: Context) -> None:
-    actions = {
-        ctx.t.UncategorizedTranslates.back: ProfileStates.Menu,
-        ctx.t.ReplyButtonsTranslates.Profile.Settings.lang: ProfileStates.Settings.ChangeLanguage,
-        ctx.t.ReplyButtonsTranslates.Profile.Settings.currency: ProfileStates.Settings.ChangeCurrency,
-    }
-    next_state = actions.get(ctx.message.text)
-    if next_state is not None:
-        await call_state_handler(next_state, ctx)
+    text = ctx.message.text
+    if not text: return
+    
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(ProfileStates.Menu, ctx)
+    elif text == ctx.t.ReplyButtonsTranslates.Profile.Settings.lang:
+        await call_state_handler(ProfileStates.Settings.ChangeLanguage, ctx)
+    elif text == ctx.t.ReplyButtonsTranslates.Profile.Settings.currency:
+        if not ctx.customer.check_can_change_currency():
+            await call_state_handler(ProfileStates.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.wait_n_days_before_change_currency.format(n=str(DAYS_BEFORE_CHANGE_CURRENCY)), 1))
+            return
+        
+        await call_state_handler(ProfileStates.Settings.ChangeCurrency, ctx)
     else:
         await call_state_handler(ProfileStates.Settings.Menu, ctx)
  
@@ -81,6 +86,7 @@ async def profile_change_lang_handler(_, ctx: Context) -> None:
     
     if ctx.message.text in UncategorizedTranslates.Currencies.get_all_attributes(ctx.lang):
         currency = UncategorizedTranslates.Currencies.get_attribute(ctx.message.text, ctx.lang)
+        
         if ctx.customer.currency == currency:
             await call_state_handler(ProfileStates.Settings.Menu, ctx, send_before=(ctx.t.ProfileTranslates.Settings.nothing_changed, 1))
             return

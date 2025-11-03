@@ -10,7 +10,7 @@ from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
 from configs.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
-from configs.supported import SUPPORTED_CURRENCIES
+from configs.supported import DAYS_BEFORE_CHANGE_CURRENCY, SUPPORTED_CURRENCIES
 from core.helper_classes import Context
 from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
 from schemas.payment_models import PaymentMethod
@@ -968,10 +968,16 @@ class Customer(AppBaseModel):
     lang: str
     
     currency: str
+    last_time_changed_currency: Optional[datetime.datetime] = None
     bonus_wallet: Money
     
     delivery_info: Optional[DeliveryInfo] = None
     waiting_for_manual_delivery_info_confirmation: bool = False
+    
+    def check_can_change_currency(self) -> bool:
+        if self.last_time_changed_currency and self.last_time_changed_currency + datetime.timedelta(days=DAYS_BEFORE_CHANGE_CURRENCY) > datetime.datetime.now(datetime.timezone.utc):
+            return False
+        return True
     
     async def change_selected_currency(self, iso: str, ctx: Context):
         """Изменить основную валюту"""
@@ -991,7 +997,11 @@ class Customer(AppBaseModel):
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
             bonus_wallet.amount = round(amount, 2)
+        
+        if not self.check_can_change_currency():
+            raise RuntimeError("Валюту можно менять не чаще раза в месяц!")
 
+        self.last_time_changed_currency = datetime.datetime.now(datetime.timezone.utc)
         self.currency = iso
 
 class CustomersRepository(AppAbstractRepository[Customer]):

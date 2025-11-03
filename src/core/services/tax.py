@@ -77,7 +77,7 @@ class TaxSystem:
                 chunk_quantity = min(remaining_quantity, 6)
                 chunk_price = total_price_per_item * chunk_quantity - discount_per_item * chunk_quantity
                 entries_list.append([
-                    f"ТЕСТОВЫЙ {entry.frozen_product.name_for_tax}",
+                    f"{entry.frozen_product.name_for_tax}",
                     chunk_price,
                     chunk_quantity
                 ])

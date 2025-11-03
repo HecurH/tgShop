@@ -1457,8 +1457,8 @@ class ProfileTranslates(Translatable):
         }
         
         choose_currency = {
-            "ru": "Ваша текущая валюта — {currency}.\nВыберите валюту:",
-            "en": "Your current currency is {currency}.\nSelect a currency:"
+            "ru": "Ваша текущая валюта — {currency}.\nВнимание! Валюту можно менять не более раза в месяц!\nВыберите валюту:",
+            "en": "Your current currency is {currency}.\nAttention! The currency can be changed no more than once a month!\nSelect a currency:"
         }
         
         lang_changed = {
@@ -1474,6 +1474,11 @@ class ProfileTranslates(Translatable):
         nothing_changed = {
             "ru": "Вы успешно ничего не изменили.",
             "en": "You have successfully changed absolutely nothing."
+        }
+        
+        wait_n_days_before_change_currency = {
+            "ru": "Вы можете изменить валюту через {n} дней.",
+            "en": "You can change the currency after {n} days."
         }
         
     class Referrals(Translatable):
