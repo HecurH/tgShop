@@ -1115,6 +1115,11 @@ class CommonTranslates(Translatable):
         "en": "Are you at least 18 years old?"
     }
     
+    age_restriction = {
+        "ru": "Вы не можете использовать бота, так как вам меньше 18 лет.\nЕсли вы считаете что это ошибка, напишите @HecurH",
+        "en": "You can't use the bot because you are under 18.\nIf you think this is an error, write to @HecurH"
+    }
+    
     currency_choosing = {
         "ru": "Выберите валюту (можно изменить в настройках):",
         "en": "Select a currency (you can change it in the settings):"
@@ -1551,7 +1556,7 @@ Of them made at least one order: {ordered_once}"""
 However, you can also use the option below, with a hidden link:"""
         }
         
-        
+
     class Delivery(Translatable):
     
         menu = {
