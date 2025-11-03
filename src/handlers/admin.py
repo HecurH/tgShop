@@ -43,7 +43,7 @@ async def help_handler(_, ctx: Context):
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):
     """/msg_to <user_id> - Отправить сообщение пользователю"""
-    user_id = int(command.args) if command.args.isdigit() else None
+    user_id = int(command.args) if command.args and command.args.isdigit() else None
     if not user_id:
         await ctx.message.answer("Неправильный формат команды")
         return
@@ -70,7 +70,7 @@ async def admin_message_sending_handler(_, ctx: Context):
 @router.message(Command("confirm_manual_payment"))
 async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject):
     """/confirm_manual_payment <order_id>|<datetime> - Подтвердить ручную оплату заказа"""
-    args = command.args.split("|")
+    args = command.args.split("|") if command.args else []
     if len(args) < 2:
         await ctx.message.answer(f"Недостаточно аргументов.")
         return
