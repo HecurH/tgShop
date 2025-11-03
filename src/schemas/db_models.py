@@ -177,7 +177,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         else:
             return await self.find_by({"puid": puid})
         
-    async def count_customer_ordsers(self, customer: "Customer") -> int:
+    async def count_customer_orders(self, customer: "Customer") -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id})
     
     async def count_formed_customer_orders(self, customer: "Customer") -> int:
