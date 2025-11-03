@@ -451,6 +451,23 @@ async def cats_handler(_, ctx: Context) -> None:
 @router.message(Command("add_products"))
 async def image_saving_handler(_, ctx: Context) -> None:
     haiden_configuration = ProductConfiguration(options={
+        "poster": ConfigurationOption(
+            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.name"),
+            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.text"),
+            chosen_key="sfw",
+            choices={
+                "sfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_poster_sfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.description")
+                ),
+                "nsfw": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.name"),
+                    media=LocalizedSavedMedia(media_key="photo_haiden_configuration_poster_nsfw"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.description")
+                )
+            }
+        ),
         "size": ConfigurationOption(
             name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
             text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.text"),
@@ -697,6 +714,7 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
     )
 
     morion_configuration = haiden_configuration.model_copy(deep=True)
+    morion_configuration.options.pop("poster")
     morion_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_small")
     morion_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_medium")
     morion_configuration.options["size"].choices["large"].media = LocalizedSavedMedia(media_key="photo_morion_configuration_size_large")
@@ -723,6 +741,7 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
     )
     
     avily_configuration = haiden_configuration.model_copy(deep=True)
+    avily_configuration.options.pop("poster")
     avily_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_small")
     avily_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_medium")
     avily_configuration.options["size"].choices["large"].media = LocalizedSavedMedia(media_key="photo_avily_configuration_size_large")
@@ -751,25 +770,8 @@ The feathered mischief-maker Avili, famous for his ability to stealthily sneak u
     )
     
     ragnar_configuration = haiden_configuration.model_copy(deep=True)
-    ragnar_options = {"poster": ConfigurationOption(
-            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.name"),
-            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.text"),
-            chosen_key="sfw",
-            choices={
-                "sfw": ConfigurationChoice(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.name"),
-                    media=LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_sfw"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.description")
-                ),
-                "nsfw": ConfigurationChoice(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.name"),
-                    media=LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_nsfw"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.description")
-                )
-            }
-        )}
-    ragnar_options.update(ragnar_configuration.options)
-    ragnar_configuration.options = ragnar_options
+    ragnar_configuration.options["poster"].choices["sfw"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_sfw")
+    ragnar_configuration.options["poster"].choices["nsfw"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_poster_nsfw")
     
     ragnar_configuration.options["size"].choices["small"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_small")
     ragnar_configuration.options["size"].choices["medium"].media = LocalizedSavedMedia(media_key="photo_ragnar_configuration_size_medium")
@@ -810,25 +812,9 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
     
     driana_configuration = haiden_configuration.model_copy(deep=True)
     
-    driana_options = {"poster": ConfigurationOption(
-            name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.name"),
-            text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.text"),
-            chosen_key="sfw",
-            choices={
-                "sfw": ConfigurationChoice(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.name"),
-                    media=LocalizedSavedMedia(media_key="photo_driana_configuration_poster_sfw"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.SFW.description")
-                ),
-                "nsfw": ConfigurationChoice(
-                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.name"),
-                    media=LocalizedSavedMedia(media_key="photo_driana_configuration_poster_nsfw"),
-                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Poster.Choices.NSFW.description")
-                )
-            }
-        )}
-    driana_options.update(driana_configuration.options)
-    driana_configuration.options = driana_options
+    
+    driana_configuration.options["poster"].choices["sfw"].media = LocalizedSavedMedia(media_key="photo_driana_configuration_poster_sfw")
+    driana_configuration.options["poster"].choices["nsfw"].media = LocalizedSavedMedia(media_key="photo_driana_configuration_poster_nsfw")
     
     driana_configuration.options["size"] = ConfigurationOption(
         name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.name"),
@@ -1193,7 +1179,7 @@ Five grams is enough to make 200-400ml of prepared lubricant.
     # await ctx.services.db.products.save(morion_product)
     # await ctx.services.db.products.save(avily_product)
     # await ctx.services.db.products.save(ragnar_product)
-    await ctx.services.db.products.save(driana_product)
+    # await ctx.services.db.products.save(driana_product)
     # await ctx.services.db.products.save(lube_product)
     # await ctx.services.db.products.save(testers_product)
 

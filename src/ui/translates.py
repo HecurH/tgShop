@@ -1116,7 +1116,7 @@ class CommonTranslates(Translatable):
     }
     
     age_restriction = {
-        "ru": "Вы не можете использовать бота, так как вам меньше 18 лет.\nЕсли вы считаете что это ошибка, напишите @HecurH",
+        "ru": "Вы не можете использовать бота, так как Вам меньше 18 лет.\nЕсли Вы считаете что это ошибка, напишите @HecurH",
         "en": "You can't use the bot because you are under 18.\nIf you think this is an error, write to @HecurH"
     }
     
