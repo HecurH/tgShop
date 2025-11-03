@@ -50,7 +50,7 @@ async def cart_viewer_handler(_, ctx: Context):
                     return
                 entry.quantity = entry.quantity - 1
             elif text == '➕':
-                entry.quantity = min(entry.quantity + 1, 99)
+                entry.quantity = min(entry.quantity + 1, 5)
             await ctx.services.db.cart_entries.save(entry)
 
         await call_state_handler(CartStates.Menu,
