@@ -115,8 +115,8 @@ async def main() -> None:
               )
 
     dp.include_routers(common.router,
-                       admin_menu.router,
                        admin.router,
+                       admin_menu.router,
                        assortment.router,
                        cart.router,
                        orders.router,
