@@ -193,7 +193,7 @@ class AdminTextGen:
     
     @staticmethod
     def price_confirmation_text(entries: list[CartEntry], ctx: Context):
-        entries_desc = "\n".join(f"{idx} — {entry.frozen_product.name.get('ru')}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nБазовая Цена: {entry.frozen_product.price.to_text_all()};\nЦена Конфигурации: {entry.configuration.price.to_text_all()}" for idx, entry in enumerate(entries))
+        entries_desc = "\n".join(f"{idx} — {entry.frozen_product.name.get('ru')}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nПолная стоимость: {(entry.frozen_product.price + entry.configuration.price).to_text_all()};" for idx, entry in enumerate(entries))
         next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump()}for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False)}" for idx, entry in enumerate(entries))
 
 
