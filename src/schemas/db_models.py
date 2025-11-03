@@ -1001,10 +1001,11 @@ class Customer(AppBaseModel):
                 ) from e
             bonus_wallet.amount = round(amount, 2)
         
-        if not self.check_can_change_currency():
-            raise RuntimeError("Валюту можно менять не чаще раза в месяц!")
+        if do_timeout:
+            if not self.check_can_change_currency():
+                raise RuntimeError("Валюту можно менять не чаще раза в месяц!")
 
-        self.last_time_changed_currency = datetime.datetime.now(datetime.timezone.utc)
+            self.last_time_changed_currency = datetime.datetime.now(datetime.timezone.utc)
         self.currency = iso
 
 class CustomersRepository(AppAbstractRepository[Customer]):
