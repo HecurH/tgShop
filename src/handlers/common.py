@@ -86,7 +86,7 @@ async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
-    await ctx.customer.change_selected_currency(callback.data, ctx)
+    await ctx.customer.change_selected_currency(callback.data, ctx, do_timeout=False)
 
     await ctx.services.db.customers.save(ctx.customer)
 

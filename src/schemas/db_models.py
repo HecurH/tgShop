@@ -982,7 +982,7 @@ class Customer(AppBaseModel):
                 return False
         return True
     
-    async def change_selected_currency(self, iso: str, ctx: Context):
+    async def change_selected_currency(self, iso: str, ctx: Context, do_timeout: bool = True) -> None:
         """Изменить основную валюту"""
         if iso.upper() not in SUPPORTED_CURRENCIES:
             raise ValueError(f"Unsupported currency: {iso}")
