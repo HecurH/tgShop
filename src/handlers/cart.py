@@ -195,7 +195,7 @@ async def order_configuration_promocode_handler(_, ctx: Context):
                                  send_before=(ctx.t.CartTranslates.OrderConfiguration.promocode_not_found, 1))
         return
     
-    check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.services.db.orders.count_customer_orders(ctx.customer))
+    check_result: PromocodeCheckResult = promocode.check_promocode(await ctx.services.db.orders.count_formed_customer_orders(ctx.customer))
     
     if check_result != PromocodeCheckResult.ok:
         check_result_text = getattr(ctx.t.EnumTranslates.PromocodeCheckResult, str(check_result.name))
