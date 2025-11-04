@@ -100,6 +100,7 @@ def custom_namer(default_name):
     return default_name
 
 file_handler.namer = custom_namer
+file_handler.setFormatter(formatter)
 
 logging.basicConfig(level=LOG_LEVEL, handlers=[stream, file_handler])
 logging.getLogger("httpx").setLevel(logging.WARNING)
