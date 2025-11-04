@@ -90,7 +90,7 @@ class AdminTextGen:
     async def customer_menu_text(customer: Customer, ctx: Context):
         inviter = await ctx.services.db.inviters.find_by_customer_id(customer.id)
         invited = inviter.invited_customers if inviter else 0
-        invited_list = await ctx.services.db.customers.find_many_by_inviter_id(inviter.id)
+        invited_list = await ctx.services.db.customers.find_many_by_inviter_id(inviter.id) if inviter else []
         
         invited_orders = inviter.invited_customers_first_orders if inviter else 0
         
