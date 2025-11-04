@@ -42,37 +42,54 @@ LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(r
 
 
 class AlignedFormatter(ColoredFormatter):
-    def __init__(self, fmt=None, datefmt=None, style='%', log_tail_width=40):
-        super().__init__(fmt, datefmt, style)
-        self.log_tail_width = log_tail_width  # ширина правой части (хвоста)
+    def __init__(self, fmt=None, datefmt=None, style='%', log_tail_width=40, use_colors=True):
+        self.log_tail_width = log_tail_width
+        self.use_colors = use_colors
 
+        # Если не нужны цвета — убираем плейсхолдеры %(log_color)s и %(reset)s из формата
+        if not use_colors and fmt:
+            fmt = fmt.replace("%(log_color)s", "").replace("%(reset)s", "")
+
+        # Вызываем нужного предка: ColoredFormatter для консоли, logging.Formatter для файлов
+        if use_colors:
+            super().__init__(fmt, datefmt=datefmt, style=style)
+        else:
+            # прямой вызов конструктора базового Formatter
+            logging.Formatter.__init__(self, fmt, datefmt=datefmt, style=style)
 
     def format(self, record):
+        # используем super() — это либо ColoredFormatter.format, либо logging.Formatter.format
         base_message = super().format(record)
 
-        # Строим "хвост" — это будет правая часть
         tail = f"// {record.name} - {record.funcName}: {record.lineno} | {record.asctime}"
 
-        # Удаляем хвост из base_message, чтобы добавить пробелы
         if tail in base_message:
             base_message = base_message.replace(tail, "").rstrip()
 
-        # Рассчитываем отступ между основным текстом и хвостом
-        total_width = shutil.get_terminal_size()[0]  # ширина всей строки (можно подогнать под ширину терминала)
-        space_left = total_width - len(self._strip_colors(base_message)) - len(tail)
+        # вычисляем отступ по ширине терминала (если не получилось — ставим минимум пробелов)
+        try:
+            total_width = shutil.get_terminal_size()[0]
+        except Exception:
+            total_width = 120
+
+        # для корректного подсчёта длины без ANSI-кодов
+        visible_len = len(self._strip_colors(base_message))
+        space_left = total_width - visible_len - len(tail)
         space_left = max(1, space_left)
 
         return base_message + " " * space_left + tail
-
 
     def _strip_colors(self, text):
         import re
         ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
         return ansi_escape.sub('', text)
 
-formatter = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
+formatter_color = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=True)
+formatter_plain = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=False)
+
+
 stream = logging.StreamHandler()
-stream.setFormatter(formatter)
+stream.setFormatter(formatter_color)
 
 from logging.handlers import TimedRotatingFileHandler
 
@@ -100,7 +117,7 @@ def custom_namer(default_name):
     return default_name
 
 file_handler.namer = custom_namer
-file_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter_plain)
 
 logging.basicConfig(level=LOG_LEVEL, handlers=[stream, file_handler])
 logging.getLogger("httpx").setLevel(logging.WARNING)
