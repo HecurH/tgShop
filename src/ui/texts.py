@@ -113,7 +113,7 @@ class AdminTextGen:
             
             
         
-        text = f"""👤 {customer.user_id}
+        text = f"""👤 <a href=\"tg://user?id={customer.user_id}\">{customer.user_id}</a>
 
 Приглашён: {(await ctx.services.db.inviters.find_one_by_id(customer.invited_by)).customer_id if customer.invited_by else 'Никем'}
 Зарегистрировался: {customer.id.generation_time.strftime("%d.%m.%Y %H:%M")} UTC
