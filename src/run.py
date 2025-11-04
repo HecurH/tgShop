@@ -41,51 +41,44 @@ LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"
 
 
-class AlignedFormatter(ColoredFormatter):
-    def __init__(self, fmt=None, datefmt=None, style='%', log_tail_width=40, use_colors=True):
-        self.log_tail_width = log_tail_width
-        self.use_colors = use_colors
 
-        # Если не нужны цвета — убираем плейсхолдеры %(log_color)s и %(reset)s из формата
-        if not use_colors and fmt:
-            fmt = fmt.replace("%(log_color)s", "").replace("%(reset)s", "")
+class _BaseAlignedFormatter:
+    log_tail_width = 40
 
-        # Вызываем нужного предка: ColoredFormatter для консоли, logging.Formatter для файлов
-        if use_colors:
-            super().__init__(fmt, datefmt=datefmt, style=style)
-        else:
-            # прямой вызов конструктора базового Formatter
-            logging.Formatter.__init__(self, fmt, datefmt=datefmt, style=style)
+    def _strip_colors(self, text):
+        return re.sub(r'\x1B[@-_][0-?]*[ -/]*[@-~]', '', text)
 
-    def format(self, record):
-        # используем super() — это либо ColoredFormatter.format, либо logging.Formatter.format
-        base_message = super().format(record)
-
+    def _align(self, base_message, record):
         tail = f"// {record.name} - {record.funcName}: {record.lineno} | {record.asctime}"
-
         if tail in base_message:
             base_message = base_message.replace(tail, "").rstrip()
-
-        # вычисляем отступ по ширине терминала (если не получилось — ставим минимум пробелов)
         try:
             total_width = shutil.get_terminal_size()[0]
         except Exception:
             total_width = 120
-
-        # для корректного подсчёта длины без ANSI-кодов
         visible_len = len(self._strip_colors(base_message))
-        space_left = total_width - visible_len - len(tail)
-        space_left = max(1, space_left)
-
+        space_left = max(1, total_width - visible_len - len(tail))
         return base_message + " " * space_left + tail
 
-    def _strip_colors(self, text):
-        import re
-        ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
-        return ansi_escape.sub('', text)
 
-formatter_color = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=True)
-formatter_plain = AlignedFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=False)
+class AlignedColorFormatter(_BaseAlignedFormatter, ColoredFormatter):
+    def format(self, record):
+        base_message = super().format(record)
+        return self._align(base_message, record)
+
+
+class AlignedPlainFormatter(_BaseAlignedFormatter, logging.Formatter):
+    def __init__(self, fmt, datefmt=None):
+        # убираем цветовые теги
+        fmt = fmt.replace("%(log_color)s", "").replace("%(reset)s", "")
+        super().__init__(fmt, datefmt=datefmt)
+
+    def format(self, record):
+        base_message = super().format(record)
+        return self._align(base_message, record)
+
+formatter_color = AlignedColorFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=True)
+formatter_plain = AlignedPlainFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=False)
 
 
 stream = logging.StreamHandler()
