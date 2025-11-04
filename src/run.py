@@ -77,8 +77,8 @@ class AlignedPlainFormatter(_BaseAlignedFormatter, logging.Formatter):
         base_message = super().format(record)
         return self._align(base_message, record)
 
-formatter_color = AlignedColorFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=True)
-formatter_plain = AlignedPlainFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S", use_colors=False)
+formatter_color = AlignedColorFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
+formatter_plain = AlignedPlainFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
 
 
 stream = logging.StreamHandler()
