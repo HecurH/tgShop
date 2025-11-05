@@ -823,8 +823,14 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
         choices={
             "standart": ConfigurationChoice(
                 name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Standart.name"),
-                media=LocalizedSavedMedia(media_key="photo_driana_configuration_size_standart"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_size_large"),
                 description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Standart.description")
+            ),
+            "large": ConfigurationChoice(
+                name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.name"),
+                media=LocalizedSavedMedia(media_key="photo_driana_configuration_size_large"),
+                description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Size.Choices.Large.description"),
+                price=LocalizedMoney.from_keys(RUB=2000.00, USD=30.00)
             )
         }
     )

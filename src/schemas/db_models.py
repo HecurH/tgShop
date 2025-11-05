@@ -582,11 +582,11 @@ class ConfigurationOption(AppBaseModel):
         
         # Обновляем choices
         for choice_key, base_choice in update_from_option.choices.items():
-            cur_choice = self.choices[choice_key]
-            
             if choice_key not in self.choices.keys():
                 self.choices[choice_key] = base_choice
                 continue
+            
+            cur_choice = self.choices[choice_key]
             
             if type(cur_choice) == type(base_choice):
                 cur_choice.update(base_choice)

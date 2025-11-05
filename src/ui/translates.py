@@ -55,8 +55,7 @@ class TranslationField:
     
     def values(self):
         return self.translations.values()
-        
-        
+           
 class TranslationMeta(type):
     """Метакласс для автоматической организации переводов"""
 
