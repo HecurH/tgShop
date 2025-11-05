@@ -1135,7 +1135,7 @@ class CommonTranslates(Translatable):
 Мы <i>особенно педантичны</i> и преданы своему делу, делая упор на <i>качество</i> продуктов. А ещё в нашем ассортименте можно увидеть <i>единственные в своём роде</i> окрасы, которые вы не найдёте у других СНГ-производителей ^^
 Каждая игрушка изготовлена из качественных и премиальных импортных материалов с применением особых технологий производства. Индивидуальный подход к каждому клиенту и стремление к идеалу — наше призвание! Добро пожаловать в магазин :3
 
-По вопросам магазина — @TechnoZmeyka
+По вопросам магазина/продукции — @TechnoZmeyka
 По вопросам работы бота/предложение идей — @HecurH""",
         "en": """We are Good Snake, a start—up shop engaged in the production of non-standard intimate toys, merch and other furry-themed goods! 
 We are <i>particularly meticulous</i> and dedicated to our work, focusing on <i>the quality of</i> products. And in our assortment you can see <i>one-of-a-kind</i> colors that you will not find in other CIS manufacturers ^^

@@ -832,7 +832,7 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
     driana_configuration.options["firmness"] = ConfigurationOption(
         name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.name"),
         text=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.text"),
-        chosen_key="ultra_soft",
+        chosen_key="very_soft",
         choices={
             "ultra_soft": ConfigurationChoice(
                 name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.UltraSoft.name"),
