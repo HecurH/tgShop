@@ -268,6 +268,7 @@ class UserTelegramNotificator:
         self.notificator = notificator
         
     async def forward_admin_message(self, customer: Customer, message: Message):
+        if customer.kicked: return
         await self.notificator.send_forwarded_notification(message,
                                                            chat_id=customer.user_id)
         
@@ -276,22 +277,27 @@ class UserTelegramNotificator:
     
     #-----------
     async def send_delivery_price_confirmed(self, customer: Customer):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_confirmed.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_delivery_price_rejected(self, customer: Customer):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_rejected.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_delivery_price_rejected_with_reason(self, customer: Customer, reason: str):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Delivery.delivery_price_rejected_with_reason.translate(customer.lang).format(reason=reason),
                                                  chat_id=customer.user_id)
     #-----------
     async def send_order_price_confirmed(self, customer: Customer):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Order.order_price_confirmed.translate(customer.lang),
                                                  chat_id=customer.user_id)
         
     async def send_order_state_changed(self, customer: Customer, order: Order, comment: Optional[SavedTMessage] = None):
+        if customer.kicked: return
         if comment:
             await self.notificator.send_forwarded_notification(comment,
                                                                chat_id=customer.user_id)
@@ -300,6 +306,7 @@ class UserTelegramNotificator:
                                                  chat_id=customer.user_id)
     
     async def send_order_payment_accepted(self, customer: Customer, order: Order, receipt_url: Optional[str | list[str]] = None):
+        if customer.kicked: return
         media = ([("photo", URLInputFile(url)) for url in receipt_url] if isinstance(receipt_url, list) else URLInputFile(receipt_url)) if receipt_url else None
         
         await self.notificator.send_notification(NotificatorTranslates.Order.order_payment_accepted.translate(customer.lang).format(order_puid=f"#{order.puid}"),
@@ -307,14 +314,17 @@ class UserTelegramNotificator:
                                                  media=media)
     
     async def send_inviter_reward(self, customer: Customer, reward: Money):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.User.inviter_reward.translate(customer.lang).format(reward=reward.to_text(), balance=customer.bonus_wallet.to_text()),
                                                  chat_id=customer.user_id)
         
     async def send_order_unformed(self, customer: Customer, order: Order):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Order.order_unformed.translate(customer.lang).format(order_puid=f"#{order.puid}"),
                                                  chat_id=customer.user_id)
     
     async def send_order_unformed_with_reason(self, customer: Customer, order: Order, reason: str):
+        if customer.kicked: return
         await self.notificator.send_notification(NotificatorTranslates.Order.order_unformed_with_reason.translate(customer.lang).format(order_puid=f"#{order.puid}", reason=reason),
                                                  chat_id=customer.user_id)
     
