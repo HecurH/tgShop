@@ -783,24 +783,24 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                         description = {
                         "ru": """Опция позволяет окрасить изделие в два разных цвета — каждая зона окрашивается отдельно, с чёткой границей перехода (граница указана на изображении).
 
-В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий</i>, <i>низ - белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх - синий (#00008b)</i>, <i>низ - белый (#f5f5f5)</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
-    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх - фиолетовый с перламутром</i>, <i>низ - зелёный с люминофором</i>).
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх - фиолетовый (#6600ff) с перламутром</i>, <i>низ - зелёный (#00a550) с люминофором</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
 
 Базовая двухзонная окраска — бесплатная. Дополнения оплачиваются отдельно.""",
 
-                            "en": """The option allows you to color the product in two different shades — each zone is painted separately, with a clear dividing line (the boundary is shown in the image).
+                        "en": """The option allows you to color the product in two different shades — each zone is painted separately, with a clear dividing line (the boundary is shown in the image).
 
-In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue</i>, <i>bottom – white</i>), and optionally add comments about transition details or special effects.
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top – blue (#00008b)</i>, <i>bottom – white (#f5f5f5)</i>), and optionally add comments about transition details or special effects.
 Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
-    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top – purple with pearlescent effect</i>, <i>bottom – green with phosphor</i>).
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top – purple (#6600ff) with pearlescent effect</i>, <i>bottom – green (#00a550) with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
 
 The basic two-zone coloring is free of charge. Add-ons are charged separately."""
@@ -815,24 +815,24 @@ The basic two-zone coloring is free of charge. Add-ons are charged separately.""
                         description = {
                         "ru": """Опция позволяет окрасить изделие в три разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
-В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий</i>, <i>середина — розовая</i>, <i>низ — белый</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>верх — синий (#00008b)</i>, <i>середина — розовая (#ffb6c1)</i>, <i>низ — белый (#f5f5f5)</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
-    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх — фиолетовый с перламутром</i>, <i>середина — розовая с блёстками</i>, <i>низ — зелёный с люминофором</i>).
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>верх — фиолетовый (#6600ff) с перламутром</i>, <i>середина — розовая (#ffb6c1) с блёстками</i>, <i>низ — зелёный (#00a550) с люминофором</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
 
 Дополнения оплачиваются отдельно.""",
 
-                            "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
+                        "en": """The option allows the product to be painted in three different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
-In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue</i>, <i>middle — pink</i>, <i>bottom — white</i>), and optionally add comments about transition details or special effects.
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>top — blue (#00008b)</i>, <i>middle — pink (#ffb6c1)</i>, <i>bottom — white (#f5f5f5)</i>), and optionally add comments about transition details or special effects.
 Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
-    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top — violet with pearlescent effect</i>, <i>middle — pink with glitter</i>, <i>bottom — green with phosphor</i>).
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>top — violet (#6600ff) with pearlescent effect</i>, <i>middle — pink (#ffb6c1) with glitter</i>, <i>bottom — green (#00a550) with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
 
 Add-ons are charged separately."""
@@ -847,25 +847,25 @@ Add-ons are charged separately."""
                         description = {
                         "ru": """Опция позволяет окрасить изделие в три (четыре) разные зоны, каждая из которых окрашивается отдельно. Границы между зонами указаны на изображении и определяют места перехода цветов.
 
-В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий</i>, <i>2 — розовый</i>, <i>3 — красный</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
+В текстовом описании раскраски <b>укажите цвет для каждой зоны</b> (например: <i>1 — синий (#00008b)</i>, <i>2 — розовый (#ffb6c1)</i>, <i>3 — красный (#ff2400)</i>) и при желании добавьте комментарии по нюансам перехода или эффектам.
 Если Вы хотите использовать подзону 2.1, учтите, что она является единственным возможным градиентом и оплачивается отдельно. (Дополнения — Градиент)
 Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 
-    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>1 — коралловый с перламутром</i>, <i>2 — бежевый</i>, <i>3 — под цвет 1, но с люминофором</i>).
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>1 — коралловый (#ff845c) с перламутром</i>, <i>2 — бежевый (#f2e8c9)</i>, <i>3 — под цвет 1, но с люминофором</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
     
 Дополнения оплачиваются отдельно.""",
                         "en": """The option allows the product to be painted in three (four) different zones, each painted separately. The boundaries between the zones are shown in the image and define where the color transitions occur.
 
-In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue</i>, <i>2 — pink</i>, <i>3 — red</i>), and optionally add comments about transition details or special effects.
+In the coloring description, <b>specify the color for each zone</b> (for example: <i>1 — blue (#00008b)</i>, <i>2 — pink (#ffb6c1)</i>, <i>3 — red (#ff2400)</i>), and optionally add comments about transition details or special effects.
 If you want to use subzone 2.1, please note that it is the only possible gradient and is charged separately. (Additionals — Gradient)
 Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
 
-    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>1 — coral with pearlescent effect</i>, <i>2 — beige</i>, <i>3 — matching color 1, but with phosphor</i>).
+    <b>1.</b> <b>Mention them in the coloring description</b> (for example: <i>1 — coral (#ff845c) with pearlescent effect</i>, <i>2 — beige (#f2e8c9)</i>, <i>3 — matching color 1, but with phosphor</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.
 
 Add-ons are charged separately."""
@@ -881,9 +881,10 @@ Add-ons are charged separately."""
                             "ru": """Опция создаёт <b>уникальный вихревой рисунок</b> — хаотичное смешение выбранных Вами цветов, в результате чего получается плавный и равномерный перелив оттенков по всему изделию.
                             
 В текстовом описании раскраски <b>укажите от двух до четырёх цветов</b>, которые будут использованы для создания вихря.
+Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите использовать <b>люминофор, перламутр, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
-    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>вихрь из фиолетового и синего с перламутром</i>).
+    <b>1.</b> <b>Упомяните их в описании раскраски</b> (например: <i>вихрь из фиолетового (#6600ff) и синего (#00008b) с перламутром</i>).
     <b>2.</b> <b>Включите соответствующие переключатели</b> в меню “Дополнения”.
 
 Дополнения оплачиваются отдельно.""",
@@ -891,9 +892,10 @@ Add-ons are charged separately."""
                             "en": """The option creates a <b>unique swirl pattern</b> — a chaotic blend of the colors you choose, resulting in a smooth and even transition of shades across the entire product.
 
 In the color description field, <b>specify two to four colors</b> that will be used to create the swirl.
+Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to use <b>phosphor, pearlescent pigment, glitter, use a gradient or neon colors</b>, make sure to:
-    <b>1.</b> <b>Mention them in the color description</b> (for example: <i>a swirl of purple and blue with pearlescent effect</i>).
+    <b>1.</b> <b>Mention them in the color description</b> (for example: <i>a swirl of purple (#6600ff) and blue (#00008b) with pearlescent effect</i>).
     <b>2.</b> <b>Enable the corresponding switches</b> in the “Additionals” menu.     
     
 Add-ons are charged separately."""
@@ -909,6 +911,7 @@ Add-ons are charged separately."""
                             "ru": """Опция позволяет создать <b>уникальный индивидуальный окрас</b> изделия по Вашему описанию. Итоговая стоимость рассчитывается <b>в зависимости от сложности работы</b>.
 
 В текстовом описании раскраски <b>укажите, какие цвета (из меню) и эффекты</b> Вы хотите видеть, а также любые другие пожелания.
+Обратите внимание, лучше всего цвета указывать HEX-кодами, чтобы мы могли точно понять какой оттенок вас интересует.
 
 Если Вы хотите добавить <b>люминофор, перламутровый пигмент, блёстки, использовать градиент или неоновые цвета</b>, обязательно:
 <b>1.</b> <b>Упомяните их</b> в своём описании окраса.
@@ -918,6 +921,7 @@ Add-ons are charged separately."""
                             "en": """This option allows you to create a <b>unique, individual paint job</b> based on your description. The final cost is calculated <b>based on the complexity of the work</b>.
 
 In your text description of the paint job, <b>specify which colors and effects</b> you would like to see, as well as any other wishes.
+Please note that it is best to specify colors using HEX codes so that we can understand exactly which shade you are interested in.
 
 If you want to add <b>luminescent or pearlescent pigment, glitter, use a gradient or neon colors</b>, please ensure you:
     <b>1.</b> <b>Mention them</b> in your paint job description.
