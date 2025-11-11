@@ -13,7 +13,7 @@ from core.services.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from schemas.enums import OrderStateKey, MediaType
+from schemas.enums import InviterType, OrderStateKey, MediaType
 from schemas.types import LocalizedMoney, LocalizedString, LocalizedSavedMedia, LocalizedEntry
 from ui.message_tools import list_commands
 
@@ -38,7 +38,27 @@ async def help_handler(_, ctx: Context):
     
     await ctx.message.answer("Обновлено!")
 
+@router.message(Command("toggle_partner"))
+async def toggle_partner_handler(_, ctx: Context, command: CommandObject):
+    """/toggle_partner <user_id> - Изменить тип реферальной системы пользователя"""
+    user_id = int(command.args) if command.args and command.args.isdigit() else None
+    if not user_id:
+        await ctx.message.answer("Неправильный формат команды")
+        return
+    
+    customer = await ctx.services.db.customers.find_by_user_id(user_id)
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+    inviter = await ctx.services.db.inviters.find_by_customer_id(customer.id)
+    if not inviter:
+        await ctx.message.answer("Пользователь не реферал")
+        return
 
+    inviter.inviter_type = InviterType.channel if inviter.inviter_type == InviterType.customer else InviterType.customer
+    await ctx.services.db.inviters.save(inviter)
+
+    await ctx.message.answer(f"Изменено! Теперь тип реферала {inviter.inviter_type.name}")
 
 @router.message(Command("msg_to"))
 async def msg_to_handler(_, ctx: Context, command: CommandObject):

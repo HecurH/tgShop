@@ -31,8 +31,8 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         }),
         currency="RUB",
         payment_details=LocalizedString(data={
-            "ru": "Перевод на карту Сбербанка 2202205334616056.",
-            "en": "Transfer to Sberbank card 2202205334616056."
+            "ru": "Перевод на карту Сбербанка 2202205334616056. (Белан Н. С.)",
+            "en": "Transfer to Sberbank card 2202205334616056. (Белан Н. С.)"
         }),
         enabled=True,
         can_register_receipts=True,

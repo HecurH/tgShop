@@ -30,7 +30,7 @@ class TaxSystem:
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
         from schemas.types import LocalizedMoney, Money
         entry_prices = [
-            (entry.configuration.price + entry.frozen_product.base_price) * entry.quantity
+            (entry.configuration.price + entry.frozen_product.price) * entry.quantity
             for entry in cart_entries
         ]
 
@@ -69,7 +69,7 @@ class TaxSystem:
         entries_list = []
 
         for i, entry in enumerate(cart_entries):
-            total_price_per_item = entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.base_price.get_amount(discounts.currency)
+            total_price_per_item = entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.price.get_amount(discounts.currency)
             remaining_quantity = entry.quantity
             discount_per_item = entry_discounts[i].amount / entry.quantity if entry.quantity else 0
 
