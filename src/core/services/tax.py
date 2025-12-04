@@ -1,3 +1,4 @@
+from os import getenv
 from schemas.db_models import CartEntry, Order
 from schemas.types import Money
 
@@ -9,8 +10,9 @@ from datetime import datetime
 
 
 class TaxSystem:
-    def __init__(self, config_path: str = "/src/configs/"):
-        self.client = AsyncMoyNalog(config_path)
+    def __init__(self):
+        folder = getenv("CONFIGS_PATH")
+        self.client = AsyncMoyNalog(folder)
 
     async def safe_create_invoice(self, *args, retries: int = 3, timeout: int = 10, **kwargs):
         last_exc = None

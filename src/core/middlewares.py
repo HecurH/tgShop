@@ -49,7 +49,6 @@ class ContextMiddleware(BaseMiddleware):
             try:
                 return await (event.message or event.callback_query.message).answer("You are banned.", reply_keyboard=ReplyKeyboardRemove())
             except:
-                print(event)
                 return
             
         lang = customer.lang if customer and customer.lang else "?"                          
