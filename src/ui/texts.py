@@ -143,13 +143,13 @@ class AdminTextGen:
         
         text = ""
         for order in active_orders:
-            text += f"<b>Заказ {order.id}</b> от {order.id.generation_time.strftime('%d.%m.%Y %H:%M UTC')} UTC\n"
+            text += f"<b>Заказ {order.id}</b> от {order.id.generation_time.strftime('%d.%m.%Y %H:%M UTC')}\n"
             text += f"  Статус заказа: {order.state.get_localized_name(ctx.lang)}\n"
             entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
             products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
             entries_text = ", ".join([pr.name.get(ctx) for pr in products])
             
-            text += f"  Содержимое: {entries_text}\n"
+            text += f"  Содержимое: {entries_text}\n\n"
             
         return text
     
