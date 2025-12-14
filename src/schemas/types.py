@@ -114,7 +114,7 @@ class SecureValue(BaseModel):
 
 class Money(BaseModel):
     currency: str
-    amount: float | DecimalAnnotation
+    amount: DecimalAnnotation
     
     @field_validator("amount", mode="before")
     def convert_decimal(cls, v):
@@ -330,7 +330,7 @@ class OrderState(BaseModel):
         
 class Discount(BaseModel):
     dicount_type: DiscountType  # тип действия: фиксированная сумма или процент
-    value: LocalizedMoney | float | DecimalAnnotation     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
+    value: LocalizedMoney | DecimalAnnotation     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
     
     @field_validator("value", mode="before")
     def convert_decimal(cls, v):

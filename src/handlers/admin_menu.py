@@ -103,6 +103,14 @@ async def orders_ask_id_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
+    if text == "Список активных заказов":
+        active_orders = await ctx.services.db.orders.find_by({"state.key": {"$ne": OrderStateKey.received}})
+        for order in active_orders:
+            await ctx.message.answer(await AdminTextGen.order_menu_text(order, ctx))
+            await asyncio.sleep(0.3)
+        
+        await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
+        return
     
     if text.startswith("#"):
         puid = text[1:]

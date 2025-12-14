@@ -128,16 +128,17 @@ class AdminKBs:
     
     class Orders:
         @staticmethod
-        async def delivery_manual_price_confirmation(ctx: Context) -> types.InlineKeyboardMarkup:
-            me = await ctx.message.bot.get_me()
-            keyboard = [
+        def orders_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
                 [
-                    types.InlineKeyboardButton(text="Перейти к боту",
-                                               url=f"tg://resolve?domain={me.username}")
+                    types.KeyboardButton(text="Список активных заказов")
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                 ]
             ]
-            return types.InlineKeyboardMarkup(inline_keyboard=keyboard)
-        
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                            resize_keyboard=True)
         
         @staticmethod
         def order_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
