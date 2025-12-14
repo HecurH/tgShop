@@ -48,12 +48,12 @@ class TaxSystem:
             fraction = price.get_amount(total_discount.currency) / total_price.get_amount(total_discount.currency)
             discount_amount = fraction * total_discount.amount
             discount_amount = min(discount_amount, price.get_amount(total_discount.currency))
-            discount_amount = round(discount_amount, 2)
+            
             discounts.append(Money(currency=total_discount.currency, amount=discount_amount))
             remaining_discount -= discount_amount
 
         last_discount = min(remaining_discount, entry_prices[-1].get_amount(total_discount.currency))
-        last_discount = round(last_discount, 2)
+        
         discounts.append(Money(currency=total_discount.currency, amount=last_discount))
 
         return discounts
@@ -86,7 +86,7 @@ class TaxSystem:
                 remaining_quantity -= chunk_quantity
 
         for name, price, quantity in entries_list:
-            if price > 0.001: services.append(Service(name=name, amount=price, quantity=quantity))
+            if price > 0.001: services.append(Service(name=name, amount=float(price), quantity=quantity))
 
         if len(services) == 0: return None
         

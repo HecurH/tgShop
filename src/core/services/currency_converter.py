@@ -1,3 +1,4 @@
+from decimal import Decimal
 from configs.supported import SUPPORTED_CURRENCIES
 import aiohttp
 
@@ -86,7 +87,7 @@ class AsyncCurrencyConverter:
         await self._initial_update_done.wait()
         return self._cache
 
-    async def convert(self, amount: float, from_currency: str, to_currency: str) -> float:
+    async def convert(self, amount: Decimal, from_currency: str, to_currency: str) -> Decimal:
         """Преобразует сумму из одной валюты в другую."""
         if amount < 0:
             raise ValueError("Amount must be non-negative")
@@ -106,6 +107,6 @@ class AsyncCurrencyConverter:
         if rate_to is None:
             raise ValueError(f"Currency {to_currency} is not supported")
             
-        return amount * rate_to
+        return amount * Decimal(str(rate_to))
     
 __all__ = ["AsyncCurrencyConverter"]

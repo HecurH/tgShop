@@ -8,7 +8,7 @@ from schemas.db_models import *
 class DatabaseService:
     def __init__(self, db_name="Shop"):
         self.client = AsyncMongoClient(getenv("MONGO_URI"), tls=True, tlsAllowInvalidCertificates=True, tlsCAFile=getenv("MONGO_TLS_CA_PATH"))
-        self.db = self.client[db_name]
+        self.db = self.client.get_database(db_name)
 
         self._init_collections()
 

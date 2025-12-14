@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from decimal import Decimal
 import re
 from typing import Optional
 
@@ -248,7 +249,7 @@ async def create_promocode_code_handler(_, ctx: Context):
             if not part:
                 continue
             cur, amt = part.split(":", 1)
-            result[cur.strip().upper()] = float(amt.replace(",", "."))
+            result[cur.strip().upper()] = Decimal(amt.replace(",", "."))
         return LocalizedMoney.from_keys(**result)
 
     def parse_expire(text: str) -> Optional[datetime.datetime]:
@@ -288,7 +289,7 @@ async def create_promocode_code_handler(_, ctx: Context):
         "expire_date": parse_expire(fields.get("expire", "none")),
     }
     if result["type"] == "percent":
-        result["value"] = float(fields["значение"])
+        result["value"] = Decimal(fields["значение"])
     else:
         result["value"] = parse_localized_money(fields["значение"])
     result["description"] = parse_localized_string(fields["описание"])

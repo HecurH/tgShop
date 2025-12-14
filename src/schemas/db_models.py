@@ -92,8 +92,6 @@ class OrderPriceDetails(AppBaseModel):
     async def get_referral_reward(self) -> Optional[Money]:
         if not self.total_price: return None
         reward = self.total_price * REFERRALS_FIRST_ORDER_PERCENT
-        reward.amount = round(reward.amount, 2)
-        
         return reward
     
 class Order(AppBaseModel):
@@ -984,22 +982,23 @@ class Customer(AppBaseModel):
     
     async def change_selected_currency(self, iso: str, ctx: Context, do_timeout: bool = True) -> None:
         """Изменить основную валюту"""
-        if iso.upper() not in SUPPORTED_CURRENCIES:
+        if iso.upper() not in SUPPORTED_CURRENCIES.keys():
             raise ValueError(f"Unsupported currency: {iso}")
 
-        bonus_wallet = self.bonus_wallet
-        bonus_wallet.currency = iso
+        self.bonus_wallet.currency = iso
         
-        if bonus_wallet.amount > 0:
+        if self.bonus_wallet.amount > 0:
             try:
-                amount = await ctx.services.currency_converter.convert(bonus_wallet.amount, self.currency, iso)
+                self.bonus_wallet = Money(currency=iso, 
+                                     amount=await ctx.services.currency_converter.convert(self.bonus_wallet.amount, 
+                                                                                          self.currency, 
+                                                                                          iso))
             except Exception as e:
                 # Логируем ошибку и не меняем валюту
                 logging.getLogger(__name__).critical(f"Ошибка конвертации валюты: {e}")
                 raise RuntimeError(
                     "Сервис конвертации валют временно недоступен. Попробуйте позже."
                 ) from e
-            bonus_wallet.amount = round(amount, 2)
         
         if do_timeout:
             if not self.check_can_change_currency():
@@ -1043,7 +1042,6 @@ class CustomersRepository(AppAbstractRepository[Customer]):
                 ) from e
             money = Money(currency=customer.currency, amount=amount)
 
-        money.amount = round(money.amount, 2)
         customer.bonus_wallet += money
         await self.save(customer)
         return money
@@ -1061,7 +1059,6 @@ class CustomersRepository(AppAbstractRepository[Customer]):
                 ) from e
             money = Money(currency=customer.currency, amount=amount)
             
-        money.amount = round(money.amount, 2)
         customer.bonus_wallet -= money
         await self.save(customer)
 

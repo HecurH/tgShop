@@ -1,10 +1,12 @@
-import logging
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from bson import Decimal128
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 from configs.supported import SUPPORTED_CURRENCIES
 from core.helper_classes import Context, Cryptography
 
 from aiogram.types import Message
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic_core import core_schema
 
 import base64
 from binascii import Error as BinasciiError
@@ -14,6 +16,66 @@ from ui.translates import EnumTranslates
 
 if TYPE_CHECKING:
     from core.services.placeholders import PlaceholderManager
+class DecimalAnnotation:
+    
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: Any
+    ) -> core_schema.CoreSchema:
+        """Схема для валидации и сериализации Decimal полей."""
+        
+        def validate_to_decimal(value: Any) -> Decimal:
+            """Конвертируем различные типы в Decimal."""
+            if isinstance(value, Decimal):
+                return value
+            elif isinstance(value, Decimal128):
+                return value.to_decimal()
+            elif isinstance(value, str):
+                try:
+                    return Decimal(value)
+                except InvalidOperation as e:
+                    raise ValueError(f"Invalid decimal string: {value}") from e
+            elif isinstance(value, (int, float)):
+                # Для float есть потеря точности, но это ожидаемо
+                return Decimal(str(value))
+            else:
+                raise ValueError(f"Cannot convert {type(value).__name__} to Decimal")
+        
+        # Схема для валидации входящих данных в Decimal
+        decimal_schema = core_schema.no_info_plain_validator_function(validate_to_decimal)
+        
+        # Сериализатор для конвертации Decimal -> Decimal128 при дампе в словарь
+        def serialize_to_decimal128(value: Decimal, _info) -> Decimal128:
+            """Сериализуем Decimal в Decimal128 для Python dict."""
+            return Decimal128(str(value))
+        
+        # Схема для конвертации Decimal -> строка при дампе в JSON
+        def serialize_to_string(value: Decimal, _info) -> str:
+            """Сериализуем Decimal в строку для JSON."""
+            return str(value)
+        
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.str_schema(),
+            python_schema=core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(Decimal),
+                    core_schema.is_instance_schema(Decimal128),
+                    decimal_schema,
+                ]
+            ),
+            # Двойная сериализация: для JSON и для Python dict
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                function=lambda value, info=None: (
+                    serialize_to_string(value, info) if info and info.mode == 'json'
+                    else serialize_to_decimal128(value, info)
+                ),
+                return_schema=core_schema.union_schema([
+                    core_schema.str_schema(),
+                    core_schema.is_instance_schema(Decimal128),
+                ]),
+                when_used='always',
+            ),
+        )
 
 
 class SecureValue(BaseModel):
@@ -51,56 +113,80 @@ class SecureValue(BaseModel):
         self.tag = base64.b64encode(tag).decode()
 
 class Money(BaseModel):
-    currency: str  # ISO
-    amount: float
+    currency: str
+    amount: float | DecimalAnnotation
+    
+    @field_validator("amount", mode="before")
+    def convert_decimal(cls, v):
+        return Decimal(str(v))
+
+    @field_validator("currency")
+    def check_currency(cls, v):
+        if v not in SUPPORTED_CURRENCIES:
+            raise ValueError(f"Unsupported currency: {v}")
+        return v
+    
+    @model_validator(mode="after")
+    def normalize(self):
+        self.amount = self._quantize(self.amount)
+        return self
+    
     
     def to_text(self) -> str:
-        sign = "-" if self.amount < 0 else ""
-        template = SUPPORTED_CURRENCIES.get(self.currency, f"{{amount}}{self.currency}")
+        info = SUPPORTED_CURRENCIES[self.currency]
         
-        num = round(abs(self.amount), 2)
-        amount = template.format(amount=f"{int(num)}" if num == int(num) else f"{num:.2f}")
-        return f"{sign}{amount}"
-
-    def __add__(self, other):
+        sign = "-" if self.amount < 0 else ""
+        abs_amount = abs(self.amount)
+        
+        rounded = abs_amount.quantize(info.quant(), rounding=ROUND_HALF_UP)
+        
+        if rounded == rounded.to_integral():
+            amount_text = f"{rounded.to_integral()}"
+        else:
+            fmt = f"{{0:.{info.precision}f}}"
+            amount_text = fmt.format(rounded)
+        
+        formatted = info.format_template.format(amount=amount_text)
+        return f"{sign}{formatted}"
+    
+    def _quantize(self, value: Decimal) -> Decimal:
+        info = SUPPORTED_CURRENCIES[self.currency]
+        return value.quantize(info.quant(), rounding=ROUND_HALF_UP)
+    
+    def _check(self, other):
         if not isinstance(other, Money):
             return NotImplemented
         if self.currency != other.currency:
             raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+        return SUPPORTED_CURRENCIES[self.currency]
+
+    def __add__(self, other: "Money"):
+        self._check(other)
         return Money(currency=self.currency, amount=self.amount + other.amount)
     
-    def __sub__(self, other):
-        if not isinstance(other, Money):
-            return NotImplemented
-        if self.currency != other.currency:
-            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+    def __sub__(self, other: "Money"):
+        self._check(other)
         return Money(currency=self.currency, amount=self.amount - other.amount)
-
     
-    def __lt__(self, other):
-        if not isinstance(other, Money):
-            return NotImplemented
-        if self.currency != other.currency:
-            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+    def __lt__(self, other: "Money"):
+        self._check(other)
         return self.amount < other.amount
 
-    def __le__(self, other):
-        if not isinstance(other, Money):
-            return NotImplemented
-        if self.currency != other.currency:
-            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+    def __le__(self, other: "Money"):
+        self._check(other)
         return self.amount <= other.amount
 
-    def __eq__(self, other):
-        if not isinstance(other, Money):
-            return NotImplemented
-        if self.currency != other.currency:
-            raise ValueError(f"Currency mismatch: {self.currency} != {other.currency}")
+    def __eq__(self, other: object):
+        self._check(other)
         return self.amount == other.amount
 
-
-    def __mul__(self, factor: float):
-        return Money(currency=self.currency, amount=self.amount * factor)
+    def __mul__(self, factor):
+        val = self._quantize(self.amount * Decimal(str(factor)))
+        return Money(currency=self.currency, amount=val)
+    
+    def __truediv__(self, factor):
+        val = self._quantize(self.amount / Decimal(str(factor)))
+        return Money(currency=self.currency, amount=val)
 
     def __str__(self):
         return self.to_text()
@@ -116,21 +202,18 @@ class LocalizedMoney(BaseModel):
     def empty_base(cls) -> "LocalizedMoney":
         return cls(data={cur: Money(currency=cur, amount=0.0) for cur in SUPPORTED_CURRENCIES})
     
-    def get_amount(self, cur: str) -> float:
+    def get_amount(self, cur: str) -> Decimal:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
 
     def get_money(self, cur: str) -> Money:
         return self.data.get(cur, Money(currency=cur, amount=0.0))
     
-    def set_amount(self, curency: str, amount: float):
+    def set_amount(self, curency: str, amount: Decimal):
         self.data[curency] = Money(currency=curency, amount=amount)
 
     def to_text(self, currency: str) -> str:
-        if money := self.data.get(currency):
-            return str(money)
-        
-        template = SUPPORTED_CURRENCIES.get(currency, f"{{amount}}{currency}")
-        return template.format(amount=0)
+        if money := self.data.get(currency): return money.to_text()
+        return Money(currency=currency, amount=0.0).to_text()
     
     def to_text_all(self) -> str:
         return ", ".join(self.to_text(cur) for cur in self.data)
@@ -163,12 +246,12 @@ class LocalizedMoney(BaseModel):
             return LocalizedMoney(data=self.data.copy())
         return self.__add__(other)
 
-    def __mul__(self, factor: float) -> "LocalizedMoney":
+    def __mul__(self, factor) -> "LocalizedMoney":
         return LocalizedMoney(
             data={cur: money * factor for cur, money in self.data.items()}
         )
 
-    def __imul__(self, factor: float) -> "LocalizedMoney":
+    def __imul__(self, factor) -> "LocalizedMoney":
         for cur in self.data:
             self.data[cur] = self.data[cur] * factor
         return self
@@ -247,7 +330,11 @@ class OrderState(BaseModel):
         
 class Discount(BaseModel):
     dicount_type: DiscountType  # тип действия: фиксированная сумма или процент
-    value: LocalizedMoney | float     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
+    value: LocalizedMoney | float | DecimalAnnotation     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
+    
+    @field_validator("value", mode="before")
+    def convert_decimal(cls, v):
+        return v if isinstance(v, LocalizedMoney) or isinstance(v, Decimal) else Decimal(str(v))
 
     def get_discount(self, amount: Money | LocalizedMoney) -> Money | LocalizedMoney:
         if isinstance(amount, LocalizedMoney):
@@ -259,15 +346,14 @@ class Discount(BaseModel):
             )
         
         if self.dicount_type == DiscountType.percent:
-            discount = amount.amount * (self.value / 100)
-            discount = round(min(discount, amount.amount), 2)
-            return Money(currency=amount.currency, amount=max(discount, 0.0))
+            discount = amount.amount * (self.value / Decimal("100"))
+            discount = min(discount, amount.amount)
+            return Money(currency=amount.currency, amount=max(discount, Decimal("0")))
         elif self.dicount_type == DiscountType.fixed:
             discount = min(self.value.get_amount(amount.currency), amount.amount)
-            discount = round(discount, 2)
-            return Money(currency=amount.currency, amount=max(discount, 0.0))
+            return Money(currency=amount.currency, amount=max(discount, Decimal("0")))
         # если тип не распознан — скидка 0
-        return Money(currency=amount.currency, amount=0.0)
+        return Money(currency=amount.currency, amount=Decimal("0"))
 
 
 __all__ = ["SecureValue", "Money", "LocalizedMoney", "LocalizedString", "LocalizedEntry", "LocalizedSavedMedia", "OrderState", "Discount", "SavedTMessage"]
