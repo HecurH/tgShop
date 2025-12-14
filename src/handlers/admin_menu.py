@@ -104,11 +104,7 @@ async def orders_ask_id_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
     if text == "Список активных заказов":
-        active_orders = await ctx.services.db.orders.find_by({"state.key": {"$ne": OrderStateKey.received}})
-        for order in active_orders:
-            await ctx.message.answer(await AdminTextGen.order_menu_text(order, ctx))
-            await asyncio.sleep(0.3)
-        
+        await ctx.message.answer(await AdminTextGen.active_orders_menu_text(ctx))
         await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
         return
     
