@@ -134,7 +134,7 @@ class AdminKBs:
                     types.KeyboardButton(text="Список активных заказов")
                 ],
                 [
-                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.cancel)
                 ]
             ]
             return types.ReplyKeyboardMarkup(keyboard=kb,
