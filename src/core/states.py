@@ -1,3 +1,4 @@
+import logging
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import ReplyKeyboardRemove
 from typing import Callable, Dict, Any, Awaitable, Tuple, Union, List
@@ -67,6 +68,7 @@ async def call_state_handler(state: State,
         await handler(ctx=ctx, **kwargs)
 
     except Exception as e:
+        logging.getLogger(__name__).exception(f"Error in state handler: {e}")
         await ctx.message.answer(f"Error: {e}")
         if state != CommonStates.MainMenu:
             await call_state_handler(CommonStates.MainMenu, ctx)

@@ -114,4 +114,4 @@ async def global_error_handler(event: ErrorEvent):
         elif hasattr(event.update, "callback_query") and event.update.callback_query:
             await event.update.callback_query.answer("Произошла ошибка. Пожалуйста, попробуйте позже.", show_alert=True)
 
-    logging.getLogger(__name__).exception("Ошибка в хендлере:")
+    logging.getLogger(__name__).exception(f"Ошибка в хендлере: {event.exception}")
