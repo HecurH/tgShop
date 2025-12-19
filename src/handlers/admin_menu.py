@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import replace
 import datetime
 from decimal import Decimal
 import re
@@ -93,6 +94,16 @@ async def customer_menu_handler(_, ctx: Context):
         await customer.save_in_fsm(ctx, "customer")
         
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer, send_before="Успешно.")
+    elif text == "История сообщений":
+        msgs = await ctx.fsm.storage.get_value(storage_key=replace(ctx.fsm.key, chat_id=customer.user_id, user_id=customer.user_id), 
+                                  dict_key="messages_log", 
+                                  default=[])
+        
+        for msg in msgs:
+            await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=customer.user_id, message_id=msg)
+            await asyncio.sleep(0.3)
+        
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
     else:
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
         

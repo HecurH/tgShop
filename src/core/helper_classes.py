@@ -30,8 +30,9 @@ if TYPE_CHECKING:
 CRYPTO_KEY = base64.b64decode(getenv("CRYPTO_KEY").encode("utf-8"))
 
 class MessageWrapper:
-    def __init__(self, message: Message):
+    def __init__(self, message: Message, ctx: "Context"):
         self._message = message
+        self._ctx = ctx
         
     async def answer(self, text, *args, **kwargs):
         parts = split_message(text, 4096)
@@ -51,6 +52,7 @@ class MessageWrapper:
             if not is_last:
                 await asyncio.sleep(0.4)
             
+            self._ctx.update_messages_log(result)
             result_messages.append(result)
         
         return result_messages[-1] if result_messages else None
@@ -153,7 +155,7 @@ class Context:
     @property
     def message(self) -> Message:
         attr: Message = getattr(self.event, "message", self.event)
-        return MessageWrapper(attr)
+        return MessageWrapper(attr, self)
         
     
     async def parse_user_input(self, text: Optional[str] = None):
@@ -193,9 +195,6 @@ class Context:
         push(messages_log, message.message_id)
 
         await self.fsm.update_data(messages_log=messages_log)
-
-    async def get_messages_log(self) -> list[int]:
-        return await self.fsm.get_value("messages_log") or []
     
     async def get_last_bot_message(self) -> Optional[Message]:
         last_bot_message = await self.fsm.get_value("last_bot_message")

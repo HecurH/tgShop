@@ -83,7 +83,10 @@ class AdminKBs:
                     types.KeyboardButton(text="Написать сообщение")
                 ],
                 [
-                    types.KeyboardButton(text="Разблокировать" if customer.banned else "Заблокировать"),
+                    types.KeyboardButton(text="Разблокировать" if customer.banned else "Заблокировать")
+                ],
+                [
+                    types.KeyboardButton(text="История сообщений")
                 ],
                 [
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
