@@ -52,7 +52,7 @@ class MessageWrapper:
             if not is_last:
                 await asyncio.sleep(0.4)
             
-            self._ctx.update_messages_log(result)
+            await self._ctx.update_messages_log(result)
             result_messages.append(result)
         
         return result_messages[-1] if result_messages else None
