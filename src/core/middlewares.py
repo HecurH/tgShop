@@ -1,3 +1,4 @@
+import logging
 from os import getenv
 from typing import Any, Optional
 import time
@@ -64,6 +65,11 @@ class ContextMiddleware(BaseMiddleware):
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
+        try:
+            if hasattr(event, "message"): await data["ctx"].update_messages_log(event.message)
+        except Exception as e: 
+            logging.getLogger(__name__).exception(f"Failed to update messages log: {e}")
+        
         return await handler(event, data)
     
     async def stop(self):

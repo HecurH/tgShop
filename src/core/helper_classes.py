@@ -183,6 +183,20 @@ class Context:
 
         return text
     
+    async def update_messages_log(self, message: Message):
+        messages_log: list[int] = await self.fsm.get_value("messages_log") or []
+        def push(buf, x, limit=30):
+            buf.append(x)
+            if len(buf) > limit:
+                del buf[0]
+                
+        push(messages_log, message.message_id)
+
+        await self.fsm.update_data(messages_log=messages_log)
+
+    async def get_messages_log(self) -> list[int]:
+        return await self.fsm.get_value("messages_log") or []
+    
     async def get_last_bot_message(self) -> Optional[Message]:
         last_bot_message = await self.fsm.get_value("last_bot_message")
         
