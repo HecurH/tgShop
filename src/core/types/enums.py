@@ -36,3 +36,11 @@ class OrderStateKey(str, Enum):
     
     sent = "sent"
     received = "received"
+
+__all__ = [
+    "MediaType",
+    "DiscountType",
+    "InviterType",
+    "PromocodeCheckResult",
+    "OrderStateKey"
+]

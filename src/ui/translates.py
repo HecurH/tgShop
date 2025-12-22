@@ -2,7 +2,7 @@ import logging
 from types import SimpleNamespace
 from typing import ClassVar, Optional, Type
 
-from configs.supported import SUPPORTED_LANGUAGES_TEXT
+from configs.languages import SUPPORTED_LANGUAGES_TEXT
 from core.services.placeholders import PlaceholderManager
 
 class TranslationField:
@@ -1349,6 +1349,12 @@ class CartTranslates(Translatable):
 
 Поскольку это не автоматизируемый метод оплаты, произведенный Вами платеж будет проверен вручную. (Вам будет выслано уведомление)
 После оплаты заказа нажмите соответствующую кнопку ниже:""",
+            "en": """You have selected payment <b>{payment_method_name}</b>.
+For payment, use the details below:
+{payment_method_details}
+
+Since this is not an automated payment method, the payment you make will be checked manually. (You will receive a notification)
+After paying for the order, click the corresponding button below:"""
         }
         
         manual_payment_confirmation_sended = {

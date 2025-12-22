@@ -7,14 +7,15 @@ from aiogram.types import BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
-from configs.supported import SUPPORTED_LANGUAGES_TEXT
 from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from schemas.enums import InviterType, OrderStateKey, MediaType
-from schemas.types import LocalizedMoney, LocalizedString, LocalizedSavedMedia, LocalizedEntry
+from core.types.enums import InviterType, OrderStateKey
+from core.types.values import LocalizedSavedMedia
+from core.types.values import LocalizedEntry
+from core.types.values import LocalizedMoney, LocalizedString
 from ui.message_tools import list_commands
 
 router = Router(name="admin")

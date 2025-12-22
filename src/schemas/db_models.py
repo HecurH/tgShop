@@ -5,16 +5,21 @@ import logging
 import re
 from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING
 
+from aiogram.types import Message
+
 from pydantic import BaseModel, Field
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
-from configs.payments import SUPPORTED_PAYMENT_METHODS
+from registry.currencies import SUPPORTED_CURRENCIES
+from registry.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
-from configs.supported import DAYS_BEFORE_CHANGE_CURRENCY, SUPPORTED_CURRENCIES
+from configs.languages import DAYS_BEFORE_CHANGE_CURRENCY
 from core.helper_classes import Context
-from schemas.enums import InviterType, OrderStateKey, PromocodeCheckResult
-from schemas.payment_models import PaymentMethod
-from schemas.types import *
+from core.types.values import Discount
+from core.types.enums import InviterType, OrderStateKey, PromocodeCheckResult
+from schemas.entities.payment import PaymentMethod
+from core.types.values import *
+from ui.translates import EnumTranslates
 
 if TYPE_CHECKING:
     from core.services.db import DatabaseService
@@ -94,6 +99,28 @@ class OrderPriceDetails(AppBaseModel):
         reward = self.total_price * REFERRALS_FIRST_ORDER_PERCENT
         return reward
     
+
+class OrderState(BaseModel):
+    key: OrderStateKey
+    comment: list[SavedTMessage] = Field(default_factory=list)
+
+    def get_localized_name(self, lang: str) -> str:
+        return EnumTranslates.OrderStateKey.translate(self.key.value, lang)
+    
+    def set_state(self, key: OrderStateKey):
+        self.key = key 
+        
+    def add_comment(self, message: Message) -> SavedTMessage:
+        tmsg = SavedTMessage(chat_id=message.chat.id, message_id=message.message_id)
+        self.comment.append(tmsg)
+        return tmsg
+        
+    def get_comments(self):
+        return self.comment
+    
+    def __eq__(self, value):
+        return self.key == value    
+
 class Order(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     puid: Optional[str] = None

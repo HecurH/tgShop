@@ -1,8 +1,6 @@
 import asyncio
 import re
-from typing import TYPE_CHECKING, Optional
-
-
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from schemas.db_models import PlaceholdersRepository

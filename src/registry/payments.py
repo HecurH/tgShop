@@ -1,5 +1,5 @@
-from schemas.payment_models import PaymentMethod, PaymentMethodsRepository
-from schemas.types import LocalizedString
+from schemas.entities.payment import PaymentMethod, PaymentMethodsRepository
+from core.types.values import LocalizedString
 
 SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
     # "manual_sbp": PaymentMethod(
@@ -57,3 +57,5 @@ SUPPORTED_PAYMENT_METHODS = PaymentMethodsRepository({
         manual=True
     ),
 })
+
+__all__ = ["SUPPORTED_PAYMENT_METHODS"]

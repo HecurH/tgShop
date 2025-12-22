@@ -6,7 +6,6 @@ from typing import Callable, Dict, Any, Awaitable, Tuple, Union, List
 from ui.message_tools import clear_keyboard_effect, send_media_response
 from ui.texts import *
 from ui.keyboards import *
-from ui.translates import ProfileTranslates
 
 
 class StateHandlerRegistry:

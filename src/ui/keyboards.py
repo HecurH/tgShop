@@ -2,14 +2,15 @@ from typing import Iterable, Optional
 from aiogram import types
 from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
 
-from configs.payments import SUPPORTED_PAYMENT_METHODS
+from registry.currencies import SUPPORTED_CURRENCIES
+from registry.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.enums import OrderStateKey
-from schemas.types import LocalizedMoney
+from core.types.enums import OrderStateKey
+from core.types.values import LocalizedMoney
 from ui.message_tools import strike
 
-from configs.supported import SUPPORTED_CURRENCIES, SUPPORTED_LANGUAGES_TEXT
+from configs.languages import SUPPORTED_LANGUAGES_TEXT
 from ui.translates import EnumTranslates, ReplyButtonsTranslates, UncategorizedTranslates
 
 class CommonKBs:

@@ -2,10 +2,10 @@ from typing import Iterable
 from aiogram import Router
 from schemas.db_models import *
 
-from configs.supported import DAYS_BEFORE_CHANGE_CURRENCY, SUPPORTED_LANGUAGES_TEXT
+from configs.languages import DAYS_BEFORE_CHANGE_CURRENCY, SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, ProfileStates, call_state_handler
-from ui.translates import ProfileTranslates, ReplyButtonsTranslates, TranslatorHub, UncategorizedTranslates
+from ui.translates import ReplyButtonsTranslates, TranslatorHub, UncategorizedTranslates
 
 router = Router(name="profile")
 

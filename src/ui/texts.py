@@ -4,11 +4,11 @@ import json
 from typing import Iterable, Optional
 from aiogram import html
 
-from configs.payments import SUPPORTED_PAYMENT_METHODS
+from registry.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from schemas.enums import DiscountType, InviterType, OrderStateKey
-from schemas.types import LocalizedMoney
+from core.types.enums import DiscountType, InviterType, OrderStateKey
+from core.types.values import LocalizedMoney
 from ui.message_tools import build_list
 
 

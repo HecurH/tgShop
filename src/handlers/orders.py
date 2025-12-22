@@ -4,7 +4,7 @@ from aiogram import Router
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, OrderStates, call_state_handler
 from schemas.db_models import Order, OrderPriceDetails
-from schemas.enums import OrderStateKey
+from core.types.enums import OrderStateKey
 from ui.translates import ReplyButtonsTranslates
 
 

@@ -1,12 +1,14 @@
 from os import getenv
 from schemas.db_models import CartEntry, Order
-from schemas.types import Money
+from core.types.values import Money
 
 from MoyNalogAPI import AsyncMoyNalog
 from MoyNalogAPI.schemas import Client, Service
 
 import asyncio
 from datetime import datetime
+
+from core.types.values import Money
 
 
 class TaxSystem:
@@ -30,7 +32,7 @@ class TaxSystem:
                 raise last_exc
 
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
-        from schemas.types import LocalizedMoney, Money
+        from core.types.values import LocalizedMoney
         entry_prices = [
             (entry.configuration.price + entry.frozen_product.price) * entry.quantity
             for entry in cart_entries
@@ -59,7 +61,7 @@ class TaxSystem:
         return discounts
 
     async def invoice_by_order(self, cart_entries: list["CartEntry"], order: "Order", operation_time: datetime) -> str | list[str]:
-        from schemas.types import Money
+        from core.types.values import Money
         price_details = order.price_details
 
         services = []

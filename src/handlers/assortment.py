@@ -1,7 +1,5 @@
 from aiogram import Router
-from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, LabeledPrice, CallbackQuery
+from aiogram.types import Message, CallbackQuery
 
 from ui.texts import AssortmentTextGen
 from core.helper_classes import Context

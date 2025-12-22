@@ -8,7 +8,8 @@ from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
 from schemas.db_models import Customer, Order, DeliveryInfo
-from schemas.types import Money, SavedTMessage
+from core.types.values import SavedTMessage
+from core.types.values import Money
 from ui.keyboards import UncategorizedKBs
 
 from core.helper_classes import Context, MessageWrapper

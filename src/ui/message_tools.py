@@ -6,11 +6,11 @@ from aiogram.types import Message, InputMediaPhoto, ReplyKeyboardRemove, \
     InlineKeyboardMarkup, ReplyKeyboardMarkup, InputMediaVideo
 
 
-from schemas.enums import MediaType
+from core.types.enums import MediaType
 
 
 if TYPE_CHECKING:
-    from schemas.types import LocalizedSavedMedia
+    from core.types.values import LocalizedSavedMedia
     from core.helper_classes import Context
 
 

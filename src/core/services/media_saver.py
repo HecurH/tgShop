@@ -8,8 +8,8 @@ from typing import Optional, Union
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
 
-from configs.supported import SUPPORTED_LANGUAGES_TEXT
-from schemas.enums import MediaType
+from configs.languages import SUPPORTED_LANGUAGES_TEXT
+from core.types.enums import MediaType
 
 
 class MediaSaver:

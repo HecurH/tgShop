@@ -1,7 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel
-
-from schemas.types import LocalizedString
+from core.types.values import LocalizedString
 
 
 class PaymentMethod(BaseModel):
@@ -28,3 +27,5 @@ class PaymentMethodsRepository:
     
     def get_by_name(self, name, ctx, only_enabled=False, for_currency=True) -> Optional[tuple[str, PaymentMethod]]:
         return next(((key, method) for key, method in self.data.items() if method.name.get(ctx) == name and (not only_enabled or method.enabled) and (not for_currency or method.currency == ctx.customer.currency)), None)
+    
+__all__ = ["PaymentMethod", "PaymentMethodsRepository"]

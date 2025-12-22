@@ -1,5 +1,5 @@
 from decimal import Decimal
-from configs.supported import SUPPORTED_CURRENCIES
+from registry.currencies import SUPPORTED_CURRENCIES
 import aiohttp
 
 import asyncio

@@ -66,7 +66,7 @@ class ContextMiddleware(BaseMiddleware):
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
 
         try:
-            if hasattr(event, "message"): await data["ctx"].update_messages_log(event.message)
+            if hasattr(event, "message") and event.message: await data["ctx"].update_messages_log(event.message)
         except Exception as e: 
             logging.getLogger(__name__).exception(f"Failed to update messages log: {e}")
         
