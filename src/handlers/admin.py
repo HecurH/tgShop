@@ -1351,7 +1351,32 @@ async def addit(_, ctx: Context) -> None:
         requirements_options=[
             DeliveryRequirementsList(
                 name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
-                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.boxberryyandex_delivery_description_description"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.yandex_delivery_description"),
+                requirements=[
+                    DeliveryRequirement(
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
+                    )
+                ]
+            )
+        ]
+    )
+    
+    ozon_delivery = DeliveryService(
+        name=LocalizedString(data={
+            "ru":"Ozon Доставка",
+            "en":"Ozon Delivery"
+            }
+        ),
+        price=LocalizedMoney.from_keys(RUB=200.0, USD=3.0),
+        requirements_options=[
+            DeliveryRequirementsList(
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.ozon_delivery_description"),
                 requirements=[
                     DeliveryRequirement(
                         name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
@@ -1366,62 +1391,14 @@ async def addit(_, ctx: Context) -> None:
         ]
     )
 
-    # ozon_delivery = DeliveryService(
-    #     name=LocalizedString(data={
-    #         "ru":"Ozon Доставка",
-    #         "en":"Ozon Delivery"
-    #         }
-    #     ),
-    #     price=LocalizedMoney.from_keys(RUB=200.00, USD=3.00),
-    #     requirements_options=[
-    #         DeliveryRequirementsList(
-    #             name=LocalizedString(data={
-    #                 "ru":"По номеру телефона и адресу ПВЗ",
-    #                 "en":""
-    #                 }
-    #             ),
-    #             description=LocalizedString(data={
-    #                 "ru":"описание чего-то там не знаю чего",
-    #                 "en":"сначала на русском текст нормально надо"
-    #                 }
-    #             ),
-    #             requirements=[
-    #                 DeliveryRequirement(
-    #                     name=LocalizedString(data={
-    #                         "ru":"Номер телефона",
-    #                         "en":"Phone number"
-    #                         }
-    #                     ),
-    #                     description=LocalizedString(data={
-    #                         "ru":"пишите номер в формате +7xxxxxxxxxx",
-    #                         "en":"на русском сначала блин давай"
-    #                         }
-    #                     )
-    #                 ),
-    #                 DeliveryRequirement(
-    #                     name=LocalizedString(data={
-    #                         "ru":"Полный адрес пункта выдачи",
-    #                         "en":""
-    #                         }
-    #                     ),
-    #                     description=LocalizedString(data={
-    #                         "ru":"При написании адреса не забудьте перепроверить все ишак дражайший вы наш",
-    #                         "en":"на русском сначала блин давай"
-    #                         }
-    #                     )
-    #                 )
-    #             ]
-    #         ) 
-    #     ]
-    # )
 
 
-    await ctx.services.db.delivery_services.save(service)
+    # await ctx.services.db.delivery_services.save(service)
     # await ctx.services.db.delivery_services.save(cdek)
-    await ctx.services.db.delivery_services.save(boxberry)
-    await ctx.services.db.delivery_services.save(universal_international)
-    await ctx.services.db.delivery_services.save(ya_delivery)
-    # await ctx.services.db.delivery_services.save(ozon_delivery)
+    # await ctx.services.db.delivery_services.save(boxberry)
+    # await ctx.services.db.delivery_services.save(universal_international)
+    # await ctx.services.db.delivery_services.save(ya_delivery)
+    await ctx.services.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))
 async def add_additionals_handler(_, ctx: Context) -> None:

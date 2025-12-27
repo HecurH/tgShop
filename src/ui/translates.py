@@ -334,6 +334,11 @@ class DBEntryTranslates(Translatable):
                     "ru": "Оформление доставки в один из пунктов выдачи Яндекс Доставки.",
                     "en": "Delivery to one of the Yandex Delivery pick-up points."
                 }
+                
+                ozon_delivery_description = {
+                    "ru": "Оформление доставки в один из пунктов выдачи Ozon Доставки.",
+                    "en": "Delivery to one of the Ozon Delivery pick-up points."
+                }
 
                 class Requirements(Translatable):
                     class PhoneNumber(Translatable):
