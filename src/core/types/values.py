@@ -1,6 +1,9 @@
 import base64
 from binascii import Error as BinasciiError
+import json
 from typing import Dict, Optional
+
+from bson import Decimal128
 from core.helper_classes import Context, Cryptography
 from core.services.placeholders import PlaceholderManager
 from registry.currencies import SUPPORTED_CURRENCIES
@@ -101,6 +104,9 @@ class LocalizedMoney(BaseModel):
     @classmethod
     def empty_base(cls) -> "LocalizedMoney":
         return cls(data={cur: Money(currency=cur, amount=0.0) for cur in SUPPORTED_CURRENCIES})
+    
+    def to_json(self) -> str:
+        return json.dumps(self.model_dump(), ensure_ascii=False, default=lambda o: float(o if isinstance(o, Decimal) else o.to_decimal()) if isinstance(o, (Decimal, Decimal128)) else o)
 
     def get_amount(self, cur: str) -> Decimal:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
