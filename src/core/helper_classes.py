@@ -34,6 +34,13 @@ class MessageWrapper:
         self._message = message
         self._ctx = ctx
         
+    async def delete(self, *args, **kwargs):
+        try:
+            await self._message.delete()
+            return True
+        except Exception:
+            return False
+        
     async def answer(self, text, *args, **kwargs):
         parts = split_message(text, 4096)
         if len(parts) == 1:
