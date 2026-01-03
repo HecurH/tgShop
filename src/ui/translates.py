@@ -743,6 +743,85 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                             "ru": "Выбран <b>Набор #3</b> мягкостей.\nСостоит из трёх тестеров с мягкостью: <b>Невероятно мягкий</b>, <b>Очень мягкий</b>, <b>Мягкий</b>.",
                             "en": "<b>Set #3</b> of firmness levels selected.\nIncludes three testers with firmness: <b>Ultra soft</b>, <b>Very soft</b>, <b>Soft</b>."
                         }
+                        
+            class ChocolateShape(Translatable):
+                name = {
+                    "ru": "Форма",
+                    "en": "Shape"
+                }
+
+                text = {
+                    "ru": "Выберите форму шоколада:",
+                    "en": "Choose the chocolate shape:"
+                }
+
+                class Choices(Translatable):
+                    class Standing(Translatable):
+                        name = {
+                            "ru": "Змейка стоит",
+                            "en": "Snake stands"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Змейка стоит</b>.",
+                            "en": "Selected <b>Snake stands</b> shape."
+                        }
+                    
+                    class Sitting(Translatable):
+                        name = {
+                            "ru": "Змейка сидит",
+                            "en": "Snake sits"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Змейка сидит</b>.",
+                            "en": "Selected <b>Snake sits</b> shape."
+                        }
+                        
+            class ChocolateTaste(Translatable):
+                name = {
+                    "ru": "Вкус",
+                    "en": "Taste"
+                }
+
+                text = {
+                    "ru": "Выберите вкус шоколада:",
+                    "en": "Choose the chocolate taste:"
+                }
+
+                class Choices(Translatable):
+                    class White(Translatable):
+                        name = {
+                            "ru": "Белый",
+                            "en": "White"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали <b>белый</b> шоколад.",
+                            "en": "You have chosen <b>white</b> chocolate."
+                        }
+                    
+                    class Milk(Translatable):
+                        name = {
+                            "ru": "Молочный",
+                            "en": "Milk"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали <b>молочный</b> шоколад.",
+                            "en": "You have chosen <b>milk</b> chocolate."
+                        }
+
+                    class Dark(Translatable):
+                        name = {
+                            "ru": "Тёмный",
+                            "en": "Dark"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали <b>тёмный</b> шоколад.",
+                            "en": "You have chosen <b>dark</b> chocolate."
+                        }
 
             class Color(Translatable):
                 name = {
