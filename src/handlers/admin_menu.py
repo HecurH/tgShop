@@ -151,7 +151,7 @@ async def order_menu_handler(_, ctx: Context):
     text = ctx.message.text
     if not text: return
     if text == ctx.t.UncategorizedTranslates.back:
-        await call_state_handler(AdminStates.Main.Menu, ctx)
+        await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
         return
     
     order: Order = await Order.from_fsm_context(ctx, "order")
