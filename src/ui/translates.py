@@ -1296,8 +1296,8 @@ class AssortmentTranslates(Translatable):
     
 class DiscountedProductsTranslates(Translatable):
     no_discounted_products = {
-        "ru": "На данный момент нет товаров в этой категории.",
-        "en": "There are no products at the moment."
+        "ru": "На данный момент нет товаров в наличии.",
+        "en": "There are no products in stock at the moment."
     }
     
     added_to_cart = {
@@ -1794,7 +1794,7 @@ class ReplyButtonsTranslates(Translatable):
     
     discounted_products = {
         "ru": "В наличии",
-        "en": "Available products"
+        "en": "In stock"
     }
 
     cart = {
