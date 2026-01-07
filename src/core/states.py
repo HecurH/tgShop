@@ -129,6 +129,7 @@ async def handle_admin_customers_menu(ctx: Context, customer: Customer, **_):
     
 @state_handlers.register(AdminStates.Main.Orders.AskId)
 async def handle_admin_orders_ask_id(ctx: Context, **_):
+    await ctx.message.answer(await AdminTextGen.active_orders_menu_text(ctx))
     await ctx.message.answer("Введите ID заказа либо попытайтесь найти по PUIDу (начинать с #):", reply_markup=AdminKBs.Orders.orders_menu(ctx))
     
 @state_handlers.register(AdminStates.Main.Orders.OrderMenu)
