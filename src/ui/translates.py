@@ -830,8 +830,8 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                 }
 
                 text = {
-                    "ru": "Учтите, все изображения несут информационный характер, итоговое изделие может иметь незначительные отличия.\nВыберите окрас изделия:",
-                    "en": "Please note that all images are informational in nature, and the final product may have minor differences.\nChoose the color of the product:"
+                    "ru": "Учтите, все изображения несут информационный характер, итоговое изделие может иметь отличия.\nВыберите окрас изделия:",
+                    "en": "Please note that all images are informational in nature, and the final product may have differences.\nChoose the color of the product:"
                 }
                 
                 class Choices(Translatable):
