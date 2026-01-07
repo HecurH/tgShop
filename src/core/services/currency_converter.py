@@ -78,7 +78,7 @@ class AsyncCurrencyConverter:
                 if "rates" not in data:
                     raise ValueError(f"No 'rates' in API response for {currency}")
                 return data["rates"]
-        except (aiohttp.ClientError, asyncio.TimeoutError, ValueError) as e:
+        except Exception as e:
             self._logger.error(f"Error fetching rates for {currency}: {e}")
             raise RuntimeError(f"Could not fetch rates for {currency}") from e
 
