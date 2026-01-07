@@ -124,7 +124,7 @@ async def discounted_products_menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.DiscountedProducts.Creating, ctx)
     elif text == "Список всех":
         def form_prod_txt(prod: DiscountedProduct):
-            return f"<code>{prod.id}</code> — {prod.name.get("ru")} {prod.price.to_text_all()}"
+            return f"<code>{prod.id}</code> — {prod.name.get('ru')} {prod.price.to_text_all()}"
         
         await ctx.message.answer("\n".join(map(form_prod_txt, await ctx.services.db.discounted_products.find_by({}))) or "Товаров нет.")
         await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
