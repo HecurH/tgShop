@@ -1,13 +1,15 @@
 import asyncio
 from datetime import datetime, timezone
+from decimal import Decimal
 import json
 from typing import Iterable, Optional
 from aiogram import html
+from bson import Decimal128
 
 from registry.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from core.types.enums import DiscountType, InviterType, OrderStateKey
+from core.types.enums import CartItemSource, DiscountType, InviterType, OrderStateKey
 from core.types.values import LocalizedMoney
 from ui.message_tools import build_list
 
@@ -73,16 +75,19 @@ def gen_product_configurable_info_text(
         
         selected_options += build_list([gen_additional_text(additional) for additional in additionals], '•', 2)
 
-    return f"{ctx.t.AssortmentTranslates.currently_selected}\n{selected_options}"
+    return f"{ctx.t.AssortmentTranslates.currently_selected}\n{selected_options}" if selected_options else ""
 
-async def form_entry_description(entry, ctx):
-    product: Product = await ctx.services.db.products.find_one_by_id(entry.product_id)
+async def form_entry_description(entry: CartEntry, ctx):
+    is_product = entry.source_type == CartItemSource.product
+    
+    product: Product = await ctx.services.db.products.find_one_by_id(entry.source_id) if is_product else None
+    
     quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
-    price = product.price + entry.configuration.price
+    price = (product.price + entry.configuration.price) if is_product else entry.frozen_snapshot.price
     price_text = price.to_text(ctx.customer.currency)
     price_text = f"{price_text} * {entry.quantity} = {(price*entry.quantity).to_text(ctx.customer.currency)}" if entry.quantity != 1 else price_text
     
-    return f"{product.name.get(ctx)}{quantity_text} — {price_text}"
+    return f"{product.name.get(ctx) if product else entry.frozen_snapshot.name.get(ctx)}{quantity_text} — {price_text}"
 
 
 class AdminTextGen:
@@ -146,8 +151,15 @@ class AdminTextGen:
             text += f"<b>Заказ <code>{order.id}</code></b> от {order.id.generation_time.strftime('%d.%m.%Y %H:%M UTC')}\n"
             text += f"  Статус заказа: {order.state.get_localized_name(ctx.lang)}\n"
             entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-            products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
-            entries_text = ", ".join([pr.name.get(ctx) for pr in products])
+            products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]}})
+            names = [pr.name.get(ctx) for pr in products]
+            names.extend(
+                ent.frozen_snapshot.name.get(ctx)
+                for ent in entries
+                if ent.source_type == CartItemSource.discounted
+            )
+            
+            entries_text = ", ".join(names)
             
             text += f"  Содержимое: {entries_text}\n\n"
             
@@ -156,7 +168,7 @@ class AdminTextGen:
     @staticmethod
     async def order_menu_text(order: Order, ctx: Context):
         customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
-        order_viewing_menu = """<b>Заказ {order_id}</b> от {order_forming_date}, <a href=\"tg://user?id={user_id}\">покупатель</a>
+        order_viewing_menu = """<b>Заказ {order_id}</b> от {order_forming_date}, <a href=\"tg://user?id={user_id}\">покупатель</a> ({user_id})
 {order_entries_description}        
 
 Статус заказа: {order_status}{delivery_info}{payment_method}{promocode_info}{bonus_money_info}
@@ -167,13 +179,18 @@ class AdminTextGen:
 
         entries_description = ""
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        
+        products = await ctx.services.db.products.find_by_entries(entries)
         products_dict = {product.id: product for product in products}
 
         for idx, entry in enumerate(entries):
-            if product := products_dict.get(entry.product_id):
-                entries_description += f"{idx+1} ({entry.quantity} шт.): {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
-        
+            if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):
+                amount_price = f"{entry.quantity} шт. — {entry.calculate_price(product).to_text('RUB')}" if entry.quantity > 1 else entry.calculate_price(product).to_text('RUB')
+                
+                entries_description += f"{idx+1} ({amount_price}): {product.name.get('ru')}:\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+            elif entry.source_type == CartItemSource.discounted:
+                entries_description += f"{idx+1} ({entry.calculate_price().to_text('RUB')}): {entry.frozen_snapshot.name.get('ru')}:\n{entry.frozen_snapshot.description.get('ru')}\n\n"
+                
         delivery_info = order.delivery_info
         delivery_description = ""
         if delivery_info:
@@ -209,8 +226,9 @@ class AdminTextGen:
     
     @staticmethod
     def price_confirmation_text(entries: list[CartEntry], ctx: Context):
-        entries_desc = "\n".join(f"{idx} — {entry.frozen_product.name.get('ru')}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nПолная стоимость: {(entry.frozen_product.price + entry.configuration.price).to_text_all()};" for idx, entry in enumerate(entries))
-        next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump()}for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False)}" for idx, entry in enumerate(entries))
+        
+        entries_desc = "\n".join(f"{idx} — {entry.frozen_snapshot.name.get('ru')}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nПолная стоимость: {(entry.calculate_price(entry.frozen_snapshot)).to_text_all()};" for idx, entry in enumerate(entries))
+        next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump()}for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False, default=lambda o: float(o if isinstance(o, Decimal) else o.to_decimal()) if isinstance(o, (Decimal, Decimal128)) else o)}" for idx, entry in enumerate(entries))
 
 
         return f"{entries_desc}\n\nИзмени цену конфигурации для товаров относительно их айди\n\n<code>{next_input_info}</code>"
@@ -339,6 +357,17 @@ class AssortmentTextGen:
     def gen_blocked_choice_path_text(choice_or_switch: ConfigurationChoice | ConfigurationSwitch, configuration: ProductConfiguration, ctx: Context):
         return " —> ".join(configuration.get_localized_names_by_path(choice_or_switch.get_blocking_path(configuration.options), ctx))
 
+class DiscountedProductsGen:
+    @staticmethod
+    def generate_discounted_product_text(discounted_product: DiscountedProduct, ctx: Context):
+        dprod_name = discounted_product.name.get(ctx)
+        dprod_price = discounted_product.price.to_text(ctx.customer.currency)
+        dprod_description = discounted_product.description.get(ctx)
+        
+        return f"{dprod_name} — {dprod_price}\n\n{dprod_description}" if discounted_product.description else f"{dprod_name} — {dprod_price}"
+    
+        
+
 class ProfileTextGen:
     
     @staticmethod
@@ -383,15 +412,18 @@ class ProfileTextGen:
 
 class CartTextGen:
     @staticmethod
-    def generate_cart_viewing_caption(entry: CartEntry, product: Product, configuration: ProductConfiguration, ctx: Context):
+    def generate_cart_viewing_caption(entry: CartEntry, product: Optional[Product], configuration: Optional[ProductConfiguration], ctx: Context):
+        is_product = entry.source_type == CartItemSource.product
         
-        configuration_price = product.price + entry.configuration.price
+        source_name = product.name.get(ctx) if is_product else entry.frozen_snapshot.name.get(ctx)
+        
+        configuration_price = product.price + entry.configuration.price if is_product else entry.frozen_snapshot.price
         configuration_price_text = configuration_price.to_text(ctx.customer.currency)
         total_price = (configuration_price * entry.quantity).to_text(ctx.customer.currency)
         
         price_text = f"{configuration_price_text} * {entry.quantity} = {total_price}" if entry.quantity != 1 else configuration_price_text
         
-        return ctx.t.CartTranslates.cart_view_menu.format(name=product.name.get(ctx), price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx))
+        return ctx.t.CartTranslates.cart_view_menu.format(name=source_name, price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx) if is_product else entry.frozen_snapshot.description.get(ctx))
 
     @staticmethod
     async def generate_cart_price_confirmation_caption(order: Order, ctx: Context):

@@ -273,11 +273,6 @@ class EnumTranslates(Translatable):
             "en": "Accepted"
         }
         
-        waiting_for_photo = {
-            "ru": "Ожидает фотографии",
-            "en": "Waiting for photo"
-        }
-        
         assembled_waiting_for_send = {
             "ru": "Собран, ожидает отправки",
             "en": "Assembled, waiting to be shipped"
@@ -1299,6 +1294,22 @@ class AssortmentTranslates(Translatable):
         "en": "The cart cannot contain more than 10 items."
     }
     
+class DiscountedProductsTranslates(Translatable):
+    no_discounted_products = {
+        "ru": "На данный момент нет уцененных товаров.",
+        "en": "There are no discounted products at the moment."
+    }
+    
+    added_to_cart = {
+        "ru": "Товар успешно добавлен в корзину!",
+        "en": "The product has been successfully added to the cart!"
+    }
+    
+    already_in_cart = {
+        "ru": "Этот товар уже находится в корзине!",
+        "en": "This product is already in the cart!"
+    }
+    
 class CartTranslates(Translatable):
     no_products_in_cart = {
         "ru": "В Вашей корзине нет товаров!",
@@ -1780,6 +1791,11 @@ class ReplyButtonsTranslates(Translatable):
         "ru": "Ассортимент",
         "en": "Assortment"
     }
+    
+    discounted_products = {
+        "ru": "Уценка",
+        "en": "Discounted"
+    }
 
     cart = {
         "ru": "Корзина",
@@ -1815,6 +1831,12 @@ class ReplyButtonsTranslates(Translatable):
         extra_options = {
             "ru": "Доп. опции",
             "en": "Ext. Options"
+        }
+        
+    class DiscountedProducts(Translatable):
+        add_to_cart = {
+            "ru": "Добавить в корзину",
+            "en": "Add to cart"
         }
     
     class Cart(Translatable):
@@ -1958,6 +1980,7 @@ class TypedTranslatorHub(TranslatorHub):
     UncategorizedTranslates: UncategorizedTranslates
     CommonTranslates: CommonTranslates
     AssortmentTranslates: AssortmentTranslates
+    DiscountedProductsTranslates: DiscountedProductsTranslates
     CartTranslates: CartTranslates
     OrdersTranslates: OrdersTranslates
     ProfileTranslates: ProfileTranslates

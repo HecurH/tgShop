@@ -19,6 +19,7 @@ class DatabaseService:
         self.delivery_services = DeliveryServicesRepository(self)
         self.customers = CustomersRepository(self)
         self.products = ProductsRepository(self)
+        self.discounted_products = DiscountedProductsRepository(self)
         self.additionals = AdditionalsRepository(self)
         self.categories = CategoriesRepository(self)
         self.inviters = InvitersRepository(self)

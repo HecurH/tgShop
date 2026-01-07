@@ -3,7 +3,7 @@ from registry.payments import SUPPORTED_PAYMENT_METHODS
 from schemas.db_models import CartEntry, Order, Promocode
 from core.helper_classes import Context
 from core.states import CartStates, CommonStates, ProfileStates, call_state_handler
-from core.types.enums import OrderStateKey, PromocodeCheckResult
+from core.types.enums import CartItemSource, OrderStateKey, PromocodeCheckResult
 from ui.translates import *
 
 router = Router(name="cart")
@@ -43,7 +43,7 @@ async def cart_viewer_handler(_, ctx: Context):
                                 current=new_order)
     elif text in ['➖', '➕']:
         entry: CartEntry = await ctx.services.db.cart_entries.find_customer_cart_entry_by_id(ctx.customer, current-1)
-        if entry:
+        if entry and entry.source_type == CartItemSource.product:
             if text == '➖':
                 if entry.quantity == 1:
                     await call_state_handler(CartStates.EntryRemoveConfirm, ctx)
@@ -125,6 +125,14 @@ async def cart_price_confirmation_handler(_, ctx: Context):
     
     await ctx.services.db.orders.save(order)
     await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
+    
+    entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+        
+    disounted_products_ids = [ent.source_id for ent in entries if ent.source_type == CartItemSource.discounted]
+    for disounted_product_id in disounted_products_ids:
+        await ctx.services.db.discounted_products.delete_by_id(disounted_product_id)
+        await ctx.services.db.cart_entries.delete_discounted_product_from_carts(disounted_product_id)
+    
     await ctx.services.notificators.AdminChatNotificator.send_price_confirmation(order, ctx)
     
     await ctx.fsm.update_data(order=None)
@@ -270,8 +278,14 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
         
         if not entries_assigned: await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)
         
+        entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+        
+        disounted_products_ids = [ent.source_id for ent in entries if ent.source_type == CartItemSource.discounted]
+        for disounted_product_id in disounted_products_ids:
+            await ctx.services.db.discounted_products.delete_by_id(disounted_product_id)
+            await ctx.services.db.cart_entries.delete_discounted_product_from_carts(disounted_product_id)
+
         await ctx.services.notificators.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
         await ctx.fsm.update_data(order=None)
-        
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.manual_payment_confirmation_sended, 1))

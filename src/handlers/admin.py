@@ -12,7 +12,7 @@ from core.services.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
-from core.types.enums import InviterType, OrderStateKey
+from core.types.enums import CartItemSource, InviterType, OrderStateKey
 from core.types.values import LocalizedSavedMedia
 from core.types.values import LocalizedEntry
 from core.types.values import LocalizedMoney, LocalizedString
@@ -187,8 +187,8 @@ async def unform_order_handler(_, ctx: Context, command: CommandObject):
         await ctx.message.answer("Пользователь не найден")
         return
     
-    if order.state != OrderStateKey.waiting_for_manual_payment_confirm:
-        await ctx.message.answer("Заказ не в ожидании подтверждения оплаты")
+    if order.state not in [OrderStateKey.waiting_for_manual_payment_confirm, OrderStateKey.waiting_for_price_confirmation]:
+        await ctx.message.answer("Заказ не в ожидании подтверждения оплаты/цены")
         return
     
     
@@ -211,15 +211,16 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed(customer, order)
     else:
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
-    cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+    entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+    disounted_products = [ent.frozen_snapshot for ent in entries if ent.source_type == CartItemSource.discounted]
+    for disounted_product in disounted_products:
+        await ctx.services.db.discounted_products.save(disounted_product)
+    
+    await ctx.services.db.cart_entries.unassign_cart_entries_from_order(order)
     await ctx.services.db.orders.delete(order)
-    for entry in cart_entries:
-        entry.order_id = None
-        entry.frozen_product = None
     
-    await ctx.services.db.cart_entries.save_many(cart_entries)
-    
-    await ctx.services.db.customers.add_bonus_money(customer, order.price_details.bonuses_applied, ctx)
+    if order.price_details.bonuses_applied:
+        await ctx.services.db.customers.add_bonus_money(customer, order.price_details.bonuses_applied, ctx)
     if order.promocode_id:
         await ctx.services.db.promocodes.update_usage(order.promocode_id, -1)
         
@@ -400,7 +401,6 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
         await ctx.services.notificators.UserTelegramNotificator.send_delivery_price_rejected_with_reason(customer, text)
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Успешно.", 1))
         
-
 @router.message(Command("save_photo"))
 async def photo_saving_handler(_, ctx: Context):
     raw = await ctx.message.bot.download(ctx.message.document)
@@ -1166,14 +1166,17 @@ Five grams is enough to make 200-400ml of prepared lubricant.
             choices={
                 "N1": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N1.name"),
+                    media=LocalizedSavedMedia(media_key="photo_testers_configuration_firmness_kit_n1"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N1.description")
                 ),
                 "N2": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N2.name"),
+                    media=LocalizedSavedMedia(media_key="photo_testers_configuration_firmness_kit_n2"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N2.description")
                 ),
                 "N3": ConfigurationChoice(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N3.name"),
+                    media=LocalizedSavedMedia(media_key="photo_testers_configuration_firmness_kit_n3"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.FirmnessKit.Choices.N3.description")
                 ),
             }
@@ -1368,8 +1371,8 @@ async def addit(_, ctx: Context) -> None:
     
     ozon_delivery = DeliveryService(
         name=LocalizedString(data={
-            "ru":"Ozon Доставка",
-            "en":"Ozon Delivery"
+            "ru":"Ozon Доставка [Только SFW!]",
+            "en":"Ozon Delivery [Only SFW!]"
             }
         ),
         price=LocalizedMoney.from_keys(RUB=200.0, USD=3.0),
@@ -1398,7 +1401,7 @@ async def addit(_, ctx: Context) -> None:
     # await ctx.services.db.delivery_services.save(boxberry)
     # await ctx.services.db.delivery_services.save(universal_international)
     # await ctx.services.db.delivery_services.save(ya_delivery)
-    await ctx.services.db.delivery_services.save(ozon_delivery)
+    # await ctx.services.db.delivery_services.save(ozon_delivery)
 
 @router.message(Command("add_additionals"))
 async def add_additionals_handler(_, ctx: Context) -> None:

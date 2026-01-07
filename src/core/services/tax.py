@@ -1,4 +1,5 @@
 from os import getenv
+from core.types.enums import CartItemSource
 from schemas.db_models import CartEntry, Order
 from core.types.values import Money
 
@@ -34,7 +35,7 @@ class TaxSystem:
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
         from core.types.values import LocalizedMoney
         entry_prices = [
-            (entry.configuration.price + entry.frozen_product.price) * entry.quantity
+            entry.calculate_price(entry.frozen_snapshot)
             for entry in cart_entries
         ]
 
@@ -73,7 +74,7 @@ class TaxSystem:
         entries_list = []
 
         for i, entry in enumerate(cart_entries):
-            total_price_per_item = entry.configuration.price.get_amount(discounts.currency) + entry.frozen_product.price.get_amount(discounts.currency)
+            total_price_per_item = entry.calculate_price(entry.frozen_snapshot).get_amount(discounts.currency)
             remaining_quantity = entry.quantity
             discount_per_item = entry_discounts[i].amount / entry.quantity if entry.quantity else 0
 
@@ -81,7 +82,7 @@ class TaxSystem:
                 chunk_quantity = min(remaining_quantity, 6)
                 chunk_price = total_price_per_item * chunk_quantity - discount_per_item * chunk_quantity
                 entries_list.append([
-                    f"{entry.frozen_product.name_for_tax}",
+                    f"{entry.frozen_snapshot.name_for_tax if entry.source_type == CartItemSource.product else 'Индивидуальная отливка силиконового изделия'}",
                     chunk_price,
                     chunk_quantity
                 ])

@@ -15,15 +15,15 @@ async def assortment_command_handler(_, ctx: Context) -> None:
     await call_state_handler(AssortmentStates.Menu, ctx)
 
 @router.message(AssortmentStates.Menu)
-async def assortment_category_handler(message: Message, ctx: Context) -> None:
-    if message.text in UncategorizedTranslates.back.values():
+async def assortment_category_handler(_, ctx: Context) -> None:
+    if ctx.message.text in UncategorizedTranslates.back.values():
         await call_state_handler(CommonStates.MainMenu,
                                  ctx)
         return
 
     category = next(
         (category.name for category in await ctx.services.db.categories.get_all()
-         if category.localized_name.get(ctx) == message.text),
+         if category.localized_name.get(ctx) == ctx.message.text),
         None  # значение по умолчанию, если ничего не найдено
     )
 
@@ -34,7 +34,6 @@ async def assortment_category_handler(message: Message, ctx: Context) -> None:
     await ctx.fsm.update_data(category=category, current=1)
     await call_state_handler(AssortmentStates.ViewingAssortment,
                              ctx,
-                             edit=False,
                              category=category,
                              current=1)
 

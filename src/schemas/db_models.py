@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import datetime
 import json
@@ -7,7 +8,7 @@ from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, 
 
 from aiogram.types import Message
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
 from registry.currencies import SUPPORTED_CURRENCIES
@@ -16,7 +17,7 @@ from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
 from configs.languages import DAYS_BEFORE_CHANGE_CURRENCY
 from core.helper_classes import Context
 from core.types.values import Discount
-from core.types.enums import InviterType, OrderStateKey, PromocodeCheckResult
+from core.types.enums import *
 from schemas.entities.payment import PaymentMethod
 from core.types.values import *
 from ui.translates import EnumTranslates
@@ -29,7 +30,7 @@ TModel = TypeVar("TModel", bound="AppBaseModel[Any]")
 
 
 class AppAbstractRepository(AsyncAbstractRepository[T]):
-    def __init__(self, dbs: "DatabaseService"):
+    def __init__(self, dbs: DatabaseService):
         super().__init__(dbs.db)
         self.dbs = dbs
         
@@ -80,7 +81,7 @@ class OrderPriceDetails(AppBaseModel):
     payment_time: Optional[datetime.datetime] = None
     
     @classmethod
-    def new(cls, customer: "Customer", products_price: LocalizedMoney, delivery_info: "DeliveryInfo" = None) -> "OrderPriceDetails":
+    def new(cls, customer: Customer, products_price: LocalizedMoney, delivery_info: DeliveryInfo = None) -> OrderPriceDetails:
         price_details = OrderPriceDetails(products_price=products_price.get_money(customer.currency),
                                           delivery_price=delivery_info.service.price.get_money(customer.currency) if delivery_info else None
                                           )
@@ -128,7 +129,7 @@ class Order(AppBaseModel):
     
     customer_id: PydanticObjectId
     state: OrderState = OrderState(key=OrderStateKey.forming)
-    delivery_info: Optional["DeliveryInfo"] = None # при запросе удаления перс данных, обычно не должен быть пуст
+    delivery_info: Optional[DeliveryInfo] = None # при запросе удаления перс данных, обычно не должен быть пуст
 
     promocode_id: Optional[PydanticObjectId] = None
 
@@ -187,25 +188,30 @@ class OrdersRepository(AppAbstractRepository[Order]):
     class Meta:
         collection_name = 'orders'
         
-    def new_order(self, customer: "Customer", products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
+    def __init__(self, dbs: DatabaseService):
+        super().__init__(dbs)
+        
+        self.logger = logging.getLogger(__name__)
+        
+    def new_order(self, customer: Customer, products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
         delivery_info = customer.delivery_info if save_delivery_info else None
         price_details = OrderPriceDetails.new(customer, products_price, delivery_info)
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
     
-    async def find_customer_orders(self, customer: "Customer") -> Iterable[Order]:
+    async def find_customer_orders(self, customer: Customer) -> Iterable[Order]:
         return await self.find_by({"customer_id": customer.id})
     
-    async def find_by_puid(self, puid: str, customer: Optional["Customer"] = None) -> Optional[Order] | Iterable[Order]:
+    async def find_by_puid(self, puid: str, customer: Optional[Customer] = None) -> Optional[Order] | Iterable[Order]:
         if customer:
             return await self.find_one_by({"puid": puid, "customer_id": customer.id})
         else:
             return await self.find_by({"puid": puid})
         
-    async def count_customer_orders(self, customer: "Customer") -> int:
+    async def count_customer_orders(self, customer: Customer) -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id})
     
-    async def count_formed_customer_orders(self, customer: "Customer") -> int:
+    async def count_formed_customer_orders(self, customer: Customer) -> int:
         return await self.get_collection().count_documents({"customer_id": customer.id, "state.key": {"$ne": OrderStateKey.waiting_for_forming.name}})
     
     async def save(self, order: Order):
@@ -218,38 +224,110 @@ class OrdersRepository(AppAbstractRepository[Order]):
             
             order.id = PydanticObjectId(inserted_id)
             order.puid = Order.generate_puid(inserted_id)
+            self.logger.info(f"New order {order.id} for customer {order.customer_id}")
             
         await super().save(order)
 
+# class CartEntryOLD(AppBaseModel):
+#     id: Optional[PydanticObjectId] = None
+#     customer_id: PydanticObjectId
+#     product_id: PydanticObjectId
+    
+#     frozen_product: Optional[Product] = None # только для сформированных заказов
+    
+#     order_id: Optional[PydanticObjectId] = None
+
+#     quantity: int = Field(default=1, gt=0)
+
+#     configuration: "ProductConfiguration"
+    
+#     @property
+#     def need_to_confirm_price(self) -> bool:
+#         return self.configuration.requires_price_confirmation
+    
 class CartEntry(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
-    product_id: PydanticObjectId
-    frozen_product: Optional["Product"] = None # только для сформированных заказов
-    
     order_id: Optional[PydanticObjectId] = None
 
-    quantity: int = Field(default=1, gt=0)
+    source_type: CartItemSource = CartItemSource.product
+    source_id: PydanticObjectId  # product.id ИЛИ discounted_product.id
 
-    configuration: "ProductConfiguration"
+    frozen_snapshot: Optional[Product | DiscountedProduct] = None # DiscountedProduct сразу фризится
+
+    quantity: int = Field(default=1, gt=0)
+    configuration: Optional["ProductConfiguration"] = None
+    
+    @model_validator(mode="before")
+    @classmethod
+    def from_v1(cls, data: dict):
+        if "source_type" in data:
+            return data
+
+        if "product_id" in data:
+            logging.getLogger(__name__).warning("CartEntry: converting from v1 to v2")
+            
+            data["source_type"] = CartItemSource.product
+            data["source_id"] = data.pop("product_id")
+
+            if "frozen_product" in data:
+                data["frozen_snapshot"] = data.pop("frozen_product")
+
+        return data
+    
+    @field_validator("quantity")
+    @classmethod
+    def force_quantity_for_discounted(cls, v, info):
+        if info.data.get("source_type") == CartItemSource.discounted:
+            return 1
+        return v
     
     @property
     def need_to_confirm_price(self) -> bool:
-        return self.configuration.requires_price_confirmation
+        return self.configuration.requires_price_confirmation if self.configuration else False
+    
+    def calculate_price(self, product: Optional[Product] = None):
+        if self.source_type == CartItemSource.product:
+            return (self.configuration.price + product.price) * self.quantity 
+        elif self.source_type == CartItemSource.discounted:
+            return self.frozen_snapshot.price
+
 
 class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     class Meta:
         collection_name = 'cart_entries'
     
-    async def add_to_cart(self, product: "Product", customer: "Customer"):
-        await self.save(CartEntry(customer_id=customer.id, 
-                      product_id=product.id, 
-                      configuration=product.configuration))
+    def __init__(self, dbs: DatabaseService):
+        super().__init__(dbs)
         
-    async def count_customer_cart_entries(self, customer: "Customer"):
+        self.logger = logging.getLogger(__name__)
+        
+    
+    async def add_to_cart(self, source: Product | DiscountedProduct, customer: Customer):
+        is_product = isinstance(source, Product)
+
+        await self.save(CartEntry(customer_id=customer.id, 
+                                  source_type=CartItemSource.product if is_product else CartItemSource.discounted,
+                                  source_id=source.id,
+                                  frozen_snapshot=None if is_product else source,
+                                  configuration=source.configuration if is_product else None))
+        
+        self.logger.info(f"Added {source.name.get('ru')} to cart for {customer.user_id}")
+        
+    async def check_product_in_cart(self, product: Product | DiscountedProduct, customer: Customer) -> bool:
+        return await self.get_collection().count_documents({"customer_id": customer.id, "source_id": product.id}) > 0
+        
+    async def delete_discounted_product_from_carts(self, discounted_product_id: PydanticObjectId):
+        entries = await self.find_by({"order_id": None, 
+                            "source_type": CartItemSource.discounted,
+                            "source_id": discounted_product_id})
+        for entry in entries:
+            await self.delete(entry)
+        
+    async def count_customer_cart_entries(self, customer: Customer):
         return await self.get_collection().count_documents({"customer_id": customer.id, "order_id": None})
     
-    async def find_customer_cart_ids_sorted_by_date(self, customer: "Customer") -> List[PydanticObjectId]:
+    async def find_customer_cart_ids_sorted_by_date(self, customer: Customer) -> List[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         cursor = self.get_collection().find(
             {"customer_id": customer.id,
@@ -258,65 +336,93 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
-    async def find_customer_cart_entries(self, customer: "Customer") -> Iterable[CartEntry]:
+    async def find_customer_cart_entries(self, customer: Customer) -> Iterable[CartEntry]:
         return await self.find_by({"customer_id": customer.id, "order_id": None}, sort=[("_id", 1)])
     
-    async def find_entries_by_order(self, order: "Order", query: Optional[dict] = None) -> Iterable[CartEntry]:
+    async def find_entries_by_order(self, order: Order, query: Optional[dict] = None) -> Iterable[CartEntry]:
         base_query = {**(query or {}), "order_id": order.id}
         return await self.find_by(base_query, sort=[("_id", 1)])
+    
+    async def find_entries_by_product(self, product: Product | DiscountedProduct, query: Optional[dict] = None) -> Iterable[CartEntry]:
+        base_query = {**(query or {}), "source_id": product.id}
+        return await self.find_by(base_query, sort=[("_id", 1)])
 
-    async def find_customer_cart_entry_by_id(self, customer: "Customer", idx: int) -> Optional[CartEntry]:
+    async def find_customer_cart_entry_by_id(self, customer: Customer, idx: int) -> Optional[CartEntry]:
         ids = await self.find_customer_cart_ids_sorted_by_date(customer)
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
     
-    async def assign_cart_entries_to_order(self, customer: "Customer", order: "Order"):
+    async def assign_cart_entries_to_order(self, customer: Customer, order: Order):
         entries = await self.find_customer_cart_entries(customer)
         
         if not entries:
             return
         
-        product_ids = [entry.product_id for entry in entries]
-        products = await self.dbs.products.find_by({"_id": {"$in": product_ids}})
+        product_ids = [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]
+        
+        products = (
+            await self.dbs.products.find_by({"_id": {"$in": product_ids}})
+            if product_ids else []
+        )
         
         products_map = {product.id: product for product in products}
         
         for entry in entries:
             entry.order_id = order.id
-            entry.frozen_product = products_map.get(entry.product_id)
+            if entry.source_type == CartItemSource.product:
+                entry.frozen_snapshot = products_map.get(entry.source_id)
+            else:
+                continue
             
         await self.save_many(entries)
+        
+    async def unassign_cart_entries_from_order(self, order: Order):
+        entries = await self.find_entries_by_order(order)
+        if not entries:
+            return
+
+        for entry in entries:
+            entry.order_id = None
+            if entry.source_type == CartItemSource.product:
+                entry.frozen_snapshot = None
+            # elif entry.source_type == CartItemSource.discounted:
+            #     await self.delete(entry)
+        
+        await self.save_many(entries)
     
-    async def calculate_customer_cart_price(self, customer: "Customer") -> LocalizedMoney:
+    async def calculate_customer_cart_price(self, customer: Customer) -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
-        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]}})
         product_map: Dict[PydanticObjectId, Product] = {
             product.id: product for product in products
         }
 
         total_price = LocalizedMoney()
         for entry in entries:
-            if product := product_map.get(entry.product_id):
-                entry_total = (product.price + entry.configuration.price) * entry.quantity
-                total_price += entry_total
+            if entry.source_type == CartItemSource.product and (product := product_map.get(entry.source_id)):
+                total_price += entry.calculate_price(product)
+            if entry.source_type == CartItemSource.discounted:
+                total_price += entry.calculate_price()
         return total_price
 
     async def calculate_cart_entries_price_by_order(self, order: Order) -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"order_id": order.id})
-        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]}})
         product_map: Dict[PydanticObjectId, Product] = {
             product.id: product for product in products
         }
 
         total_price = LocalizedMoney()
         for entry in entries:
-            if product := product_map.get(entry.product_id):
+            if entry.source_type == CartItemSource.product and (product := product_map.get(entry.source_id)):
                 entry_total = (product.price + entry.configuration.price) * entry.quantity
                 total_price += entry_total
+            if entry.source_type == CartItemSource.discounted:
+                total_price += entry.frozen_snapshot.price * entry.quantity
         return total_price
     
-    async def check_price_confirmation_in_cart(self, customer: "Customer") -> bool:
+    async def check_price_confirmation_in_cart(self, customer: Customer) -> bool:
         query = {
             "customer_id": customer.id,
             "order_id": None,
@@ -326,13 +432,41 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         document = await self.get_collection().find_one(query, projection={"_id": 1})
         return document is not None
     
-    async def find_price_confirmation_entries(self, order: "Order") -> Iterable[CartEntry]:
+    async def find_price_confirmation_entries(self, order: Order) -> Iterable[CartEntry]:
         query = {
             "order_id": order.id,
             "configuration.requires_price_confirmation": True
         }
 
         return await self.find_by(query)
+
+class DiscountedProduct(AppBaseModel):
+    id: Optional[PydanticObjectId] = None
+    name: LocalizedString
+    
+    description: LocalizedString
+    media: Optional[LocalizedSavedMedia] = None
+    
+    price: LocalizedMoney
+
+
+class DiscountedProductsRepository(AppAbstractRepository[DiscountedProduct]):
+    class Meta:
+        collection_name = 'discounted_products'
+        
+    async def count(self) -> int:
+        return await self.get_collection().count_documents({})
+    
+    async def find_by_index(self, idx: int) -> Optional[Product]:
+        cursor = self.get_collection().find(
+            {},
+            projection={"_id": 1}
+        ).sort("_id", 1)
+        
+        ids = [PydanticObjectId(doc["_id"]) async for doc in cursor]
+        if not ids: return None
+        
+        return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
 
 class ConfigurationSwitch(AppBaseModel):
     name: LocalizedEntry
@@ -778,6 +912,13 @@ class ProductsRepository(AppAbstractRepository[Product]):
             projection={"_id": 1}
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
+    
+    async def find_by_entries(self, entries: List[CartEntry]) -> Iterable[Product]:
+        ids = [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]
+        return (
+            await self.find_by({"_id": {"$in": ids}})
+            if ids else []
+        )
 
     async def find_by_category_and_index(self, category: str, idx: int) -> Optional[Product]:
         ids = await self.get_ids_by_category_sorted_by_date(category)
@@ -899,7 +1040,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
         inviter.invited_customers += 1
         await self.save(inviter)
     
-    async def count_new_first_order(self, inviter: Inviter, order: "Order", ctx: Context) -> Optional[Money]:
+    async def count_new_first_order(self, inviter: Inviter, order: Order, ctx: Context) -> Optional[Money]:
         inviter.invited_customers_first_orders += 1
         if inviter.inviter_type == InviterType.customer:
             customer = await self.dbs.customers.find_one_by_id(inviter.customer_id)
@@ -1110,6 +1251,8 @@ __all__ = [
     "OrdersRepository",
     "CartEntry",
     "CartEntriesRepository",
+    "DiscountedProduct",
+    "DiscountedProductsRepository",
     "ConfigurationSwitch",
     "ConfigurationSwitches",
     "ConfigurationSwitchesGroup",

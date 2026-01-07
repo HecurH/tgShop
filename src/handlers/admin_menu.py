@@ -16,7 +16,7 @@ from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, call_state_handler
 from core.types.enums import DiscountType, OrderStateKey
-from core.types.values import Discount
+from core.types.values import Discount, LocalizedSavedMedia
 from core.types.values import LocalizedString
 from core.types.values import LocalizedMoney
 from ui.message_tools import split_message
@@ -44,6 +44,8 @@ async def menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Customers.AskId, ctx)
     elif text == "Товары":
         ...
+    elif text == "Уценка":
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
     elif text == "Заказы":
         await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
     elif text == "Промокоды": 
@@ -108,6 +110,129 @@ async def customer_menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
     else:
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+        
+@router.message(AdminStates.Main.DiscountedProducts.Menu)
+async def discounted_products_menu_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+
+    if text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+    
+    if text == "Создать":
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Creating, ctx)
+    elif text == "Список всех":
+        def form_prod_txt(prod: DiscountedProduct):
+            return f"<code>{prod.id}</code> — {prod.name.get("ru")} {prod.price.to_text_all()}"
+        
+        await ctx.message.answer("\n".join(map(form_prod_txt, await ctx.services.db.discounted_products.find_by({}))) or "Товаров нет.")
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        
+    elif text == "Удалить":
+        await call_state_handler(AdminStates.Main.DiscountedProducts.AskDeleteId, ctx)
+    else:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        
+@router.message(AdminStates.Main.DiscountedProducts.AskDeleteId)
+async def discounted_products_ask_delete_id_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        return
+
+    if not text.isdigit:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.AskDeleteId, ctx, send_before="Неправильный формат.")
+        return
+
+    try:
+        prod = await ctx.services.db.discounted_products.find_one_by_id(PydanticObjectId(text))
+        if not prod:
+            await call_state_handler(AdminStates.Main.DiscountedProducts.AskDeleteId, ctx, send_before="Товар не найден.")
+            return
+        
+        entries = await ctx.services.db.cart_entries.find_entries_by_product(prod, {"order_id": None})
+        for entry in entries:
+            await ctx.services.db.cart_entries.delete_by_id(entry.id)
+        
+        await ctx.services.db.discounted_products.delete_by_id(PydanticObjectId(text))
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx, send_before="Удалено.")
+    except Exception as e:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.AskDeleteId, ctx, send_before=e)
+        return
+
+@router.message(AdminStates.Main.DiscountedProducts.Creating)
+async def discounted_products_creating_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+    
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        return
+
+    def parse_localized_string(block: str) -> LocalizedString:
+        result = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ":" in line:
+                lang, text = line.split(":", 1)
+                result[lang.strip()] = text.strip().replace("\\n", "\n")
+        return LocalizedString.from_keys(**result)
+
+    def parse_localized_money(text: str) -> LocalizedMoney:
+        result = {}
+        for part in re.split(r"[;\n]+", text):
+            part = part.strip()
+            if not part:
+                continue
+            cur, amt = part.split(":", 1)
+            result[cur.strip().upper()] = Decimal(amt.replace(",", "."))
+        return LocalizedMoney.from_keys(**result)
+
+    fields = {}
+    key = None
+    buf = []
+    for line in text.splitlines():
+        if ":" in line and not line.startswith(" "):
+            # новая ключ-строка
+            if key:
+                # сохраняем предыдущий буфер
+                fields[key] = "\n".join(buf).strip()
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
+        else:
+            # продолжение блока (многострочный)
+            if key is not None:
+                buf.append(line)
+    # сохраняем последний блок
+    if key:
+        fields[key] = "\n".join(buf).strip()
+    
+    result = {
+        "name": parse_localized_string(fields["имя_товара"]),
+        "media_key": fields["ключ_медиа"],
+        "price": parse_localized_money(fields["цена"]),
+        "description": parse_localized_string(fields["описание_что_не_так_и_тп"])
+    }
+    
+    try:
+        discounted_product = DiscountedProduct(
+            name=result["name"],
+            description=result["description"],
+            media=LocalizedSavedMedia(media_key=result["media_key"]),
+            price=result["price"]
+        )
+        
+        await ctx.services.db.discounted_products.save(discounted_product)
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx, send_before="Товар создан.")
+        
+    except Exception as e:
+        raise Exception(f"Не удалось создать товар: {e}")
         
 @router.message(AdminStates.Main.Orders.AskId)
 async def orders_ask_id_handler(_, ctx: Context):
@@ -207,10 +332,6 @@ async def order_set_change_status_comment_handler(_, ctx: Context):
         await ctx.services.notificators.UserTelegramNotificator.send_order_state_changed(customer, order, tmsg)
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order, send_before="Успешно.")
         
-        
-        
-    
-        
 @router.message(AdminStates.Main.Promocodes.Menu)
 async def promocodes_handler(_, ctx: Context):
     text = ctx.message.text
@@ -256,7 +377,7 @@ async def create_promocode_code_handler(_, ctx: Context):
                 continue
             if ":" in line:
                 lang, text = line.split(":", 1)
-                result[lang.strip()] = text.strip()
+                result[lang.strip()] = text.strip().replace("\\n", "\n")
         return LocalizedString.from_keys(**result)
 
     def parse_localized_money(text: str) -> LocalizedMoney:

@@ -89,6 +89,11 @@ class AdminStates(StatesGroup):
             
             ChangeStatusChoice = State()
             SetChangeStatusComment = State()
+            
+        class DiscountedProducts(StatesGroup):
+            Menu = State()
+            Creating = State()
+            AskDeleteId = State()
         
         class Promocodes(StatesGroup):
             Menu = State()
@@ -145,6 +150,38 @@ async def handle_admin_orders_change_status_choice(ctx: Context, **_):
 async def handle_admin_orders_set_change_status_comment(ctx: Context, **_):
     await ctx.message.answer("Введите комментарий (если не надо - введите ноль):", reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
+@state_handlers.register(AdminStates.Main.DiscountedProducts.Menu)
+async def handle_admin_discounted_products(ctx: Context, **_):
+    await ctx.message.answer("Выберите пункт меню:",
+                             reply_markup=AdminKBs.DiscountedProducts.admin_discounted_products_menu(ctx))
+
+@state_handlers.register(AdminStates.Main.DiscountedProducts.Creating)
+async def handle_admin_create_discounted_product(ctx: Context, **_):
+    txt = """Имя_товара:
+  ru: тут на русском кратко, но чтобы было понятно кто что
+  en: here in english
+Цена: обязательно формата — "USD:100;RUB:1200"
+Ключ_медиа: спроси у меня в лс
+Описание_что_не_так_и_тп:
+  ru: Здесь там-то и то-то не так
+  en: Here that and this is wrong
+
+<code>Имя_товара:
+  ru:
+  en:
+Цена:
+Ключ_медиа:
+Описание_что_не_так_и_тп:
+  ru:
+  en:</code>
+
+Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""
+    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    
+@state_handlers.register(AdminStates.Main.DiscountedProducts.AskDeleteId)
+async def handle_admin_discounted_products_ask_delete_id(ctx: Context, **_):
+    await ctx.message.answer("Введите ID для удаления:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
 @state_handlers.register(AdminStates.Main.Promocodes.Menu)
 async def handle_admin_promocodes(ctx: Context, **_):
     await ctx.message.answer("Выберите пункт меню:",
@@ -172,7 +209,7 @@ Expire: 2025-12-31    # YYYY-MM-DD или 30d (только в днях) или 
 Макс_использований: -1
 Expire: 30d</code>
 
-Введите по шаблону:"""
+Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
 
 @state_handlers.register(AdminStates.Main.GlobalPlaceholders.Menu)
@@ -281,9 +318,8 @@ async def viewing_assortment_handler(ctx: Context,
     amount = await ctx.services.db.products.count_in_category(category)
 
     if amount == 0:
-        await ctx.message.answer(ctx.t.AssortmentTranslates.no_products_in_category)
         await call_state_handler(AssortmentStates.Menu,
-                                 ctx)
+                                 ctx, send_before=(ctx.t.AssortmentTranslates.no_products_in_category, 0.2))
         return
     
     product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
@@ -385,6 +421,28 @@ async def additionals_editing_handler(ctx: Context,
         text,
         reply_markup=kb
     )
+    
+class DiscountedStates(StatesGroup):
+    ViewingProducts = State()
+    
+@state_handlers.register(DiscountedStates.ViewingProducts)
+async def viewing_products_handler(ctx: Context,
+                                   current: int, 
+                                   **_):
+    amount = await ctx.services.db.discounted_products.count()
+    
+    if amount == 0:
+        await call_state_handler(CommonStates.MainMenu,
+                                 ctx, send_before=(ctx.t.DiscountedProductsTranslates.no_discounted_products, 1))
+        return
+    
+    discounted_product: DiscountedProduct = await ctx.services.db.discounted_products.find_by_index(current-1)
+    caption = DiscountedProductsGen.generate_discounted_product_text(discounted_product, ctx)
+    
+    await send_media_response(ctx,
+                            discounted_product.media,
+                            caption,
+                            DiscountedProductKBs.gen_discounted_product_view(current, amount, ctx))
 
 class CartStates(StatesGroup):
     Menu = State()
@@ -408,16 +466,18 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     if current > amount: current = 1
     
     entry = await ctx.services.db.cart_entries.find_customer_cart_entry_by_id(ctx.customer, current-1)
-    product: Product = await ctx.services.db.products.find_one_by_id(entry.product_id)
+    is_product = entry.source_type == CartItemSource.product
+    
+    product: Product = await ctx.services.db.products.find_one_by_id(entry.source_id) if is_product else None
     total_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
     
-    caption = CartTextGen.generate_cart_viewing_caption(entry,
-                                            product,
-                                            entry.configuration,
-                                            ctx)
+    caption = CartTextGen.generate_cart_viewing_caption(entry=entry,
+                                            product=product,
+                                            configuration=entry.configuration,
+                                            ctx=ctx)
     
     await send_media_response(ctx,
-                            product.short_description_media,
+                            product.short_description_media if is_product else entry.frozen_snapshot.media,
                             caption,
                             await CartKBs.cart_view(entry, current, amount, total_price, ctx))
 

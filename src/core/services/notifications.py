@@ -7,6 +7,7 @@ from aiogram import Bot
 from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
+from core.types.enums import CartItemSource
 from schemas.db_models import Customer, Order, DeliveryInfo
 from core.types.values import SavedTMessage
 from core.types.values import Money
@@ -223,12 +224,17 @@ class AdminChatNotificator:
         ctx.lang = "ru"
 
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        
+        products = await ctx.services.db.products.find_by_entries(entries)
         products_dict = {product.id: product for product in products}
 
         for idx, entry in enumerate(entries):
-            if product := products_dict.get(entry.product_id):
-                text += f"{idx+1}: {product.name.get('ru')} ({entry.quantity} шт.):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+            if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):
+                amount_price = f"{entry.quantity} шт. — {entry.calculate_price(product).to_text('RUB')}" if entry.quantity > 1 else entry.calculate_price(product).to_text('RUB')
+                
+                text += f"{idx+1}: {product.name.get('ru')} ({amount_price}):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+            elif entry.source_type == CartItemSource.discounted:
+                text += f"{idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price(product).to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
                 
         text += f"\n\n<code>/msg_to {ctx.customer.user_id}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/confirm_order_price {order.id}</code>"
 
@@ -243,16 +249,20 @@ class AdminChatNotificator:
         ctx.lang = "ru"
 
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        products = await ctx.services.db.products.find_by({"_id": {"$in": [entry.product_id for entry in entries]}})
+        products = await ctx.services.db.products.find_by_entries(entries)
         products_dict = {product.id: product for product in products}
 
         for idx, entry in enumerate(entries):
-            if product := products_dict.get(entry.product_id):
-                text += f"  {idx+1} - {product.name.get('ru')} ({entry.quantity} шт.):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
-        
+            if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):
+                amount_price = f"{entry.quantity} шт. — {entry.calculate_price(product).to_text('RUB')}" if entry.quantity > 1 else entry.calculate_price(product).to_text('RUB')
+                
+                text += f"  {idx+1} - {product.name.get('ru')} ({amount_price}):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
+            elif entry.source_type == CartItemSource.discounted:
+                text += f"  {idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price(product).to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
+                
         text += f"\nЭто первый заказ пользователя, не забудь вложить пробник!\n" if await ctx.services.db.orders.count_formed_customer_orders(ctx.customer) == 1 else "\n\n"
         
-        text += f"<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
+        text += f"<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         

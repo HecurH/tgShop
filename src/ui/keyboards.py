@@ -6,7 +6,7 @@ from registry.currencies import SUPPORTED_CURRENCIES
 from registry.payments import SUPPORTED_PAYMENT_METHODS
 from core.helper_classes import Context
 from schemas.db_models import *
-from core.types.enums import OrderStateKey
+from core.types.enums import CartItemSource, OrderStateKey
 from core.types.values import LocalizedMoney
 from ui.message_tools import strike
 
@@ -40,6 +40,7 @@ class CommonKBs:
         kb = [
             [
                 types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.assortment),
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.discounted_products),
                 types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.cart)
             ],
             [
@@ -63,6 +64,7 @@ class AdminKBs:
         kb = [
             [
                 types.KeyboardButton(text="Покупатели"),
+                types.KeyboardButton(text="Уценка"),
                 types.KeyboardButton(text="Товары")
             ],
             [
@@ -130,13 +132,29 @@ class AdminKBs:
             return types.ReplyKeyboardMarkup(keyboard=kb,
                                              resize_keyboard=True)
     
+    class DiscountedProducts:
+        @staticmethod
+        def admin_discounted_products_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Создать"),
+                    types.KeyboardButton(text="Список всех")
+                ],
+                [
+                    types.KeyboardButton(text="Удалить")
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                             resize_keyboard=True)
+    
     class Orders:
         @staticmethod
         def orders_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
             kb = [
-                [
-                    types.KeyboardButton(text="Список активных заказов")
-                ],
                 [
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.cancel)
                 ]
@@ -363,6 +381,34 @@ class AssortmentKBs:
             # one_time_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
+class DiscountedProductKBs:
+    
+    @staticmethod
+    def gen_discounted_product_view(current: int, amount: int, ctx: Context) -> types.ReplyKeyboardMarkup:
+        controls = [
+            types.KeyboardButton(text="⬅️"),
+            types.KeyboardButton(text=f"{current}/{amount}"),
+            types.KeyboardButton(text="➡️")
+        ] if amount > 1 else [
+            types.KeyboardButton(text=f"{current}/{amount}")
+        ]
+        
+        kb = [
+            [
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.DiscountedProducts.add_to_cart)
+            ],
+            controls,
+            [
+                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+            ]
+        ]
+        
+        return types.ReplyKeyboardMarkup(
+            keyboard=kb,
+            resize_keyboard=True,
+            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
+        )
+
 class CartKBs:
     @staticmethod
     async def cart_view(entry: CartEntry, current: int, amount: int, total_price: LocalizedMoney, ctx: Context) -> types.ReplyKeyboardMarkup:
@@ -375,13 +421,14 @@ class CartKBs:
         ]
         
         requires_price_confirmation = await ctx.services.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
+        is_product = entry.source_type == CartItemSource.product
         
         kb = [
             [
                 types.KeyboardButton(text='❌'),
-                types.KeyboardButton(text="➖"),
+                types.KeyboardButton(text="➖" if is_product else "🔒"),
                 types.KeyboardButton(text=f"{entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}"),
-                types.KeyboardButton(text="➕")
+                types.KeyboardButton(text="➕" if is_product else "🔒")
             ],
             controls,
             [
