@@ -7,10 +7,6 @@ import logging
 
 
 class AsyncCurrencyConverter:
-    """
-    Асинхронный конвертер валют с фоновым обновлением кэша.
-    Инициализирует ресурсы и запускает фоновую задачу при создании экземпляра.
-    """
 
     BASE_API = "https://api.exchangerate-api.com/v4/latest/"
     REFRESH_TIME = 1800  # 30 минут

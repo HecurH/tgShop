@@ -7,6 +7,7 @@ from aiogram.types import CallbackQuery, ErrorEvent
 from configs.languages import SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import CommonStates, NewUserStates, call_state_handler
+from registry.currencies import SUPPORTED_CURRENCIES
 from ui.translates import ReplyButtonsTranslates, TranslatorHub
 
 router = Router(name="common")
@@ -86,6 +87,10 @@ async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
+    if callback.data.upper() not in SUPPORTED_CURRENCIES.keys():
+        await callback.answer()
+        return
+    
     await ctx.customer.change_selected_currency(callback.data, ctx, do_timeout=False)
 
     await ctx.services.db.customers.save(ctx.customer)
