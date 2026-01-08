@@ -304,6 +304,10 @@ async def order_change_status_choice_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx)
         return
     
+    if order.state.key == getattr(OrderStateKey, attr_name):
+        await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx, send_before=("Змейка блять не смей", 1))
+        return
+    
     order.state.set_state(getattr(OrderStateKey, attr_name))
     await order.save_in_fsm(ctx, "order")
     
