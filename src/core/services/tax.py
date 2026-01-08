@@ -1,3 +1,4 @@
+import logging
 from os import getenv
 from core.types.enums import CartItemSource
 from schemas.db_models import CartEntry, Order
@@ -16,15 +17,20 @@ class TaxSystem:
     def __init__(self):
         folder = getenv("CONFIGS_PATH")
         self.client = AsyncMoyNalog(folder)
+        
+        self.logger = logging.getLogger(__name__)
 
     async def safe_create_invoice(self, *args, retries: int = 3, timeout: int = 10, **kwargs):
         last_exc = None
         for attempt in range(retries):
             try:
-                return await asyncio.wait_for(
+                result = await asyncio.wait_for(
                     self.client.create_invoice(*args, **kwargs),
                     timeout=timeout
                 )
+                
+                self.logger.info(f"Successfully created invoice {result}")
+                return result
             except (asyncio.TimeoutError, Exception) as e:
                 last_exc = e
                 if attempt < retries - 1:
@@ -107,7 +113,7 @@ class TaxSystem:
                     return_receipt_url=True
                 ))
             return receipts
-
+        
         return await self.safe_create_invoice(
             operation_time=operation_time,
             svs=services,
