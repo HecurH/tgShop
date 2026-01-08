@@ -234,7 +234,7 @@ class AdminChatNotificator:
                 
                 text += f"{idx+1}: {product.name.get('ru')} ({amount_price}):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
             elif entry.source_type == CartItemSource.discounted:
-                text += f"{idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price(product).to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
+                text += f"{idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price().to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
                 
         text += f"\n\n<code>/msg_to {ctx.customer.user_id}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/confirm_order_price {order.id}</code>"
 
@@ -258,7 +258,7 @@ class AdminChatNotificator:
                 
                 text += f"  {idx+1} - {product.name.get('ru')} ({amount_price}):\n{gen_product_configurable_info_text(entry.configuration, ctx)}\n\n"
             elif entry.source_type == CartItemSource.discounted:
-                text += f"  {idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price(product).to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
+                text += f"  {idx+1}: {entry.frozen_snapshot.name.get('ru')} ({entry.calculate_price().to_text('RUB')}):\n{entry.frozen_snapshot.description.get('ru')}\n\n"
                 
         text += f"\nЭто первый заказ пользователя, не забудь вложить пробник!\n" if await ctx.services.db.orders.count_formed_customer_orders(ctx.customer) == 1 else "\n\n"
         
