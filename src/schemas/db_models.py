@@ -447,7 +447,6 @@ class DiscountedProduct(AppBaseModel):
     
     price: LocalizedMoney
 
-
 class DiscountedProductsRepository(AppAbstractRepository[DiscountedProduct]):
     class Meta:
         collection_name = 'discounted_products'

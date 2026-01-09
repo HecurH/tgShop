@@ -128,7 +128,8 @@ async def discounted_products_menu_handler(_, ctx: Context):
         
         await ctx.message.answer("\n".join(map(form_prod_txt, await ctx.services.db.discounted_products.find_by({}))) or "Товаров нет.")
         await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
-        
+    elif text == "Изменить":
+        await call_state_handler(AdminStates.Main.DiscountedProducts.EditAskId, ctx)
     elif text == "Удалить":
         await call_state_handler(AdminStates.Main.DiscountedProducts.AskDeleteId, ctx)
     else:
@@ -233,7 +234,109 @@ async def discounted_products_creating_handler(_, ctx: Context):
         
     except Exception as e:
         raise Exception(f"Не удалось создать товар: {e}")
+
+@router.message(AdminStates.Main.DiscountedProducts.EditAskId)
+async def discounted_products_edit_ask_id_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        return
+
+    try:
+        oid = PydanticObjectId(text)
+        prod = await ctx.services.db.discounted_products.find_one_by_id(oid)
+        if not prod:
+            await call_state_handler(AdminStates.Main.DiscountedProducts.EditAskId, ctx, send_before="Товар не найден.")
+            return
         
+        await ctx.fsm.update_data(discounted_product_oid=text)
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Edit, ctx, discounted_product=prod)
+    except:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.EditAskId, ctx, send_before="Неправильный формат.")
+        return
+    
+@router.message(AdminStates.Main.DiscountedProducts.Edit)
+async def discounted_products_edit_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+    
+    if text == ctx.t.UncategorizedTranslates.cancel:
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx)
+        return
+    
+    def parse_localized_string(block: str) -> LocalizedString:
+        result = {}
+        for line in block.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ":" in line:
+                lang, text = line.split(":", 1)
+                result[lang.strip()] = text.strip().replace("\\n", "\n")
+        return LocalizedString.from_keys(**result)
+
+    def parse_localized_money(text: str) -> LocalizedMoney:
+        result = {}
+        for part in re.split(r"[;\n]+", text):
+            part = part.strip()
+            if not part:
+                continue
+            cur, amt = part.split(":", 1)
+            result[cur.strip().upper()] = Decimal(amt.replace(",", "."))
+        return LocalizedMoney.from_keys(**result)
+
+    fields = {}
+    key = None
+    buf = []
+    for line in text.splitlines():
+        if ":" in line and not line.startswith(" "):
+            # новая ключ-строка
+            if key:
+                # сохраняем предыдущий буфер
+                fields[key] = "\n".join(buf).strip()
+            key, val = line.split(":", 1)
+            key, val = key.strip().lower(), val.strip()
+            buf = [val] if val else []  # если сразу есть значение — кладём в буфер
+        else:
+            # продолжение блока (многострочный)
+            if key is not None:
+                buf.append(line)
+    # сохраняем последний блок
+    if key:
+        fields[key] = "\n".join(buf).strip()
+    
+    result = {
+        "name": parse_localized_string(fields["имя_товара"]),
+        "media_key": fields["ключ_медиа"],
+        "price": parse_localized_money(fields["цена"]),
+        "description": parse_localized_string(fields["описание_что_не_так_и_тп"])
+    }
+    
+    try:
+        oid = PydanticObjectId(await ctx.fsm.get_value("discounted_product_oid"))
+        discounted_product = DiscountedProduct(
+            id=oid,
+            name=result["name"],
+            description=result["description"],
+            media=LocalizedSavedMedia(media_key=result["media_key"]),
+            price=result["price"]
+        )
+
+        await ctx.services.db.discounted_products.save(discounted_product)
+        
+        entries = await ctx.services.db.cart_entries.find_entries_by_product(discounted_product)
+        for e in entries:
+            e.frozen_snapshot = discounted_product
+        await ctx.services.db.cart_entries.save_many(entries)
+        
+        await ctx.fsm.update_data(discounted_product_oid=None)
+        await call_state_handler(AdminStates.Main.DiscountedProducts.Menu, ctx, send_before="Товар отредактирован.")
+    except Exception as e:
+        raise Exception(f"Не удалось отредактировать товар: {e}")
+    
+   
 @router.message(AdminStates.Main.Orders.AskId)
 async def orders_ask_id_handler(_, ctx: Context):
     text = ctx.message.text

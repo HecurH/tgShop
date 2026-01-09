@@ -94,6 +94,9 @@ class AdminStates(StatesGroup):
             Menu = State()
             Creating = State()
             AskDeleteId = State()
+            
+            EditAskId = State()
+            Edit = State()
         
         class Promocodes(StatesGroup):
             Menu = State()
@@ -174,6 +177,24 @@ async def handle_admin_create_discounted_product(ctx: Context, **_):
 Описание_что_не_так_и_тп:
   ru:
   en:</code>
+
+Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""
+    await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Main.DiscountedProducts.EditAskId)
+async def handle_admin_discounted_products_ask_edit_id(ctx: Context, **_):
+    await ctx.message.answer("Введите ID для редактирования:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Main.DiscountedProducts.Edit)
+async def handle_admin_edit_discounted_product(ctx: Context, discounted_product: DiscountedProduct, **_):
+    txt = f"""<code>Имя_товара:
+  ru: {discounted_product.name.get("ru")}
+  en: {discounted_product.name.get("en")}
+Цена: {';'.join([f'{c}:{p.amount}' for c, p in discounted_product.price.data.items()])}
+Ключ_медиа: {discounted_product.media.media_key}
+Описание_что_не_так_и_тп:
+  ru: {discounted_product.description.get("ru")}
+  en: {discounted_product.description.get("en")}</code>
 
 Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))

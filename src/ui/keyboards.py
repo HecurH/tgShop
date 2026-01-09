@@ -141,6 +141,7 @@ class AdminKBs:
                     types.KeyboardButton(text="Список всех")
                 ],
                 [
+                    types.KeyboardButton(text="Изменить"),
                     types.KeyboardButton(text="Удалить")
                 ],
                 [
