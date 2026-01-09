@@ -211,9 +211,11 @@ class TelegramChannelLogsNotificator:
         self.notificator = notificator
     
     async def send_error(self, ctx: Context, error: str):
-        user_info = f"User {ctx.customer.id}, State: {await ctx.fsm.get_state()}\n\n" if ctx.customer else ""
-        
-        await self.notificator.send_notification(f"{user_info}{error}")
+        try:
+            user_info = f"Пользователь {ctx.customer.id}, Состояние: {await ctx.fsm.get_state()}\n\n" if ctx.customer else ""
+            await self.notificator.send_notification(f"{user_info}{str(error)}")
+        except Exception as e:
+            logging.getLogger(__name__).critical(f"Не удалось отправить ошибку в канал логов: {e}")
 
 class AdminChatNotificator:
     def __init__(self, notificator: TelegramNotificator):

@@ -42,7 +42,12 @@ class ContextMiddleware(BaseMiddleware):
         
         self.initialized = True
 
-    async def __call__(self, handler, event, data):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any]
+    ) -> Any:
         user_id = data["event_from_user"].id
 
         customer = await self.services.db.customers.find_by_user_id(user_id)
@@ -90,10 +95,7 @@ class ErrorLoggingMiddleware(BaseMiddleware):
         try:
             return await handler(event, data)
         except Exception as e:
-            try:
-                await data["ctx"].services.notificators.TelegramChannelLogs.send_error(data["ctx"], e)
-            except Exception as ex:
-                logging.getLogger(__name__).exception(f"Failed to send error: {ex}")
+            await data["ctx"].services.notificators.TelegramChannelLogs.send_error(data["ctx"], e)
             raise e
 
 class ThrottlingMiddleware(BaseMiddleware):
@@ -104,10 +106,10 @@ class ThrottlingMiddleware(BaseMiddleware):
     banned_users = TTLCache(maxsize=25_000, ttl=15)
 
     async def __call__(
-            self,
-            handler,
-            event,
-            data
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any]
     ) -> Any:
         user_id = data["event_from_user"].id
         # Проверяем, не забанен ли пользователь
