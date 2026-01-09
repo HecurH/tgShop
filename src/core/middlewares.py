@@ -91,9 +91,9 @@ class ErrorLoggingMiddleware(BaseMiddleware):
             return await handler(event, data)
         except Exception as e:
             try:
-                await data["ctx"].services.notificators.send_error(e)
-            except Exception as e:
-                logging.getLogger(__name__).exception(f"Failed to send error: {e}")
+                await data["ctx"].services.notificators.TelegramChannelLogs.send_error(data["ctx"], e)
+            except Exception as ex:
+                logging.getLogger(__name__).exception(f"Failed to send error: {ex}")
             raise e
 
 class ThrottlingMiddleware(BaseMiddleware):
