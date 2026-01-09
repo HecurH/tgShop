@@ -69,6 +69,12 @@ async def call_state_handler(state: State,
     except Exception as e:
         logging.getLogger(__name__).exception(f"Error in state handler: {e}")
         await ctx.message.answer(f"Error: {e}")
+        try:
+            await ctx.services.notificators.TelegramChannelLogs.send_error(ctx, e)
+        except Exception as e:
+            logging.getLogger(__name__).exception(f"Error in sending error to TelegramChannelLogs: {e}")
+            
+        
         if state != CommonStates.MainMenu:
             await call_state_handler(CommonStates.MainMenu, ctx)
         raise e

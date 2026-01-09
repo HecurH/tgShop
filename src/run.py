@@ -37,6 +37,7 @@ dp.message.filter(F.chat.type == "private")
 dp.update.middleware.register(middlewares.ThrottlingMiddleware())
 context_middleware = middlewares.ContextMiddleware()
 dp.update.middleware.register(context_middleware)
+dp.update.middleware.register(middlewares.ErrorLoggingMiddleware())
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"

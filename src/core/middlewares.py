@@ -1,9 +1,9 @@
 import logging
 from os import getenv
-from typing import Any, Optional
+from typing import Any, Awaitable, Callable, Dict, Optional
 import time
 from aiogram import BaseMiddleware
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove, TelegramObject
 from cachetools import TTLCache
 
 from core.services.currency_converter import AsyncCurrencyConverter
@@ -79,6 +79,22 @@ class ContextMiddleware(BaseMiddleware):
         if self.services.db: await self.services.db.close()
         if self.services.tax: await self.services.tax.close()
         if self.services.currency_converter: await self.services.currency_converter.close()
+        
+class ErrorLoggingMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any]
+    ) -> Any:
+        try:
+            return await handler(event, data)
+        except Exception as e:
+            try:
+                await data["ctx"].services.notificators.send_error(e)
+            except Exception as e:
+                logging.getLogger(__name__).exception(f"Failed to send error: {e}")
+            raise e
 
 class ThrottlingMiddleware(BaseMiddleware):
     default = TTLCache(maxsize=25_000, ttl=.25)
