@@ -195,7 +195,7 @@ class AdminTextGen:
         delivery_description = ""
         if delivery_info:
             delivery_description = f"{delivery_info.service.name.get(ctx)} — {order.price_details.delivery_price.to_text()}\n"
-            delivery_description += build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+            delivery_description += build_list([f"{requirement.name.get(ctx)} - <tg-spoiler><code>{requirement.value.get()}</code></tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
                                                     padding=2)
         
         if order.state == OrderStateKey.waiting_for_price_confirmation:

@@ -35,7 +35,11 @@ async def user_unblocked_bot(_, ctx: Context):
 
 @router.startup()
 async def on_startup(dispatcher: Dispatcher):
-    await dispatcher.workflow_data.get("context_middleware").start(dispatcher.workflow_data.get("bot"))
+    ctx = dispatcher.workflow_data.get("context_middleware")
+    bot = dispatcher.workflow_data.get("bot")
+    await ctx.start(bot)
 
 @router.shutdown()
-async def on_shutdown(dispatcher: Dispatcher): await dispatcher.workflow_data.get("context_middleware").stop()
+async def on_shutdown(dispatcher: Dispatcher): 
+    ctx = dispatcher.workflow_data.get("context_middleware")
+    await ctx.stop()
