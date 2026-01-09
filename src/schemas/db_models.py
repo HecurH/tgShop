@@ -372,8 +372,6 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
             entry.order_id = order.id
             if entry.source_type == CartItemSource.product:
                 entry.frozen_snapshot = products_map.get(entry.source_id)
-            else:
-                continue
             
         await self.save_many(entries)
         

@@ -104,7 +104,7 @@ class MediaSaver:
         with open(filepath, "rb") as f:
             file_bytes = f.read()
             
-        await asyncio.sleep(5)
+        await asyncio.sleep(0.6)
         
         try:
 
