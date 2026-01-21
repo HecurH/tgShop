@@ -283,9 +283,9 @@ class EnumTranslates(Translatable):
             "en": "Sent"
         }
         
-        delivered = {
-            "ru": "Доставлен",
-            "en": "Delivered"
+        arrived_at_delivery_point = {
+            "ru": "Готов к получению",
+            "en": "Ready for pickup"
         }
 
         received = {
