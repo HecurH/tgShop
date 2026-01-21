@@ -282,6 +282,11 @@ class EnumTranslates(Translatable):
             "ru": "Отправлен",
             "en": "Sent"
         }
+        
+        delivered = {
+            "ru": "Доставлен",
+            "en": "Delivered"
+        }
 
         received = {
             "ru": "Получен",

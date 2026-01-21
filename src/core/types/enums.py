@@ -37,6 +37,8 @@ class OrderStateKey(str, Enum):
     assembled_waiting_for_send = "assembled_waiting_for_send"
     
     sent = "sent"
+    delivered = "delivered"
+    
     received = "received"
 
 __all__ = [
