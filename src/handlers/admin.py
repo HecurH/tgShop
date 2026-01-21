@@ -333,7 +333,7 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     # все что после JSON и до конца строки - это price
     price_str = command.args[json_end+1:].strip()
     try:
-        price = LocalizedMoney.model_validate_json(price_str)
+        price = LocalizedMoney.from_json(price_str)
     except:
         await ctx.message.answer("Неверный формат цены")
         return

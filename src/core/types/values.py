@@ -108,6 +108,11 @@ class LocalizedMoney(BaseModel):
     def to_json(self) -> str:
         return json.dumps(self.model_dump(), ensure_ascii=False, default=lambda o: float(o if isinstance(o, Decimal) else o.to_decimal()) if isinstance(o, (Decimal, Decimal128)) else o)
 
+    @classmethod
+    def from_json(cls, json_str: str) -> "LocalizedMoney":
+        data = json.loads(json_str).get("data")
+        return LocalizedMoney(data={cur: Money(currency=cur, amount=Decimal(data[cur]["amount"])) for cur in data})
+
     def get_amount(self, cur: str) -> Decimal:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
 
