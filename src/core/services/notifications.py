@@ -226,9 +226,7 @@ class AdminChatNotificator:
         ctx.lang = "ru"
 
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        
-        products = await ctx.services.db.products.find_by_entries(entries)
-        products_dict = {product.id: product for product in products}
+        products_dict = {entry.frozen_snapshot.id: entry.frozen_snapshot for entry in entries if entry.source_type == CartItemSource.product}
 
         for idx, entry in enumerate(entries):
             if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):
@@ -250,8 +248,7 @@ class AdminChatNotificator:
         ctx.lang = "ru"
 
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-        products = await ctx.services.db.products.find_by_entries(entries)
-        products_dict = {product.id: product for product in products}
+        products_dict = {entry.frozen_snapshot.id: entry.frozen_snapshot for entry in entries if entry.source_type == CartItemSource.product}
 
         for idx, entry in enumerate(entries):
             if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):

@@ -80,7 +80,7 @@ def gen_product_configurable_info_text(
 async def form_entry_description(entry: CartEntry, ctx):
     is_product = entry.source_type == CartItemSource.product
     
-    product: Product = await ctx.services.db.products.find_one_by_id(entry.source_id) if is_product else None
+    product: Product = (entry.frozen_snapshot or await ctx.services.db.products.find_one_by_id(entry.source_id)) if is_product else None
     
     quantity_text = f" {entry.quantity} {ctx.t.UncategorizedTranslates.unit(entry.quantity)}" if entry.quantity > 1 else ""
     price = (product.price + entry.configuration.price) if is_product else entry.frozen_snapshot.price
@@ -180,8 +180,7 @@ class AdminTextGen:
         entries_description = ""
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
         
-        products = await ctx.services.db.products.find_by_entries(entries)
-        products_dict = {product.id: product for product in products}
+        products_dict = {entry.frozen_snapshot.id: entry.frozen_snapshot for entry in entries if entry.source_type == CartItemSource.product}
 
         for idx, entry in enumerate(entries):
             if entry.source_type == CartItemSource.product and (product := products_dict.get(entry.source_id)):
@@ -366,8 +365,6 @@ class DiscountedProductsGen:
         
         return f"{dprod_name} — {dprod_price}\n\n{dprod_description}" if discounted_product.description else f"{dprod_name} — {dprod_price}"
     
-        
-
 class ProfileTextGen:
     
     @staticmethod
