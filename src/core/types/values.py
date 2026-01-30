@@ -157,10 +157,23 @@ class LocalizedMoney(BaseModel):
             return LocalizedMoney(data=self.data.copy())
         return self.__add__(other)
 
-    def __mul__(self, factor) -> "LocalizedMoney":
-        return LocalizedMoney(
-            data={cur: money * factor for cur, money in self.data.items()}
-        )
+    def __mul__(self, other) -> "LocalizedMoney":
+        if isinstance(other, (int, float, Decimal)):
+            return LocalizedMoney(
+                data={cur: money * other for cur, money in self.data.items()}
+            )
+
+        if isinstance(other, LocalizedMoney):
+            result = {
+                cur: self.get_amount(cur) * other.get_amount(cur)
+                for cur in set(self.data) | set(other.data)
+            }
+            return LocalizedMoney.from_keys(**result)
+
+        return NotImplemented
+    
+    def __rmul__(self, other) -> "LocalizedMoney":
+        return self.__mul__(other)
 
     def __imul__(self, factor) -> "LocalizedMoney":
         for cur in self.data:

@@ -178,6 +178,16 @@ async def order_configuration_handler(_, ctx: Context):
                                      send_before=(ctx.t.CartTranslates.OrderConfiguration.not_all_required_fields_filled, 1))
             return
         
+        # Изменилась ли цена пока он формировал корзину?
+        current_products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+        order_products_price = order.price_details.products_price
+        if order_products_price.amount != current_products_price.get_amount(order_products_price.currency):
+            
+            await ctx.fsm.update_data(current=1, order=None)
+            await call_state_handler(CartStates.Menu, ctx, current=1,
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.price_changed, 1))
+            return
+        
         if not payment_method.manual: # TODO когда будет интернет-эквайринг
             return
         
@@ -185,7 +195,6 @@ async def order_configuration_handler(_, ctx: Context):
         await call_state_handler(CartStates.OrderConfiguration.PaymentConfirmation, ctx, order=order)
     else:
         await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order)
-
 
 @router.message(CartStates.OrderConfiguration.PromocodeSetting)
 async def order_configuration_promocode_handler(_, ctx: Context):
@@ -255,7 +264,16 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
         entries_assigned = order.state == OrderStateKey.waiting_for_forming
         
-        order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
+        # Изменилась ли цена пока он формировал корзину?
+        current_products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
+        order_products_price = order.price_details.products_price
+        if order_products_price.amount != current_products_price.get_amount(order_products_price.currency):
+            
+            await ctx.fsm.update_data(current=1, order=None)
+            await call_state_handler(CartStates.Menu, ctx, current=1,
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.price_changed, 1))
+            return
+        
         if order.promocode_id:
             promocode = await ctx.services.db.promocodes.find_one_by_id(order.promocode_id)
             if not promocode:
@@ -274,6 +292,8 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
         if order.price_details.bonuses_applied:
             await ctx.services.db.customers.remove_bonus_money(ctx.customer, order.price_details.bonuses_applied, ctx)
         
+        
+        order.state.set_state(OrderStateKey.waiting_for_manual_payment_confirm)
         await ctx.services.db.orders.save(order)
         
         if not entries_assigned: await ctx.services.db.cart_entries.assign_cart_entries_to_order(ctx.customer, order)

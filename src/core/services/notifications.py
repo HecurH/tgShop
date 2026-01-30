@@ -242,7 +242,6 @@ class AdminChatNotificator:
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
             
-    
     async def send_payment_confirmation(self, order: Order, ctx: Context):
         payment_method = order.payment_method
         text = f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> сообщил о ручной оплате заказа на сумму {order.price_details.total_price.to_text()};\nСпособ оплаты: {payment_method.name.get('ru') if payment_method else 'Неизвестно'}."

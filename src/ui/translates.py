@@ -1417,6 +1417,11 @@ class CartTranslates(Translatable):
    Description: {description}"""
         }
         
+        price_changed = {
+            "ru": "Цена одного или нескольких товаров в корзине была изменена. Пожалуйста, оформите заказ заново.",
+            "en": "The price of one or more items in the cart has changed. Please place the order again."
+        }
+        
         not_using_bonus_money = {
             "ru": "Не используются.",
             "en": "Not used."

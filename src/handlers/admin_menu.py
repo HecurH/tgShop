@@ -336,7 +336,6 @@ async def discounted_products_edit_handler(_, ctx: Context):
     except Exception as e:
         raise Exception(f"Не удалось отредактировать товар: {e}")
     
-   
 @router.message(AdminStates.Main.Orders.AskId)
 async def orders_ask_id_handler(_, ctx: Context):
     text = ctx.message.text

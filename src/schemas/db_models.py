@@ -388,6 +388,13 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
             #     await self.delete(entry)
         
         await self.save_many(entries)
+        
+    async def update_product_in_carts(self, product: Product, additionals: Iterable[ProductAdditional]):
+        entries = await self.find_entries_by_product(product)
+        for entry in entries:
+            entry.configuration.update(product.configuration, additionals)
+
+        await self.save_many(entries)
     
     async def calculate_customer_cart_price(self, customer: Customer) -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
