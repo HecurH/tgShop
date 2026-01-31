@@ -125,6 +125,9 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                     send_before=(ctx.t.AssortmentTranslates.cant_add_to_cart_more, 1))
             return
         
+        base_product: Product = await ctx.services.db.products.find_one_by_id(product.id)
+        product.configuration.update(base_product.configuration, await ctx.services.db.additionals.get(product))
+        
         await ctx.services.db.cart_entries.add_to_cart(product, ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
                                 ctx,
@@ -220,7 +223,6 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
                                     ctx,
                                     product=product,
                                     option=changing_option)
-
 
 @router.message(AssortmentStates.SwitchesEditing)
 async def switches_handler(message: Message, ctx: Context) -> None:

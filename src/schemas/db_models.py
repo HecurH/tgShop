@@ -614,6 +614,7 @@ class ConfigurationChoice(AppBaseModel):
     can_be_blocked_by: List[str] = Field(default_factory=list) # формат типо 'option/choice'
     blocks_price_determination: bool = Field(default=False)
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
+    
     def update(self, base_choice: "ConfigurationChoice"):
         self.name=base_choice.name
         self.description=base_choice.description
@@ -624,12 +625,15 @@ class ConfigurationChoice(AppBaseModel):
         self.blocks_price_determination=base_choice.blocks_price_determination
         self.price_by_preset = base_choice.price_by_preset
         
-        if not self.price_by_preset:
+        if self.price_by_preset:
+            self.set_chosen_preset(self.existing_presets_chosen)
+        else:
             self.price=base_choice.price
     
     def set_chosen_preset(self, preset: str):
-        self.existing_presets_chosen = preset
-        if self.price_by_preset:
+        if self.price_by_preset and self.validate_existing_preset(preset):
+            self.existing_presets_chosen = preset
+            
             total_price = LocalizedMoney.empty_base()
             for let, price in self.price_by_preset.items():
                 if let in preset:
@@ -812,7 +816,9 @@ class ProductConfiguration(AppBaseModel):
         base_additional_ids = {add.id for add in allowed_additionals}
         self.additionals = [add for add in self.additionals if add.id in base_additional_ids]
         
+        self.update_price()
         self._sync_price_confirmation_flag()
+        
 
     def get_all_options_localized_names(self, ctx: Context):
         return [option.name.get(ctx) for option in self.options.values()]
