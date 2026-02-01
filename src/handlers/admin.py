@@ -713,7 +713,7 @@ async def image_saving_handler(_, ctx: Context) -> None:
         name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Хайден\"",
         category="dildos",
         short_description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""<blockquote expandable>Нежное сияние пурпурной драконьей чешуи под лучами алого заката. Хайден всегда знает, как позаботиться о своём любимом партнёре. Мягко обхватывая тебя своими опытными лапками, чутко лаская чувствительные зоны, он приближается всё ближе и ближе, заставляя твоё тело легко подрагивать от возбуждения. Он улавливает твоё сбитое дыхание, чуть улыбаясь от удовольствия... 
 
 Его кончик нежно входит в тебя, заставляя постанывать и дрожать еще сильнее. Постепенно расширяясь, мягко входят сплетения, доходя до окончательно добивающего узла... 
@@ -727,7 +727,7 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
 
 <b>An A5 laminated poster will be included with the order!</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=haiden_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_haiden_full_photo"),
@@ -750,11 +750,11 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
         name_for_tax="Индивидуальная отливка силиконового изделия \"Конь Морион\"",
         category="dildos",
         short_description_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""Питончик ещё не притащил описание... подождём, пока он распутает свой хвост 🐍""",
             "en":"""Питончик ещё не притащил описание... подождём, пока он распутает свой хвост 🐍"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=morion_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_morion_full_photo"),
@@ -777,13 +777,13 @@ Strong and tender, the dragon Hayden will be the perfect partner, bestowing soft
         name_for_tax="Индивидуальная отливка силиконового изделия \"Авали Авили\"",
         category="dildos",
         short_description_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""<blockquote expandable>Беззвучное движение мягких перьев, едва заметное неловко брошенному взгляду... 
 Пернатый проказник Авили, прославившийся своим умением незаметно подкрадываться со спины, утягивая свою жертву ловким движением лап, обладает очень интересной особенностью: вначале узкий, как течение маленького ручья, затем плавно расширяющийся в небольшую реку, а после превращающийся в мощный водный поток, достигая кульминации, впадающий в объёмное озеро, такое крупное и необъятное, но невероятно манящее...</blockquote>""",
             "en":"""<blockquote expandable>The soundless motion of soft feathers, barely noticeable to a clumsily cast glance...
 The feathered mischief-maker Avili, famous for his ability to stealthily sneak up from behind and snatch his victim with a deft movement of his paws, possesses a very interesting feature: at first narrow, like the flow of a small stream, then smoothly widening into a small river, and then transforming into a powerful water stream, reaching its climax, it flows into a vast lake, so large and boundless, yet incredibly alluring...</blockquote>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=avily_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_avily_full_photo"),
@@ -808,7 +808,7 @@ The feathered mischief-maker Avili, famous for his ability to stealthily sneak u
         name_for_tax="Индивидуальная отливка силиконового изделия \"Волк Рагнар\"",
         category="dildos",
         short_description_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""<blockquote expandable>Крупное, мощное тело, стальные мускулы, перекатывающиеся под толстой шкурой с густой серебристой шерстью... Огромный волк с тяжёлым рокотом дышит в твою спину, взгляд его ледяных жёлтых глаз пробивает твоё тело насквозь. Свирепо обнажая ряды блестящих зубов, своей мощной лапой он хватает тебя за талию, заставляя дрожать от лёгкого страха и предвкушения невероятного удовольствия...
 
 Небольшой кончик входит внутрь, давая какое-то время для привычки к этому зверю, а затем ствол входит глубже, давая почувствовать свой плавный изгиб. Заставив подумать, что на этом всё заканчивается, он вводит внутрь мощный узел, добивая окончательно...
@@ -824,7 +824,7 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
 
 <b>The order will be accompanied by an A5 — SFW laminated poster or an NSFW version to choose from.</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=ragnar_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_ragnar_full_photo"),
@@ -1056,7 +1056,7 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
         name_for_tax="Индивидуальная отливка силиконового изделия \"Дракон Дриана\"",
         category="masturbators",
         short_description_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""<blockquote expandable>Лунный свет струился по нежной чешуе, заставляя её сиять и переливаться. Тишина ночного озера, прерываемая лишь рокотом цикад. Плавные, мягкие движения Дрианы, осторожно спускающейся в воду... Она, рождённая от дракона и кобольда, соединила в себе их лучшие черты: изящное тело с тонкой талией, плавно переходящей в сочные и упругие широкие бёдра. 
 
 Хрупкая, но такая привлекательная, она готова подарить вам невообразимые ласки и искреннюю нежность, доставить удовольствие, от которого закатят глаза даже самые искушённые!</blockquote>
@@ -1071,7 +1071,7 @@ The masturbator is made from the softest silicone with an incredible internal te
 
 <b>The order will be accompanied by an A5 — SFW laminated poster or an NSFW version to choose from.</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=6000.00, USD=100.00),
         configuration=driana_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_driana_full_photo"),
@@ -1119,7 +1119,7 @@ The masturbator is made from the softest silicone with an incredible internal te
         name_for_tax="Модификация готовой порошковой смазки для улучшения характеристик хранения",
         category="other",
         short_description_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""<b>Плюсы K-Lube:</b>
   - Инертная и безопасная к игрушкам
   - Долго высыхает 
@@ -1151,7 +1151,7 @@ Five grams is enough to make 200-400ml of prepared lubricant.
   3) Pour the lubricant into a sterile container and let it sit for a few hours.
   4) Enjoy!"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=300.00, USD=3.00),
         configuration=lube_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_lube_full_photo"),
@@ -1190,7 +1190,7 @@ Five grams is enough to make 200-400ml of prepared lubricant.
         name_for_tax="Индивидуальная отливка силиконовых тестеров",
         category="other",
         short_description_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
-        long_description=LocalizedString(data={
+        description=LocalizedString(data={
             "ru":"""Силиконовые тестеры мягкости, набор из трёх.
             
 <b>Учтите, тестеры будут случайного цвета!</b>""",
@@ -1198,7 +1198,7 @@ Five grams is enough to make 200-400ml of prepared lubricant.
             
 <b>Please note, the testers will be of random color!</b>"""}
         ),
-        long_description_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
+        description_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),
         base_price=LocalizedMoney.from_keys(RUB=500.00, USD=10.00),
         configuration=testers_configuration,
         configuration_media=LocalizedSavedMedia(media_key="photo_testers_full_photo"),

@@ -318,7 +318,7 @@ async def main_menu_handler(ctx: Context, **_):
 class AssortmentStates(StatesGroup):
     Menu = State()
     ViewingAssortment = State()
-    ViewingProductDetails = State()
+    ViewingProductDetails = State() # DEPRECATED
     FormingOrderEntry = State()
     EntryOptionSelect = State()
     ChoiceEditValue = State()
@@ -351,21 +351,9 @@ async def viewing_assortment_handler(ctx: Context,
                                                         ctx)
 
     await send_media_response(ctx,
-                                product.short_description_media,
+                                product.description_media,
                                 caption,
                                 AssortmentKBs.gen_assortment_view_kb(current, amount, ctx))
-
-@state_handlers.register(AssortmentStates.ViewingProductDetails)
-async def viewing_product_details_handler(ctx: Context,
-                                          product: Product,
-                                          **_):
-    caption = AssortmentTextGen.generate_product_detailed_caption(product, ctx)
-
-    await send_media_response(ctx,
-                                product.long_description_media,
-                                caption,
-                                AssortmentKBs.detailed_view(ctx)
-                                )
 
 @state_handlers.register(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_handler(ctx: Context,
@@ -501,7 +489,7 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
                                             ctx=ctx)
     
     await send_media_response(ctx,
-                            product.short_description_media if is_product else entry.frozen_snapshot.media,
+                            product.description_media if is_product else entry.frozen_snapshot.media,
                             caption,
                             await CartKBs.cart_view(entry, current, amount, total_price, ctx))
 

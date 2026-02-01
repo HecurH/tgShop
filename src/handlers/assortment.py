@@ -62,7 +62,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 category=category,
                                 current=new_order)
-    elif text == ctx.t.ReplyButtonsTranslates.Assortment.details:
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
         if amount == 0: 
             await ctx.message.delete()
             return
@@ -70,7 +70,9 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
         await ctx.fsm.update_data(product=None)
         
         product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
-        await call_state_handler(AssortmentStates.ViewingProductDetails,
+        await product.save_in_fsm(ctx, "product")
+        
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
                                 ctx,
                                 product=product)
     else:
@@ -78,7 +80,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 category=category,
                                 current=current)
-
+        
 @router.message(AssortmentStates.ViewingProductDetails)
 async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     current: int = await ctx.fsm.get_value("current")
@@ -86,7 +88,15 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     text = ctx.message.text
     if not text: return
     
-    if text == ctx.t.UncategorizedTranslates.back:
+    
+    if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
+        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+        
+        await product.save_in_fsm(ctx, "product")
+        await call_state_handler(AssortmentStates.FormingOrderEntry,
+                                ctx,
+                                product=product)
+    else:
         if current > await ctx.services.db.products.count_in_category(category): 
             await ctx.fsm.update_data(current=1)
             current = 1
@@ -97,16 +107,6 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
                                 current=current)
         return
         
-    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
-    if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
-        await product.save_in_fsm(ctx, "product")
-        await call_state_handler(AssortmentStates.FormingOrderEntry,
-                                ctx,
-                                product=product)
-    else:
-        await call_state_handler(AssortmentStates.ViewingProductDetails,
-                                ctx,
-                                product=product)
 
 @router.message(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
@@ -115,9 +115,20 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
     if not text: return
     
     if text == ctx.t.UncategorizedTranslates.cancel:
-        await call_state_handler(AssortmentStates.ViewingProductDetails,
+        current: int = await ctx.fsm.get_value("current")
+        category: int = await ctx.fsm.get_value("category")
+        
+        if current > await ctx.services.db.products.count_in_category(category): 
+            await ctx.fsm.update_data(current=1)
+            current = 1
+        
+        await ctx.fsm.update_data(product=None)
+        await call_state_handler(AssortmentStates.ViewingAssortment,
                                 ctx,
-                                product=product)
+                                category=category,
+                                current=current)
+        return
+        
     elif text == ctx.t.UncategorizedTranslates.finish:
         if await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer) >= 10:
             await call_state_handler(AssortmentStates.MainMenu,

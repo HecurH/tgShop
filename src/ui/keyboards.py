@@ -214,7 +214,7 @@ class AssortmentKBs:
         
         kb = [
             [
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.details)
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart)
             ],
             controls,
             [

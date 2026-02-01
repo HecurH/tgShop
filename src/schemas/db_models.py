@@ -880,12 +880,9 @@ class Product(AppBaseModel):
     name_for_tax: str
     
     category: str
-
-    short_description: Optional[LocalizedString] = None
-    short_description_media: Optional[LocalizedSavedMedia] = None
-
-    long_description: LocalizedString
-    long_description_media: Optional[LocalizedSavedMedia] = None
+    
+    description: LocalizedString
+    description_media: Optional[LocalizedSavedMedia] = None
     
     base_price: LocalizedMoney
     discount: Optional[Discount] = None
@@ -897,6 +894,24 @@ class Product(AppBaseModel):
 
     configuration: ProductConfiguration
     configuration_media: Optional[LocalizedSavedMedia] = None
+    
+    
+    @model_validator(mode="before")
+    @classmethod
+    def from_v1(cls, data: dict):
+        if "description" in data:
+            return data
+
+        if "short_description_media" in data:
+            logging.getLogger(__name__).warning("Product: converting from v1 to v2")
+            
+            
+            data.pop("short_description")
+            data.pop("short_description_media")
+            data["description"] = data.pop("long_description")
+            data["description_media"] = data.pop("long_description_media")
+
+        return data
     
     
     # def calculate_price(self, configuration: ProductConfiguration = None) -> LocalizedPrice:
