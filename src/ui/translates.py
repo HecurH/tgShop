@@ -527,6 +527,16 @@ class DBEntryTranslates(Translatable):
                             "ru": "Выбран <b>Большой</b> размер.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
                             "en": "Selected <b>Large</b> size.\n\nYou can see all the size values in the attached picture."
                         }
+                        
+                    class XL(Translatable):
+                        name = {
+                            "ru": "XL",
+                            "en": "XL"
+                        }
+                        description = {
+                            "ru": "Выбран размер <b>XL</b>.\n\nУвидеть значения выбранного размера изделия можно на прикрепленном фото.",
+                            "en": "Selected <b>XL</b> size.\n\nYou can see all the size values in the attached picture."
+                        }
 
             class Weight(Translatable):
                 name = {

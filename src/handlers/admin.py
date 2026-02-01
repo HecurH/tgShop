@@ -468,7 +468,6 @@ async def cats_handler(_, ctx: Context) -> None:
             }))
     await ctx.services.db.categories.save(cat)
 
-
 @router.message(Command("add_products"))
 async def image_saving_handler(_, ctx: Context) -> None:
     haiden_configuration = ProductConfiguration(options={
