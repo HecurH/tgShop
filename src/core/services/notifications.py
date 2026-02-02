@@ -338,6 +338,11 @@ class UserTelegramNotificator:
                                                  chat_id=customer.user_id)
     
     #-----------
+    
+    async def send_bonus_money_added(self, customer: Customer, money: Money):
+        if customer.kicked: return
+        await self.notificator.send_notification(NotificatorTranslates.User.bonus_money_added.translate(customer.lang).format(money=money.to_text(), balance=customer.bonus_wallet.to_text()),
+                                                 chat_id=customer.user_id)
 
 class NotificatorHub:
     def __init__(self, bot: Bot, logs_channel_id: Optional[int] = None, admin_chat_id: Optional[int] = None, config: NotificatorConfig = NotificatorConfig()):

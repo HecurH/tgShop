@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 import json
 
 from aiogram import Bot, Router
@@ -13,7 +14,7 @@ from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
 from core.types.enums import CartItemSource, InviterType, OrderStateKey
-from core.types.values import LocalizedSavedMedia
+from core.types.values import LocalizedSavedMedia, Money
 from core.types.values import LocalizedEntry
 from core.types.values import LocalizedMoney, LocalizedString
 from ui.message_tools import list_commands
@@ -38,6 +39,36 @@ async def help_handler(_, ctx: Context):
     await ctx.services.media_saver.update_cache()
     
     await ctx.message.answer("Обновлено!")
+    
+@router.message(Command("add_bonus_money"))
+async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
+    """/add_bonus_money <user_id> - Добавить бонусные деньги пользователю"""
+    args = command.args.split()
+    
+    user_id = int(args[0]) if args and args[0].isdigit() else None
+    money = str(args[1]) if args and args[1] else None
+    
+    if not user_id:
+        await ctx.message.answer("Неправильный формат команды")
+        return
+    customer = await ctx.services.db.customers.find_by_user_id(user_id)
+    if not customer:
+        await ctx.message.answer("Пользователь не найден")
+        return
+    
+    if not money:
+        await ctx.message.answer(f"У пользователя установлена валюта {customer.currency}.\n\nПример команды:\n<code>/add_bonus_money {user_id} 1000</code>")
+        return
+    
+    try:
+        money = Money(currency=customer.currency, amount=Decimal(money))
+        
+        await ctx.services.db.customers.add_bonus_money(customer, money, ctx)
+        await ctx.services.notificators.UserTelegramNotificator.send_bonus_money_added(customer, money)
+        await ctx.message.answer(f"Бонусные деньги {money} были добавлены пользователю {customer.user_id}")
+    except:
+        await ctx.message.answer("Неправильный формат суммы")
+    
 
 @router.message(Command("toggle_partner"))
 async def toggle_partner_handler(_, ctx: Context, command: CommandObject):

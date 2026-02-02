@@ -1758,6 +1758,11 @@ class NotificatorTranslates(Translatable):
             "ru": "Вам было начислено {reward} за первый заказ приглашённого Вами пользователя.\nТеперь у Вас {balance} на бонусном счету.",
             "en": "You have been awarded {reward} for the first order of the user you invited.\nNow you have {balance} in your bonus account."
         }
+        
+        bonus_money_added = {
+            "ru": "Вам было начислено {money}.\nТеперь у Вас {balance} на бонусном счету.",
+            "en": "You have been awarded {money}.\nNow you have {balance} in your bonus account."
+        }
     
     class Delivery(Translatable):
         delivery_price_confirmed = {
