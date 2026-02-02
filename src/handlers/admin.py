@@ -45,8 +45,8 @@ async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
     """/add_bonus_money <user_id> - Добавить бонусные деньги пользователю"""
     args = command.args.split()
     
-    user_id = int(args[0]) if args and args[0].isdigit() else None
-    money = str(args[1]) if args and args[1] else None
+    user_id = int(args[0]) if args and args[0].isdigit() and len(args) >= 1 else None
+    money = str(args[1]) if args and len(args) >= 2 else None
     
     if not user_id:
         await ctx.message.answer("Неправильный формат команды")
