@@ -1,3 +1,4 @@
+import logging
 from os import getenv
 
 import pymongo
@@ -11,6 +12,8 @@ class DatabaseService:
         self.db = self.client.get_database(db_name)
 
         self._init_collections()
+        
+        logging.getLogger(__name__).info("Database service initialized.")
 
     def _init_collections(self):
         self.placeholders = PlaceholdersRepository(self)
@@ -54,3 +57,4 @@ class DatabaseService:
     
     async def close(self):
         await self.client.close()
+        logging.getLogger(__name__).info("Database service closed.")

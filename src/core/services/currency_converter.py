@@ -38,7 +38,6 @@ class AsyncCurrencyConverter:
 
     async def _background_refresh_task(self):
         """Бесконечный цикл для периодического обновления кэша в фоне."""
-        self._logger.info("Background refresh task started.")
         while True:
             try:
                 await self.update_all_rates()

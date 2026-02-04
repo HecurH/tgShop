@@ -26,7 +26,7 @@ async def on_startup(bot: Bot) -> None:
     )
     
     me = await bot.get_me()
-    logging.getLogger(__name__).info(f"Started bot @{me.username}")
+    logging.getLogger(__name__).info(f"Started bot @{me.username}.")
 
 def create_app(dp: Dispatcher, bot: Bot):
     webhook_path = load_env('WEBHOOK_PATH')
