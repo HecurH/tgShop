@@ -49,7 +49,7 @@ def load_env(name: str) -> str:
     if value := getenv(name): return value
     else: raise KeyError(f"Missing {name} environment variable.")
     
-logs_dir = load_env("LOGS_DIR")
+logs_path = load_env("LOGS_PATH")
 
 # Переопределяем метод namer, чтобы архивные логи были вида "18_06_25.log"
 def custom_namer(default_name):
@@ -58,7 +58,7 @@ def custom_namer(default_name):
     if match := re.search(r'(\d{4}-\d{2}-\d{2})', default_name):
         y, m, d = match.group(1).split('-')
         short_name = f"{y[2:]}_{m}_{d}.log"
-        return str(logs_dir / short_name)
+        return str(logs_path / short_name)
     return default_name
 
 def setup_logging():
