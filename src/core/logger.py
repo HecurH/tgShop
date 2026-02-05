@@ -49,7 +49,7 @@ def load_env(name: str) -> str:
     if value := getenv(name): return value
     else: raise KeyError(f"Missing {name} environment variable.")
     
-logs_path = load_env("LOGS_PATH")
+logs_path = Path(load_env("LOGS_PATH"))
 
 # Переопределяем метод namer, чтобы архивные логи были вида "18_06_25.log"
 def custom_namer(default_name):
@@ -69,12 +69,11 @@ def setup_logging():
     stream = logging.StreamHandler()
     stream.setFormatter(formatter_color)
     
-    logs_dir = Path(logs_path)
-    logs_dir.mkdir(exist_ok=True)
+    logs_path.mkdir(exist_ok=True)
 
     # TimedRotatingFileHandler будет создавать новый файл каждый день
     file_handler = TimedRotatingFileHandler(
-        filename=logs_dir / "current.log",
+        filename=logs_path / "current.log",
         when="midnight",
         interval=1,
         backupCount=30,
