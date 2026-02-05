@@ -69,7 +69,7 @@ def setup_logging():
     stream = logging.StreamHandler()
     stream.setFormatter(formatter_color)
     
-    logs_dir = Path(logs_dir)
+    logs_dir = Path(logs_path)
     logs_dir.mkdir(exist_ok=True)
 
     # TimedRotatingFileHandler будет создавать новый файл каждый день
