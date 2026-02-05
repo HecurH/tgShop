@@ -168,7 +168,7 @@ class AdminTextGen:
     @staticmethod
     async def order_menu_text(order: Order, ctx: Context):
         customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
-        order_viewing_menu = """<b>Заказ {order_id}</b> от {order_forming_date}, <a href=\"tg://user?id={user_id}\">покупатель</a> ({user_id})
+        order_viewing_menu = """<b>Заказ {order_id}</b> от {order_forming_date}, <a href=\"tg://user?id={user_id}\">покупатель</a> (<code>{user_id}</code>)
 {order_entries_description}        
 
 Статус заказа: {order_status}{delivery_info}{payment_method}{promocode_info}{bonus_money_info}
