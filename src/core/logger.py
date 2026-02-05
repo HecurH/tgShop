@@ -1,6 +1,7 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+from os import getenv
 from pathlib import Path
 import re
 import shutil
@@ -29,12 +30,10 @@ class _BaseAlignedFormatter:
         space_left = max(1, total_width - visible_len - len(tail))
         return base_message + " " * space_left + tail
 
-
 class AlignedColorFormatter(_BaseAlignedFormatter, ColoredFormatter):
     def format(self, record):
         base_message = super().format(record)
         return self._align(base_message, record)
-
 
 class AlignedPlainFormatter(_BaseAlignedFormatter, logging.Formatter):
     def __init__(self, fmt, datefmt=None):
@@ -46,6 +45,12 @@ class AlignedPlainFormatter(_BaseAlignedFormatter, logging.Formatter):
         base_message = super().format(record)
         return self._align(base_message, record)
 
+def load_env(name: str) -> str:
+    if value := getenv(name): return value
+    else: raise KeyError(f"Missing {name} environment variable.")
+    
+logs_dir = load_env("LOGS_DIR")
+
 # Переопределяем метод namer, чтобы архивные логи были вида "18_06_25.log"
 def custom_namer(default_name):
     # default_name: logs/current.log.2024-06-25_00-00-00
@@ -56,7 +61,7 @@ def custom_namer(default_name):
         return str(logs_dir / short_name)
     return default_name
 
-def setup_logging(logs_dir: str = "/gss_logs/"):
+def setup_logging():
     formatter_color = AlignedColorFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
     formatter_plain = AlignedPlainFormatter(LOGFORMAT, datefmt="%m-%d %H:%M:%S")
 
