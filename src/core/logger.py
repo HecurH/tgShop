@@ -23,7 +23,7 @@ class _BaseAlignedFormatter:
         if tail in base_message:
             base_message = base_message.replace(tail, "").rstrip()
         try:
-            total_width = max(shutil.get_terminal_size()[0], 120)
+            total_width = max(shutil.get_terminal_size()[0], 160)
         except Exception:
             total_width = 120
         visible_len = len(self._strip_colors(base_message))
