@@ -5,6 +5,13 @@ from core.states import call_state_handler, CommonStates
 
 router = Router(name="bottom")
 
+@router.message(CommonStates.MainMenu)
+async def main_menu_handler(_, ctx: Context):
+    if ctx.customer:
+        await call_state_handler(CommonStates.MainMenu, ctx)
+    else:
+        await ctx.message.answer("Enter /start.")
+
 @router.message(StateFilter(None))
 async def base_handler(_, ctx: Context):
     await ctx.fsm.clear()
