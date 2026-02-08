@@ -833,6 +833,51 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                             "en": "You have chosen <b>dark</b> chocolate."
                         }
 
+            class ChocolateShimmer(Translatable):
+                name = {
+                    "ru": "Шиммер",
+                    "en": "Shimmer"
+                }
+
+                text = {
+                    "ru": "Внимание! Шиммер хорошо выглядит обычно только с чёрным шоколадом!\nВыберите какой шиммер добавить:",
+                    "en": "Warning! Shimmer usually looks good only with dark chocolate!\nChoose which shimmer to add:"
+                }
+
+                class Choices(Translatable):
+                    class Without(Translatable):
+                        name = {
+                            "ru": "Без шиммера",
+                            "en": "Without shimmer"
+                        }
+
+                        description = {
+                            "ru": "Выбран шоколад <b>без шиммера</b>.",
+                            "en": "Selected chocolate <b>without shimmer</b>."
+                        }
+                
+                    class Silver(Translatable):
+                        name = {
+                            "ru": "Серябряный",
+                            "en": "Silver"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали <b>серябряный</b> шиммер.",
+                            "en": "You have chosen <b>silver</b> shimmer."
+                        }
+                    
+                    class Gold(Translatable):
+                        name = {
+                            "ru": "Золотой",
+                            "en": "Gold"
+                        }
+
+                        description = {
+                            "ru": "Вы выбрали <b>золотой</b> шиммер.",
+                            "en": "You have chosen <b>gold</b> shimmer."
+                        }
+    
             class Color(Translatable):
                 name = {
                     "ru": "Окрас",
