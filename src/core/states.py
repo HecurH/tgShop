@@ -358,17 +358,26 @@ async def viewing_assortment_handler(ctx: Context,
 @state_handlers.register(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_handler(ctx: Context,
                                       product: Product,
+                                      annotation: ConfigurationAnnotation = None,
                                       **_):
-    options: dict[str, ConfigurationOption] = product.configuration.options
+    
+
+    options: list[ConfigurationOption] = list(product.configuration.get_options(only_options=False).values())
 
     if ctx.is_query: await clear_keyboard_effect(ctx.message)
     
     additionals = await ctx.services.db.additionals.get(product)
+    
+    kb = AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx)
+    
+    if annotation:
+        await send_media_response(ctx, annotation.media, annotation.text.get(ctx), kb)
+        return
 
     await send_media_response(ctx,
-                                product.configuration_media,
-                                AssortmentTextGen.generate_product_configurating_main(product, ctx),
-                                AssortmentKBs.adding_to_cart_main(options, len(additionals) > 0, ctx))
+                            product.configuration_media,
+                            AssortmentTextGen.generate_product_configurating_main(product, ctx),
+                            kb)
 
 @state_handlers.register(AssortmentStates.EntryOptionSelect)
 async def entry_option_select_handler(ctx: Context,

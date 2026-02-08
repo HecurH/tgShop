@@ -787,6 +787,73 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                             "ru": "Выбрана форма <b>Змейка сидит</b>.",
                             "en": "Selected <b>Snake sits</b> shape."
                         }
+            
+            class ChocolateValentineShape(Translatable):
+                name = {
+                    "ru": "Форма",
+                    "en": "Shape"
+                }
+
+                text = {
+                    "ru": "Выберите форму шоколада:",
+                    "en": "Choose the chocolate shape:"
+                }
+
+                class Choices(Translatable):
+                    class CupidLizard(Translatable):
+                        name = {
+                            "ru": "Ящерка-купидон",
+                            "en": "Lizard cupid"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Ящерка-купидон</b>.",
+                            "en": "Selected the <b>Lizard cupid</b> shape."
+                        }
+                    
+                    class BigHeartSnake(Translatable):
+                        name = {
+                            "ru": "Змейка-сердце",
+                            "en": "Big heart snake"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Змейка-сердце</b>.",
+                            "en": "Selected <b>Big heart snake</b> shape."
+                        }
+                        
+                    class HeartDragon(Translatable):
+                        name = {
+                            "ru": "Дракончик-сердце",
+                            "en": "Heart dragon"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Дракончик-сердце</b>.",
+                            "en": "Selected the <b>Heart dragon</b> shape."
+                        }
+                        
+                    class SnakeGirl(Translatable):
+                        name = {
+                            "ru": "Девочка-змейка",
+                            "en": "Snake girl"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Девочка-змейка</b>.",
+                            "en": "Selected the <b>Snake girl</b> shape."
+                        }
+                        
+                    class CupidSnake(Translatable):
+                        name = {
+                            "ru": "Змейка-купидон",
+                            "en": "Cupid snake"
+                        }
+
+                        description = {
+                            "ru": "Выбрана форма <b>Змейка-купидон</b>.",
+                            "en": "Selected the <b>Cupid snake</b> shape."
+                        }
                         
             class ChocolateTaste(Translatable):
                 name = {
@@ -877,7 +944,48 @@ For each of the zones, you need to choose one of three softness levels: <b>Ultra
                             "ru": "Вы выбрали <b>золотой</b> шиммер.",
                             "en": "You have chosen <b>gold</b> shimmer."
                         }
+
+            class ChocolatePackagingAnntotation(Translatable):
+                name = {
+                    "ru": "Упаковка",
+                    "en": "Packaging"
+                }
+
+                text = {
+                    "ru": """<b>Все коробки идут с прозрачным окном.</b>
+Маленькая коробка — 10×8 см, большая — 20×12 см.
+                    
+Упаковка зависит от состава заказа:
+  — <b>1 маленькая шоколадка</b> — маленькая коробка
+  — <b>2 маленькие шоколадки</b> — большая коробка
+  — <b>1 маленькая + 1 большая</b> — большая коробка
+  — <b>2 большие шоколадки</b> — две большие коробки
     
+К маленьким шоколадкам относятся:
+    ● Ящерка-купидон
+    ● Девочка-змейка
+    ● Змейка-купидон
+К большим шоколадкам относятся:
+    ● Змейка-сердце
+    ● Дракончик-сердце""",
+                    "en": """<b>All boxes come with a transparent window.</b>
+Small box — 10×8 cm, large box — 20×12 cm.
+
+Packaging depends on the composition of the order:
+  — <b>1 small chocolate</b> — small box
+  — <b>2 small chocolates</b> — large box
+  — <b>1 small + 1 large</b> — large box
+  — <b>2 large chocolates</b> — two large boxes
+
+Small chocolates include:
+    ● Lizard cupid
+    ● Snake girl
+    ● Snake cupid
+Large chocolates include:
+    ● Big heart snake
+    ● Heart Dragon"""
+                }
+            
             class Color(Translatable):
                 name = {
                     "ru": "Окрас",

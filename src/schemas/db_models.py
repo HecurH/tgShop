@@ -714,7 +714,9 @@ class ConfigurationOption(AppBaseModel):
     choices: Dict[str, ConfigurationChoice | ConfigurationSwitches | ConfigurationAnnotation]
     
     def get_chosen(self) -> Optional[ConfigurationChoice]:
-        return self.choices.get(self.chosen_key) or self.choices.values()[0] if self.choices else None
+        choice = self.choices.get(self.chosen_key) or list(self.choices.values())[0] if self.choices else None
+        
+        return choice if isinstance(choice, ConfigurationChoice) else None
     
     def set_chosen(self, choice: ConfigurationChoice):
         self.chosen_key = next((key for key, value in self.choices.items() if value == choice and isinstance(choice, ConfigurationChoice)), self.chosen_key)
@@ -765,7 +767,7 @@ class ConfigurationOption(AppBaseModel):
                 del self.choices[choice_key]
 
 class ProductConfiguration(AppBaseModel):
-    options: Dict[str, ConfigurationOption]
+    options: Dict[str, ConfigurationOption | ConfigurationAnnotation]
     additionals: list["ProductAdditional"] = Field(default_factory=list)
     price: Optional[LocalizedMoney] = None
     
@@ -776,7 +778,7 @@ class ProductConfiguration(AppBaseModel):
         new_value = any(
             hasattr(option.get_chosen(), "blocks_price_determination") and
             option.get_chosen().blocks_price_determination
-            for option in self.options.values()
+            for option in self.get_options().values()
         ) and not self.price_confirmed_override
         
         if self.requires_price_confirmation != new_value:
@@ -793,6 +795,12 @@ class ProductConfiguration(AppBaseModel):
         
         if name in ["options", "price_confirmed_override"]:
             if self.options: self._sync_price_confirmation_flag()
+    
+    def get_options(self, only_options: bool = True):
+        if only_options:
+            return {key: option for key, option in self.options.items() if isinstance(option, ConfigurationOption)}
+        else:
+            return self.options
     
     def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
         """
@@ -828,7 +836,7 @@ class ProductConfiguration(AppBaseModel):
                      if option.name.get(ctx) == name), None)
         
     def get_price_blocking_options(self) -> dict[str, ConfigurationOption]:
-        return {key: option for key, option in self.options.items() if option.get_chosen().blocks_price_determination}
+        return {key: option for key, option in self.get_options().items() if option.get_chosen().blocks_price_determination}
         
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
@@ -869,7 +877,7 @@ class ProductConfiguration(AppBaseModel):
         return sum((additional.price.model_copy(deep=True) for additional in self.additionals), LocalizedMoney())
     
     def calculate_options_price(self):
-        return sum((option.calculate_price() for option in self.options.values()), LocalizedMoney())
+        return sum((option.calculate_price() for option in self.get_options().values()), LocalizedMoney())
     
     def update_price(self):
         self.price = self.calculate_additionals_price() + self.calculate_options_price()

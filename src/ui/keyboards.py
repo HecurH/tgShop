@@ -243,9 +243,9 @@ class AssortmentKBs:
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
-    def adding_to_cart_main(options: dict[str, ConfigurationOption], has_additionals: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
+    def adding_to_cart_main(options: list[ConfigurationOption], has_additionals: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
-        for option in options.values():
+        for option in options:
             builder.add(
                 types.KeyboardButton(
                     text=option.name.get(ctx)
@@ -294,7 +294,7 @@ class AssortmentKBs:
         for choice in choices:
             price_text = f" {choice.price.to_text(ctx.customer.currency)}" if choice.price.get_amount(ctx.customer.currency) != 0 else ""
 
-            is_blocked = choice.check_blocked_all(product.configuration.options)
+            is_blocked = choice.check_blocked_all(product.configuration.get_options())
 
             name = f"{strike(choice.name.get(ctx) + price_text)} 🔒" if is_blocked else f"{choice.name.get(ctx)}{price_text}"
             main_builder.add(types.KeyboardButton(text=f">{name}<"
@@ -326,7 +326,7 @@ class AssortmentKBs:
     def generate_switches_kb(configuration: ProductConfiguration, switches: ConfigurationSwitches, ctx: Context) -> types.ReplyKeyboardMarkup:
         builder = ReplyKeyboardBuilder()
         def gen_name(switch: ConfigurationSwitch):
-            blocked = switch.check_blocked_all(configuration.options)
+            blocked = switch.check_blocked_all(configuration.get_options())
             is_blocked = "🔒" if blocked else ""
             is_enabled = "✅" if switch.enabled else ""
             name = strike(switch.name.get(ctx)) if blocked else switch.name.get(ctx)

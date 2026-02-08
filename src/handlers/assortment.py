@@ -70,6 +70,10 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
         await ctx.fsm.update_data(product=None)
         
         product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+        if not product:
+            await call_state_handler(AssortmentStates.Menu,
+                                ctx)
+        
         await product.save_in_fsm(ctx, "product")
         
         await call_state_handler(AssortmentStates.FormingOrderEntry,
@@ -152,6 +156,15 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                 allowed_additionals=allowed_additionals)
     elif text in product.configuration.get_all_options_localized_names(ctx):
         idx, option = product.configuration.get_option_by_name(text, ctx)
+        
+        if isinstance(option, ConfigurationAnnotation):
+            await call_state_handler(AssortmentStates.FormingOrderEntry,
+                                    ctx,
+                                    product=product,
+                                    annotation=option)
+            return
+        
+        
         # \/\/\/\/\/\/\/\/ ВАЖНО, тк 0 == False
         if idx is not None: await ctx.fsm.update_data(current_option_key=idx)
         
@@ -187,7 +200,7 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
 
 
     if isinstance(choice, ConfigurationChoice):
-        if choice.check_blocked_all(product.configuration.options):
+        if choice.check_blocked_all(product.configuration.get_options()):
             await call_state_handler(AssortmentStates.EntryOptionSelect,
                                     ctx,
                                     send_before=(ctx.t.AssortmentTranslates.cannot_choose.format(path=AssortmentTextGen.gen_blocked_choice_path_text(choice, product.configuration, ctx)), 1),
@@ -260,7 +273,7 @@ async def switches_handler(message: Message, ctx: Context) -> None:
                                 configuration=product.configuration)
             return
         
-        if switch.check_blocked_all(product.configuration.options):
+        if switch.check_blocked_all(product.configuration.get_options()):
             await call_state_handler(AssortmentStates.SwitchesEditing,
                                 ctx,
                                 switches=switches,

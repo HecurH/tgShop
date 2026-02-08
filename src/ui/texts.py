@@ -18,7 +18,7 @@ def gen_product_configurable_info_text(
     configuration: ProductConfiguration,
     ctx: Context
 ) -> str:
-    options = configuration.options
+    options = configuration.get_options()
     currency = ctx.customer.currency
     
     def gen_price_info(price: LocalizedMoney):
@@ -348,7 +348,7 @@ class AssortmentTextGen:
     
     @staticmethod
     def gen_blocked_choice_path_text(choice_or_switch: ConfigurationChoice | ConfigurationSwitch, configuration: ProductConfiguration, ctx: Context):
-        return " —> ".join(configuration.get_localized_names_by_path(choice_or_switch.get_blocking_path(configuration.options), ctx))
+        return " —> ".join(configuration.get_localized_names_by_path(choice_or_switch.get_blocking_path(configuration.get_options()), ctx))
 
 class DiscountedProductsGen:
     @staticmethod
