@@ -60,7 +60,7 @@ def main() -> None:
     dp.workflow_data["context_middleware"] = context_middleware
     dp.workflow_data["bot"] = bot
     
-    if getenv("USE_WEBHOOK") == 1:
+    if getenv("USE_WEBHOOK") == "1":
         from core.webhook import create_app
     
         app = create_app(dp, bot)
