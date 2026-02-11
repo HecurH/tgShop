@@ -43,9 +43,9 @@ jobs:
             git pull origin main
 
             if [ "${{ steps.check-changes.outputs.docker }}" = "true" ]; then
+              echo "Building Docker images..."
               docker compose build
-              docker compose up -d --force-recreate --remove-orphans
-            else
-              docker compose up -d --remove-orphans
             fi
+
+            docker compose up -d --force-recreate --remove-orphans
             docker image prune -f
