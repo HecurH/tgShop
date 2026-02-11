@@ -14,14 +14,14 @@ from core.services.db import *
 
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
-from core.states import AdminStates, call_state_handler
+from core.states import AdminStates, CommonStates, call_state_handler
 from core.types.enums import CartItemSource, DiscountType, OrderStateKey
 from core.types.values import Discount, LocalizedSavedMedia
 from core.types.values import LocalizedString
 from core.types.values import LocalizedMoney
 from ui.message_tools import split_message
 from ui.texts import AdminTextGen, CartTextGen
-from ui.translates import EnumTranslates
+from ui.translates import EnumTranslates, ReplyButtonsTranslates
 
 router = Router(name="admin_menu")
 middleware = RoleCheckMiddleware("admin")
@@ -30,7 +30,7 @@ router.message.middleware.register(middleware)
 router.callback_query.middleware.register(middleware)
 
 
-
+@router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.admin_menu.values()) if message.text else False)
 @router.message(Command("menu"))
 async def menu_handler(_, ctx: Context):
     await call_state_handler(AdminStates.Main.Menu, ctx)
@@ -52,6 +52,8 @@ async def menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
     elif text == "Глобальные Плейсхолдеры": 
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
+    elif text == "Назад в меню":
+        await call_state_handler(CommonStates.MainMenu, ctx)
     else:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         

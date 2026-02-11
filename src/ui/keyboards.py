@@ -51,6 +51,10 @@ class CommonKBs:
                 types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.profile)
             ]
         ]
+        
+        if ctx.customer.role == "admin":
+            kb[-1].append(types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.admin_menu))
+        
         return types.ReplyKeyboardMarkup(
             keyboard=kb,
             resize_keyboard=True,
@@ -72,7 +76,8 @@ class AdminKBs:
                 types.KeyboardButton(text="Промокоды")
             ],
             [
-                types.KeyboardButton(text="Глобальные Плейсхолдеры")
+                types.KeyboardButton(text="Глобальные Плейсхолдеры"),
+                types.KeyboardButton(text="Назад в меню")
             ]
         ]
         return types.ReplyKeyboardMarkup(keyboard=kb, 
@@ -98,8 +103,7 @@ class AdminKBs:
             ]
             return types.ReplyKeyboardMarkup(keyboard=kb, 
                                          resize_keyboard=True)
-        
-    
+
     class Promocodes:
         @staticmethod
         def admin_promocodes_menu(ctx: Context) -> types.ReplyKeyboardMarkup:

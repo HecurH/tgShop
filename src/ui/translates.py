@@ -1995,6 +1995,11 @@ class ReplyButtonsTranslates(Translatable):
         "en": "Profile"
     }
     
+    admin_menu = {
+        "ru": "Админка",
+        "en": "Admin menu"
+    }
+    
     class Assortment(Translatable):
         details = {
             "ru": "Подробнее",
