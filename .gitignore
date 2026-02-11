@@ -160,3 +160,4 @@ cython_debug/
 profile.json
 src/libs/nalog/test.py
 .env_prod
+.env_linux

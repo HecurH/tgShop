@@ -2,7 +2,6 @@ import logging
 import sys
 from os import getenv
 
-from aiohttp import web
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.fsm.storage.pymongo import PyMongoStorage
@@ -61,6 +60,7 @@ def main() -> None:
     dp.workflow_data["bot"] = bot
     
     if getenv("USE_WEBHOOK") == "1":
+        from aiohttp import web
         from core.webhook import create_app
     
         app = create_app(dp, bot)
