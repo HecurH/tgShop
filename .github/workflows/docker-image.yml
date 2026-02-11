@@ -26,9 +26,9 @@ jobs:
         with:
           filters: |
             docker:
-              - 'Dockerfile'
-              - 'docker-compose.yml'
-              - 'requirements.txt'
+              - '!**/Dockerfile'
+              - '!**/docker-compose.yml'
+              - '!**/requirements.txt'
 
 
       - name: Deploy via SSH
