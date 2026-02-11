@@ -119,7 +119,7 @@ async def customer_menu_handler(_, ctx: Context):
         
         async def form_cart_entry_txt(entry: CartEntry):
             
-            product = await ctx.services.db.products.find_by_id(entry.source_id) if entry.source_type == CartItemSource.product else None
+            product = await ctx.services.db.products.find_one_by_id(entry.source_id) if entry.source_type == CartItemSource.product else None
             return CartTextGen.generate_cart_viewing_caption(entry=entry,
                                             product=product,
                                             ctx=ctx)
