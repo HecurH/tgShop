@@ -42,7 +42,7 @@ jobs:
             cd /opt/mapp
             git pull origin main
 
-            if steps.check-changes.outputs.docker == 'true'; then
+            if [ "${{ steps.check-changes.outputs.docker }}" = "true" ]; then
               docker compose build
               docker compose up -d --force-recreate --remove-orphans
             else
