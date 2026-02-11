@@ -403,7 +403,7 @@ class ProfileTextGen:
 
 class CartTextGen:
     @staticmethod
-    def generate_cart_viewing_caption(entry: CartEntry, product: Optional[Product], configuration: Optional[ProductConfiguration], ctx: Context):
+    def generate_cart_viewing_caption(entry: CartEntry, product: Optional[Product], ctx: Context):
         is_product = entry.source_type == CartItemSource.product
         
         source_name = product.name.get(ctx) if is_product else entry.frozen_snapshot.name.get(ctx)
@@ -414,7 +414,7 @@ class CartTextGen:
         
         price_text = f"{configuration_price_text} * {entry.quantity} = {total_price}" if entry.quantity != 1 else configuration_price_text
         
-        return ctx.t.CartTranslates.cart_view_menu.format(name=source_name, price=price_text, configuration=gen_product_configurable_info_text(configuration, ctx) if is_product else entry.frozen_snapshot.description.get(ctx))
+        return ctx.t.CartTranslates.cart_view_menu.format(name=source_name, price=price_text, configuration=gen_product_configurable_info_text(entry.configuration, ctx) if is_product else entry.frozen_snapshot.description.get(ctx))
 
     @staticmethod
     async def generate_cart_price_confirmation_caption(order: Order, ctx: Context):

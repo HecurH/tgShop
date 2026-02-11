@@ -127,7 +127,6 @@ class AsyncMoyNalog:
             async with self._session.post(url, headers=self.storage.get_auth_headers(), json=body, timeout=5) as response:
                 if response.status == 200:
                     json = await response.json()
-                    print(json)
                     approved_receipt_uuid = json.get("approvedReceiptUuid")
                     
                     if return_receipt_url:

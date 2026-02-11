@@ -494,7 +494,6 @@ async def cart_menu_handler(ctx: Context, current: int = 1, **_):
     
     caption = CartTextGen.generate_cart_viewing_caption(entry=entry,
                                             product=product,
-                                            configuration=entry.configuration,
                                             ctx=ctx)
     
     await send_media_response(ctx,

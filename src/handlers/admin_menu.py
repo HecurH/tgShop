@@ -15,12 +15,12 @@ from core.services.db import *
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, call_state_handler
-from core.types.enums import DiscountType, OrderStateKey
+from core.types.enums import CartItemSource, DiscountType, OrderStateKey
 from core.types.values import Discount, LocalizedSavedMedia
 from core.types.values import LocalizedString
 from core.types.values import LocalizedMoney
 from ui.message_tools import split_message
-from ui.texts import AdminTextGen
+from ui.texts import AdminTextGen, CartTextGen
 from ui.translates import EnumTranslates
 
 router = Router(name="admin_menu")
@@ -104,8 +104,25 @@ async def customer_menu_handler(_, ctx: Context):
                                   default=[])
         
         for msg in msgs:
-            await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=customer.user_id, message_id=msg)
-            await asyncio.sleep(0.3)
+            try:
+                await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=customer.user_id, message_id=msg)
+                await asyncio.sleep(0.3)
+            except Exception as e:
+                await ctx.message.answer(f"Не удалось скопировать сообщение: {e}")
+                await asyncio.sleep(0.3)
+        
+        await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
+    elif text == "Корзина":
+        cart_entries = await ctx.services.db.cart_entries.find_customer_cart_entries(customer)
+        
+        async def form_cart_entry_txt(entry: CartEntry):
+            
+            product = await ctx.services.db.products.find_by_id(entry.source_id) if entry.source_type == CartItemSource.product else None
+            return CartTextGen.generate_cart_viewing_caption(entry=entry,
+                                            product=product,
+                                            ctx=ctx)
+        texts = await asyncio.gather(*map(form_cart_entry_txt, cart_entries))
+        await ctx.message.answer("\n\n----------------\n\n".join(texts) or "Корзина пуста.")
         
         await call_state_handler(AdminStates.Main.Customers.CustomerMenu, ctx, customer=customer)
     else:
