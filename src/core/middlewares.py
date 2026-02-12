@@ -48,7 +48,6 @@ class ContextMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
-        print(1)
         user_id = data["event_from_user"].id
 
         customer = await self.services.db.customers.find_by_user_id(user_id)
