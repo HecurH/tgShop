@@ -38,7 +38,7 @@ async def main():
                     tlsAllowInvalidCertificates=True, 
                     tlsCAFile=MONGO_TLS_CA_PATH)))
 
-    dp.message.filter(F.chat.type == "private")
+    
     dp.update.middleware.register(middlewares.ThrottlingMiddleware())
     context_middleware = middlewares.ContextMiddleware()
     dp.update.middleware.register(context_middleware)

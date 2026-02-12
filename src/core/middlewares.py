@@ -48,6 +48,7 @@ class ContextMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
+        print(1)
         user_id = data["event_from_user"].id
 
         customer = await self.services.db.customers.find_by_user_id(user_id)
@@ -113,6 +114,15 @@ class ThrottlingMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
+        chat = None
+        if event.message:
+            chat = event.message.chat
+        elif event.callback_query:
+            chat = event.callback_query.message.chat
+        
+        if chat and chat.type != "private":
+            return
+        
         user_id = data["event_from_user"].id
         # Проверяем, не забанен ли пользователь
         if user_id in self.banned_users:
