@@ -20,10 +20,10 @@ async def on_startup(bot: Bot) -> None:
     if info and isinstance(info, WebhookInfo) and info.url != url:
         await bot.delete_webhook(drop_pending_updates=False)
     
-    await bot.set_webhook(
-        url,
-        secret_token=secret_token
-    )
+        await bot.set_webhook(
+            url,
+            secret_token=secret_token
+        )
     
     me = await bot.get_me()
     logging.getLogger(__name__).info(f"Started bot @{me.username}.")

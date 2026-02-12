@@ -83,7 +83,9 @@ class ContextMiddleware(BaseMiddleware):
         if self.services.notificators: await self.services.notificators.stop()
         if self.services.db: await self.services.db.close()
         if self.services.tax: await self.services.tax.close()
+        if self.services.placeholders: await self.services.placeholders.close()
         if self.services.currency_converter: await self.services.currency_converter.close()
+        if self.services.media_saver: await self.services.media_saver.close()
         
 class ErrorLoggingMiddleware(BaseMiddleware):
     async def __call__(

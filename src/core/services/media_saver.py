@@ -31,7 +31,7 @@ class MediaSaver:
         self.supported_langs = set(SUPPORTED_LANGUAGES_TEXT.values())
         self._media_cache: dict[str, Union[str, dict[str, str]]] = {}
         
-        asyncio.create_task(self._background_refresh())
+        self._refresh_task = asyncio.create_task(self._background_refresh())
     
     async def update_cache(self):
         data_path = join(self.media_path, "data.json")
@@ -135,6 +135,14 @@ class MediaSaver:
         except Exception as e:
             raise RuntimeError(f"Ошибка при загрузке файла {filepath}: {e}")
 
+    async def close(self):
+        if self._refresh_task:
+            self._refresh_task.cancel()
+            try:
+                await self._refresh_task
+            except asyncio.CancelledError:
+                pass  # Ожидаемое исключение при отмене задачи
+
     async def _background_refresh(self):
         while True:
             try:
@@ -156,3 +164,5 @@ class MediaSaver:
 
         media_type = self.media_type_by_key(key)
         return media_type, file_data
+
+__all__ = ["MediaSaver"]

@@ -15,12 +15,20 @@ class PlaceholderManager:
         
         self._txt_cache: dict[str, "Placeholder"] = {}
         
-        asyncio.create_task(self._background_refresh())
+        self._refresh_task = asyncio.create_task(self._background_refresh())
     
     async def update_placeholders(self):
         txt_placeholders = await self.txt_repo.get_all()
         
         self._txt_cache = {ph.key: ph for ph in txt_placeholders}
+        
+    async def close(self):
+        if self._refresh_task:
+            self._refresh_task.cancel()
+            try:
+                await self._refresh_task
+            except asyncio.CancelledError:
+                pass  # Ожидаемое исключение при отмене задачи
 
     async def _background_refresh(self):
         while True:

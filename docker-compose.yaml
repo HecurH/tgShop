@@ -4,9 +4,9 @@ services:
     restart: always
     network_mode: host
 
-    command: python /src/run.py
-    mem_limit: 300m
-    memswap_limit: 600m
+    command: /entrypoint.sh
+    mem_limit: 500m
+    memswap_limit: 800m
     volumes:
       - ./src/:/src/
       - ./ssl/:/ssl/

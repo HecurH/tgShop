@@ -2,6 +2,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from os import getenv
+import os
 from pathlib import Path
 import re
 import shutil
@@ -10,7 +11,7 @@ from colorlog import ColoredFormatter
 
 
 LOG_LEVEL = logging.INFO
-LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d | %(asctime)s"
+LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d [%(worker_pid)s] | %(asctime)s"
 
 class _BaseAlignedFormatter:
     log_tail_width = 40
@@ -19,7 +20,7 @@ class _BaseAlignedFormatter:
         return re.sub(r'\x1B[@-_][0-?]*[ -/]*[@-~]', '', text)
 
     def _align(self, base_message, record):
-        tail = f"// {record.name} - {record.funcName}: {record.lineno} | {record.asctime}"
+        tail = f"// {record.name} - {record.funcName}: {record.lineno} [{record.worker_pid}] | {record.asctime}"
         if tail in base_message:
             base_message = base_message.replace(tail, "").rstrip()
         try:
@@ -83,6 +84,15 @@ def setup_logging():
     
     file_handler.namer = custom_namer
     file_handler.setFormatter(formatter_plain)
+    
+    old_factory = logging.getLogRecordFactory()
+
+    def record_factory(*args, **kwargs):
+        record = old_factory(*args, **kwargs)
+        record.worker_pid = os.getpid()
+        return record
+
+    logging.setLogRecordFactory(record_factory)
 
     logging.basicConfig(level=LOG_LEVEL, handlers=[stream, file_handler])
     logging.getLogger("httpx").setLevel(logging.WARNING)
