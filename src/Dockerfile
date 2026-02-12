@@ -1,6 +1,6 @@
 FROM python:3.13-slim
 
-COPY entrypoint.sh .
+COPY ./entrypoint.sh .
 RUN chmod +x /entrypoint.sh
 
 WORKDIR /src/
