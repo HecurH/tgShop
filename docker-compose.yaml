@@ -4,7 +4,7 @@ services:
     restart: always
     network_mode: host
 
-    command: entrypoint.sh
+    command: /entrypoint.sh
     mem_limit: 500m
     memswap_limit: 800m
     volumes:
