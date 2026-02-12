@@ -5,7 +5,7 @@ WORKDIR /src/
 COPY requirements.txt .
 COPY libs/ ./libs/
 
-COPY entrypoint.sh /entrypoint.sh
+COPY ../entrypoint.sh .
 RUN chmod +x /entrypoint.sh
 
 RUN python -m pip install --root-user-action ignore --upgrade pip \
