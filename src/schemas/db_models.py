@@ -78,7 +78,7 @@ class OrderPriceDetails(AppBaseModel):
     total_price: Optional[Money] = None  # сколько надо заплатить настоящими деньгами
     
     customer_paid: bool = False
-    payment_time: Optional[datetime.datetime] = None
+    payment_time: Optional[datetime] = None
     
     @classmethod
     def new(cls, customer: Customer, products_price: LocalizedMoney, delivery_info: DeliveryInfo = None) -> OrderPriceDetails:
