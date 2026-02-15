@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-import datetime
+from datetime import datetime, timezone
 import logging
 from typing import Any, List, Optional, Tuple, Union
 from aiogram import Bot
@@ -260,7 +260,7 @@ class AdminChatNotificator:
                 
         text += f"\nЭто первый заказ пользователя, не забудь вложить пробник!\n" if await ctx.services.db.orders.count_formed_customer_orders(ctx.customer) == 1 else "\n\n"
         
-        text += f"<code>/confirm_manual_payment {order.id}|{datetime.datetime.now(datetime.timezone.utc)}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
+        text += f"<code>/confirm_manual_payment {order.id}|{datetime.now(timezone.utc)}</code>\n\n<code>/unform_order {order.id}</code>\n\n<code>/msg_to {ctx.customer.user_id}</code>"
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         

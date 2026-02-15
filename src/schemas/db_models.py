@@ -1,6 +1,6 @@
 from __future__ import annotations
 import asyncio
-import datetime
+from datetime import datetime, timezone, timedelta
 import json
 import logging
 import re
@@ -1001,15 +1001,15 @@ class Promocode(AppBaseModel):
     already_used: int = 0
     max_usages: int = -1
 
-    expire_date: Optional[datetime.datetime] = None
+    expire_date: Optional[datetime] = None
 
     def __init__(self, **data):
         super().__init__(**data)
         if self.expire_date and self.expire_date.tzinfo is None:
-            self.expire_date = self.expire_date.replace(tzinfo=datetime.timezone.utc)
+            self.expire_date = self.expire_date.replace(tzinfo=timezone.utc)
 
     def check_promocode(self, customer_orders_amount: Optional[int] = None) -> PromocodeCheckResult:
-        if self.expire_date and self.expire_date < datetime.datetime.now(datetime.timezone.utc):
+        if self.expire_date and self.expire_date < datetime.now(timezone.utc):
             return PromocodeCheckResult.expired
         elif self.only_newbies and customer_orders_amount and customer_orders_amount > 0:
             return PromocodeCheckResult.only_newbies
@@ -1167,7 +1167,7 @@ class Customer(AppBaseModel):
     lang: str
     
     currency: str
-    last_time_changed_currency: Optional[datetime.datetime] = None
+    last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
     delivery_info: Optional[DeliveryInfo] = None
@@ -1176,8 +1176,8 @@ class Customer(AppBaseModel):
     def check_can_change_currency(self) -> bool:
         if self.last_time_changed_currency:
             if self.last_time_changed_currency.tzinfo is None:
-                self.last_time_changed_currency = self.last_time_changed_currency.replace(tzinfo=datetime.timezone.utc)
-            if self.last_time_changed_currency + datetime.timedelta(days=DAYS_BEFORE_CHANGE_CURRENCY) > datetime.datetime.now(datetime.timezone.utc):
+                self.last_time_changed_currency = self.last_time_changed_currency.replace(tzinfo=timezone.utc)
+            if self.last_time_changed_currency + timedelta(days=DAYS_BEFORE_CHANGE_CURRENCY) > datetime.now(timezone.utc):
                 return False
         return True
     
@@ -1205,7 +1205,7 @@ class Customer(AppBaseModel):
             if not self.check_can_change_currency():
                 raise RuntimeError("Валюту можно менять не чаще раза в месяц!")
 
-            self.last_time_changed_currency = datetime.datetime.now(datetime.timezone.utc)
+            self.last_time_changed_currency = datetime.now(timezone.utc)
         self.currency = iso
 
 class CustomersRepository(AppAbstractRepository[Customer]):

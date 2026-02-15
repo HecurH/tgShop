@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from decimal import Decimal
 import json
 
@@ -129,7 +129,7 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     
     order_id: str = args[0]
     try:
-        parsed_datetime = datetime.datetime.fromisoformat(args[1])
+        parsed_datetime = datetime.fromisoformat(args[1])
     except ValueError as e:
         await ctx.message.answer(f"Неправильный формат времени: {e}")
         return

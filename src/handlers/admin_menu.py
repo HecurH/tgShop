@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import replace
-import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 import re
 from typing import Optional
@@ -515,14 +515,14 @@ async def create_promocode_code_handler(_, ctx: Context):
             result[cur.strip().upper()] = Decimal(amt.replace(",", "."))
         return LocalizedMoney.from_keys(**result)
 
-    def parse_expire(text: str) -> Optional[datetime.datetime]:
+    def parse_expire(text: str) -> Optional[datetime]:
         t = text.strip().lower()
         if t in ("none", "never"):
             return None
         if t.endswith("d"):
             days = int(t[:-1])
-            return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)
-        return datetime.datetime.strptime(t, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc)
+            return datetime.now(datetime.timezone.utc) + timedelta(days=days)
+        return datetime.strptime(t, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
     fields = {}
     key = None
