@@ -174,7 +174,7 @@ async def handle_admin_create_discounted_product(ctx: Context, **_):
 <code>Имя_товара:
   ru:
   en:
-Цена:
+Цена: USD:70;RUB:5000
 Ключ_медиа:
 Описание_что_не_так_и_тп:
   ru:
