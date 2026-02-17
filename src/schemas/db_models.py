@@ -261,6 +261,9 @@ class CartEntry(AppBaseModel):
     @model_validator(mode="before")
     @classmethod
     def from_v1(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        
         if "source_type" in data:
             return data
 
@@ -273,6 +276,23 @@ class CartEntry(AppBaseModel):
             if "frozen_product" in data:
                 data["frozen_snapshot"] = data.pop("frozen_product")
 
+        return data
+    
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_snapshot(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        
+        snapshot = data.get("frozen_snapshot")
+        source_type = data.get("source_type")
+        
+        if isinstance(snapshot, dict) and source_type:
+            if source_type == CartItemSource.discounted or source_type == "discounted":
+                data["frozen_snapshot"] = DiscountedProduct(**snapshot)
+            elif source_type == CartItemSource.product or source_type == "product":
+                data["frozen_snapshot"] = Product(**snapshot)
+        
         return data
     
     @field_validator("quantity")
@@ -910,6 +930,9 @@ class Product(AppBaseModel):
     @model_validator(mode="before")
     @classmethod
     def from_v1(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        
         if "description" in data and "visible" in data:
             return data
         
