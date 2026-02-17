@@ -334,14 +334,14 @@ async def viewing_assortment_handler(ctx: Context,
                                      category: str,
                                      current: int,
                                      **_):
-    amount = await ctx.services.db.products.count_in_category(category)
+    amount = await ctx.services.db.products.count_in_category(category, only_visible=True)
 
     if amount == 0:
         await call_state_handler(AssortmentStates.Menu,
                                  ctx, send_before=(ctx.t.AssortmentTranslates.no_products_in_category, 0.2))
         return
     
-    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+    product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1, only_visible=True)
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 

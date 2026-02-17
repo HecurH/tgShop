@@ -49,7 +49,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
     
     current = await ctx.fsm.get_value("current") or 1
     category = await ctx.fsm.get_value("category")
-    amount = await ctx.services.db.products.count_in_category(category)
+    amount = await ctx.services.db.products.count_in_category(category, only_visible=True)
     
     if text in ["⬅️", "➡️"]:
         if text == '⬅️':
@@ -69,7 +69,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
         
         await ctx.fsm.update_data(product=None)
         
-        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1, only_visible=True)
         if not product:
             await call_state_handler(AssortmentStates.Menu,
                                 ctx)
@@ -94,14 +94,14 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
     
     
     if text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
-        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1)
+        product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1, only_visible=True)
         
         await product.save_in_fsm(ctx, "product")
         await call_state_handler(AssortmentStates.FormingOrderEntry,
                                 ctx,
                                 product=product)
     else:
-        if current > await ctx.services.db.products.count_in_category(category): 
+        if current > await ctx.services.db.products.count_in_category(category, only_visible=True): 
             await ctx.fsm.update_data(current=1)
             current = 1
         
@@ -122,7 +122,7 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
         current: int = await ctx.fsm.get_value("current")
         category: int = await ctx.fsm.get_value("category")
         
-        if current > await ctx.services.db.products.count_in_category(category): 
+        if current > await ctx.services.db.products.count_in_category(category, only_visible=True): 
             await ctx.fsm.update_data(current=1)
             current = 1
         

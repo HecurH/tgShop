@@ -893,6 +893,8 @@ class Product(AppBaseModel):
     description: LocalizedString
     description_media: Optional[LocalizedSavedMedia] = None
     
+    visible: bool = True
+    
     base_price: LocalizedMoney
     discount: Optional[Discount] = None
 
@@ -908,17 +910,21 @@ class Product(AppBaseModel):
     @model_validator(mode="before")
     @classmethod
     def from_v1(cls, data: dict):
-        if "description" in data:
+        if "description" in data and "visible" in data:
             return data
+        
+        logging.getLogger(__name__).warning("Product: converting from v1 to v2")
 
         if "short_description_media" in data:
-            logging.getLogger(__name__).warning("Product: converting from v1 to v2")
             
             
             data.pop("short_description")
             data.pop("short_description_media")
             data["description"] = data.pop("long_description")
             data["description_media"] = data.pop("long_description_media")
+        
+        if "visible" not in data:
+            data["visible"] = True
 
         return data
     
@@ -939,10 +945,12 @@ class ProductsRepository(AppAbstractRepository[Product]):
     class Meta:
         collection_name = 'products'
     
-    async def get_ids_by_category_sorted_by_date(self, category: str) -> List[PydanticObjectId]:
+    async def get_ids_by_category_sorted_by_date(self, category: str, only_visible: bool = True) -> List[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
+        f = {"category": category, "visible": True} if only_visible else {"category": category}
+        
         cursor = self.get_collection().find(
-            {"category": category},
+            f,
             projection={"_id": 1}
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
@@ -954,8 +962,8 @@ class ProductsRepository(AppAbstractRepository[Product]):
             if ids else []
         )
 
-    async def find_by_category_and_index(self, category: str, idx: int) -> Optional[Product]:
-        ids = await self.get_ids_by_category_sorted_by_date(category)
+    async def find_by_category_and_index(self, category: str, idx: int, only_visible: bool = True) -> Optional[Product]:
+        ids = await self.get_ids_by_category_sorted_by_date(category, only_visible=only_visible)
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
@@ -967,8 +975,10 @@ class ProductsRepository(AppAbstractRepository[Product]):
         )
         return LocalizedString(**cursor["name"]) if cursor and "name" in cursor else None
     
-    async def count_in_category(self, category) -> int:
-        return await self.get_collection().count_documents({"category": category})
+    async def count_in_category(self, category, only_visible: bool = True) -> int:
+        f = {"category": category, "visible": True} if only_visible else {"category": category}
+        
+        return await self.get_collection().count_documents(f)
 
 class ProductAdditional(AppBaseModel):
     id: Optional[PydanticObjectId] = None

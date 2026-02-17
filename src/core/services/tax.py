@@ -1,4 +1,3 @@
-from decimal import ROUND_HALF_UP, Decimal
 import logging
 from os import getenv
 from core.types.enums import CartItemSource
@@ -49,28 +48,27 @@ class TaxSystem:
         total_price_amount = total_price.get_amount(total_discount.currency)
 
         if total_price_amount == 0:
-            return [Money(currency=total_discount.currency, amount=Decimal(0)) for _ in cart_entries]
+            return [Money(currency=total_discount.currency, amount=0) for _ in cart_entries]
 
         discounts = []
-        distributed = Decimal(0)
-        total_discount_amount = Decimal(str(total_discount.amount))
+        distributed = total_discount.amount - total_discount.amount  # Decimal zero с тем же масштабом
 
         for price in entry_prices[:-1]:
-            price_amount = Decimal(str(price.get_amount(total_discount.currency)))
-            fraction = price_amount / Decimal(str(total_price_amount))
-            
-            discount_amount = (fraction * total_discount_amount).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
+            price_amount = price.get_amount(total_discount.currency)
+            fraction = price_amount / total_price_amount
+            discount = min(
+                total_discount * fraction,
+                Money(currency=total_discount.currency, amount=price_amount)
             )
-            discount_amount = min(discount_amount, price_amount)
-            
-            discounts.append(Money(currency=total_discount.currency, amount=discount_amount))
-            distributed += discount_amount
+            discounts.append(discount)
+            distributed += discount.amount
 
-        # Последний элемент получает остаток — точное значение без округления
-        last_price = Decimal(str(entry_prices[-1].get_amount(total_discount.currency)))
-        last_discount = min(total_discount_amount - distributed, last_price)
-        discounts.append(Money(currency=total_discount.currency, amount=last_discount))
+        last_price_amount = entry_prices[-1].get_amount(total_discount.currency)
+        last_discount = min(
+            Money(currency=total_discount.currency, amount=total_discount.amount - distributed),
+            Money(currency=total_discount.currency, amount=last_price_amount)
+        )
+        discounts.append(last_discount)
 
         return discounts
 
