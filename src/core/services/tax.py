@@ -1,3 +1,4 @@
+from decimal import ROUND_HALF_UP, Decimal
 import logging
 from os import getenv
 from core.types.enums import CartItemSource
@@ -10,7 +11,7 @@ from MoyNalogAPI.schemas import Client, Service
 import asyncio
 from datetime import datetime
 
-from core.types.values import Money
+from core.types.values import Money, LocalizedMoney
 
 
 class TaxSystem:
@@ -39,35 +40,41 @@ class TaxSystem:
                 raise last_exc
 
     def distribute_discounts(self, cart_entries: list["CartEntry"], total_discount: "Money") -> list["Money"]:
-        from core.types.values import LocalizedMoney
         entry_prices = [
             entry.calculate_price(entry.frozen_snapshot)
             for entry in cart_entries
         ]
 
         total_price = sum(entry_prices, LocalizedMoney())
+        total_price_amount = total_price.get_amount(total_discount.currency)
 
-        if total_price.get_amount(total_discount.currency) == 0:
-            return [Money(currency=total_discount.currency, amount=0.0) for _ in cart_entries]
+        if total_price_amount == 0:
+            return [Money(currency=total_discount.currency, amount=Decimal(0)) for _ in cart_entries]
 
         discounts = []
-        remaining_discount = total_discount.amount
+        distributed = Decimal(0)
+        total_discount_amount = Decimal(str(total_discount.amount))
 
         for price in entry_prices[:-1]:
-            fraction = price.get_amount(total_discount.currency) / total_price.get_amount(total_discount.currency)
-            discount_amount = fraction * total_discount.amount
-            discount_amount = min(discount_amount, price.get_amount(total_discount.currency))
+            price_amount = Decimal(str(price.get_amount(total_discount.currency)))
+            fraction = price_amount / Decimal(str(total_price_amount))
+            
+            discount_amount = (fraction * total_discount_amount).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            discount_amount = min(discount_amount, price_amount)
             
             discounts.append(Money(currency=total_discount.currency, amount=discount_amount))
-            remaining_discount -= discount_amount
+            distributed += discount_amount
 
-        last_discount = min(remaining_discount, entry_prices[-1].get_amount(total_discount.currency))
-        
+        # Последний элемент получает остаток — точное значение без округления
+        last_price = Decimal(str(entry_prices[-1].get_amount(total_discount.currency)))
+        last_discount = min(total_discount_amount - distributed, last_price)
         discounts.append(Money(currency=total_discount.currency, amount=last_discount))
 
         return discounts
 
-    async def invoice_by_order(self, cart_entries: list["CartEntry"], order: "Order", operation_time: datetime) -> str | list[str]:
+    async def invoice_by_order(self, cart_entries: list["CartEntry"], order: "Order", operation_time: datetime) -> str | list[str] | None:
         from core.types.values import Money
         price_details = order.price_details
 
@@ -80,7 +87,7 @@ class TaxSystem:
         entries_list = []
 
         for i, entry in enumerate(cart_entries):
-            total_price_per_item = entry.calculate_price(entry.frozen_snapshot).get_amount(discounts.currency)
+            total_price_per_item = entry.calculate_price(entry.frozen_snapshot, multiply_quantity=False).get_amount(discounts.currency)
             remaining_quantity = entry.quantity
             discount_per_item = entry_discounts[i].amount / entry.quantity if entry.quantity else 0
 
@@ -98,6 +105,8 @@ class TaxSystem:
             if price > 0.001: services.append(Service(name=name, amount=float(price), quantity=quantity))
 
         if len(services) == 0: return None
+        if price_details.delivery_price and price_details.delivery_price.amount > 0.001:
+            services.append(Service(name="Организация доставки заказа", amount=float(price_details.delivery_price.amount), quantity=1))
         
         
         if len(services) > 6:

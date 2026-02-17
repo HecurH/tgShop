@@ -152,37 +152,9 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     order.state.set_state(OrderStateKey.accepted)
     
     if not order.payment_method.can_register_receipts:
-        
-        
         await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
-        await ctx.services.db.orders.save(order)
-        if await ctx.services.db.orders.count_formed_customer_orders(customer) == 1 and customer.invited_by:
-            if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
-                if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order, ctx):
-                    inviter_customer = await ctx.services.db.customers.find_one_by_id(inviter.customer_id)
-                    await ctx.services.notificators.UserTelegramNotificator.send_inviter_reward(inviter_customer, reward)
-                    
-                await ctx.services.db.inviters.save(inviter)
-        
-        await ctx.message.answer("Заказ подтвержден")
-        return
-    
-    await order.save_in_fsm(ctx, "order")
-    await call_state_handler(AdminStates.Order.AskGenerateReceipt, ctx)
-    
-@router.message(AdminStates.Order.AskGenerateReceipt)
-async def ask_generate_receipt_handler(_, ctx: Context):
-    text = ctx.message.text
-    if not text: return
-    if text not in [ctx.t.UncategorizedTranslates.yes, ctx.t.UncategorizedTranslates.no]:
-        await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
-        return
-
-    order = await Order.from_fsm_context(ctx, "order")
-    customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
-    cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-    
-    if text == ctx.t.UncategorizedTranslates.yes:
+    else:
+        cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
         try:
             receipts = await ctx.services.tax.invoice_by_order(cart_entries, order, order.price_details.payment_time)
         except Exception as e:
@@ -190,11 +162,10 @@ async def ask_generate_receipt_handler(_, ctx: Context):
             return
 
         await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts)
-    elif text == ctx.t.UncategorizedTranslates.no:
-        await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
-    
-    
+        
     await ctx.services.db.orders.save(order)
+    
+    
     if await ctx.services.db.orders.count_formed_customer_orders(customer) == 1 and customer.invited_by:
         if inviter := await ctx.services.db.inviters.find_one_by_id(customer.invited_by):
             if reward := await ctx.services.db.inviters.count_new_first_order(inviter, order, ctx):
@@ -203,7 +174,8 @@ async def ask_generate_receipt_handler(_, ctx: Context):
                 
             await ctx.services.db.inviters.save(inviter)
     
-    await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Заказ подтвержден", 1))
+    
+    await ctx.message.answer("Заказ подтвержден")
     
 @router.message(Command("unform_order"))
 async def unform_order_handler(_, ctx: Context, command: CommandObject):

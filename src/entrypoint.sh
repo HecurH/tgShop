@@ -9,7 +9,7 @@ if [ "$APP_SERVER" = "gunicorn" ]; then
     --timeout 30 \
     --graceful-timeout 30 \
     --keep-alive 5 \
-    --max-requests 1000 \
+    --max-requests 0 \
     --max-requests-jitter 100
 else
   echo "Starting with aiohttp..."

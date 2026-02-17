@@ -116,7 +116,6 @@ class AdminStates(StatesGroup):
         AdminMessageSending = State()
     
     class Order(StatesGroup):
-        AskGenerateReceipt = State()
         PriceConfirmationWaiting = State()
         
         UnformAskForComment = State()
@@ -266,10 +265,6 @@ async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeh
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
     await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
-
-@state_handlers.register(AdminStates.Order.AskGenerateReceipt)
-async def handle_ask_generate_receipt(ctx: Context, **_):
-    await ctx.message.answer("Cгенерировать ему чек?", reply_markup=UncategorizedKBs.yes_no(ctx))
     
 @state_handlers.register(AdminStates.Order.PriceConfirmationWaiting)
 async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):

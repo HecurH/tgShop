@@ -286,9 +286,10 @@ class CartEntry(AppBaseModel):
     def need_to_confirm_price(self) -> bool:
         return self.configuration.requires_price_confirmation if self.configuration else False
     
-    def calculate_price(self, product: Optional[Product] = None):
+    def calculate_price(self, product: Optional[Product] = None, multiply_quantity: bool = True) -> LocalizedMoney:
         if self.source_type == CartItemSource.product:
-            return (self.configuration.price + product.price) * self.quantity 
+            price = self.configuration.price + product.price
+            return price * self.quantity if multiply_quantity else price
         elif self.source_type == CartItemSource.discounted:
             return self.frozen_snapshot.price
 
