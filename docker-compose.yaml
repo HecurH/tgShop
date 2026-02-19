@@ -5,11 +5,11 @@ services:
     network_mode: host
 
     command: /entrypoint.sh
-    mem_limit: 500m
-    memswap_limit: 800m
+    mem_limit: 768m
+    memswap_limit: 1024m
     volumes:
       - ./src/:/src/
-      - ./ssl/:/ssl/
+      - ./ssl/:/ssl/:ro
       - ./imgs/:/imgs/
       - ./logs/:/gss_logs/
     env_file:

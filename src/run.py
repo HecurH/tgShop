@@ -32,11 +32,12 @@ async def main():
     BOT_TOKEN = load_env("BOT_TOKEN")
     MONGO_URI = load_env("MONGO_URI")
     MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")
+    MONGO_TLS_KEY_PATH = load_env("MONGO_TLS_KEY_PATH")
 
     dp = Dispatcher(storage=PyMongoStorage(AsyncMongoClient(MONGO_URI, 
                     tls=True, 
-                    tlsAllowInvalidCertificates=True, 
-                    tlsCAFile=MONGO_TLS_CA_PATH)))
+                    tlsCAFile=MONGO_TLS_CA_PATH,
+                    tlsCertificateKeyFile=MONGO_TLS_KEY_PATH)))
 
     
     dp.update.middleware.register(middlewares.ThrottlingMiddleware())

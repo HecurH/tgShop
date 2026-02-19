@@ -18,11 +18,12 @@ async def on_startup(bot: Bot) -> None:
     
     info: WebhookInfo  = await bot.get_webhook_info()
     if info and isinstance(info, WebhookInfo) and info.url != url:
-        await bot.delete_webhook(drop_pending_updates=False)
+        await bot.delete_webhook(drop_pending_updates=True)
     
         await bot.set_webhook(
             url,
-            secret_token=secret_token
+            secret_token=secret_token,
+            drop_pending_updates=True
         )
     
     me = await bot.get_me()
