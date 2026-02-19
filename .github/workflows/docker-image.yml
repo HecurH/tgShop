@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            cd /opt/mapp
+            cd /opt/bot
             git pull origin main
 
             if [ "${{ steps.check-changes.outputs.docker }}" = "true" ]; then
