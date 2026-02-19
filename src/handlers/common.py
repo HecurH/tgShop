@@ -47,7 +47,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
                            ctx)
         return
     
-    await ctx.message.reply(ctx.t.CommonTranslates.hi)
+    await ctx.message.answer(ctx.t.CommonTranslates.hi)
 
     await call_state_handler(CommonStates.MainMenu, 
                        ctx)
@@ -113,7 +113,7 @@ async def about_command_handler(_, ctx: Context) -> None:
 async def global_error_handler(event: ErrorEvent):
     with contextlib.suppress(Exception):
         if hasattr(event.update, "message") and event.update.message:
-            await event.update.message.reply("Произошла ошибка. Пожалуйста, попробуйте позже.\nЕсли ошибка повторяется, напишите @HecurH.")
+            await event.update.message.answer("Произошла ошибка. Пожалуйста, попробуйте позже.\nЕсли ошибка повторяется, напишите @HecurH.")
         elif hasattr(event.update, "callback_query") and event.update.callback_query:
             await event.update.callback_query.answer("Произошла ошибка. Пожалуйста, попробуйте позже.", show_alert=True)
 
