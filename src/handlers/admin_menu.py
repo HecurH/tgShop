@@ -65,7 +65,7 @@ async def customers_ask_id_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
-    if not text.isdigit:
+    if not text.isdigit():
         await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Неправильный формат.")
         return
     
