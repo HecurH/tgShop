@@ -65,12 +65,18 @@ async def customers_ask_id_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
-    if not text.isdigit():
-        await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Неправильный формат.")
-        return
     
     try:
-        customer = await ctx.services.db.customers.find_by_user_id(int(text))
+        try:
+            if text.isdigit():
+                customer = await ctx.services.db.customers.find_by_user_id(int(text))
+            else:
+                customer = await ctx.services.db.customers.find_one_by_id(PydanticObjectId(text))
+        except:
+            await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Неправильный формат.")
+            return
+        
+        
         if not customer:
             await call_state_handler(AdminStates.Main.Customers.AskId, ctx, send_before="Пользователь не найден.")
             return
