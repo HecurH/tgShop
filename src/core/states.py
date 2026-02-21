@@ -342,6 +342,12 @@ async def viewing_assortment_handler(ctx: Context,
         return
     
     product: Product = await ctx.services.db.products.find_by_category_and_index(category, current-1, only_visible=True)
+    if not product:
+        await call_state_handler(AssortmentStates.ViewingAssortment,
+                                 ctx, 
+                                 category=category, 
+                                 current=0)
+        return
     caption = AssortmentTextGen.generate_viewing_entry_caption(product,
                                                         ctx)
 
