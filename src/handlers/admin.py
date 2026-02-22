@@ -1355,16 +1355,20 @@ async def addit(_, ctx: Context) -> None:
         ),
         requirements_options=[
             DeliveryRequirementsList(
-                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.name"),
-                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.yandex_delivery_description"),
+                name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.name"),
+                description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.yandex_delivery_description"),
                 requirements=[
                     DeliveryRequirement(
-                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
-                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.FirstName.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.FirstName.description")
                     ),
                     DeliveryRequirement(
-                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
-                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.PhoneNumber.description")
+                    ),
+                    DeliveryRequirement(
+                        name=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.name"),
+                        description=LocalizedEntry(path="DeliveryServicesTranslates.RequirementLists.ByNameAndPhoneNumberAndPickUpPoint.Requirements.PickUpPointAddress.description")
                     )
                 ]
             )

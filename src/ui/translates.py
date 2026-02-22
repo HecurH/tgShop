@@ -363,6 +363,51 @@ class DBEntryTranslates(Translatable):
                             "en": "Enter the pick-up point address."
                         }
             
+            class ByNameAndPhoneNumberAndPickUpPoint(Translatable):
+                name = {
+                    "ru": "По имени, номеру телефона и адресу ПВЗ",
+                    "en": "By first name, phone number and pick-up point address"
+                }
+                
+                yandex_delivery_description = {
+                    "ru": "Оформление доставки в один из пунктов выдачи Яндекс Доставки.",
+                    "en": "Delivery to one of the Yandex Delivery pick-up points."
+                }
+
+                class Requirements(Translatable):
+                    class FirstName(Translatable):
+                        name = {
+                            "ru": "Имя",
+                            "en": "First name"
+                        }
+
+                        description = {
+                            "ru": "Укажите имя получателя.",
+                            "en": "Enter the recipient's first name."
+                        }
+                    
+                    class PhoneNumber(Translatable):
+                        name = {
+                            "ru": "Номер телефона",
+                            "en": "Phone number"
+                        }
+
+                        description = {
+                            "ru": "Укажите номер телефона в формате +7xxxxxxxxxx.",
+                            "en": "Enter the phone number in the format +7xxxxxxxxxx."
+                        }
+                    
+                    class PickUpPointAddress(Translatable):
+                        name = {
+                            "ru": "Полный адрес ПВЗ",
+                            "en": "Pick-up point address"
+                        }
+
+                        description = {
+                            "ru": "Укажите полный адрес ПВЗ.",
+                            "en": "Enter the pick-up point address."
+                        }
+            
             class ByFullNameAndAddress(Translatable):
                 name = {
                     "ru": "По ФИО и адресу",
