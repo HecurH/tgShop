@@ -292,9 +292,10 @@ class UserTelegramNotificator:
             
             await self.notificator.send_forwarded_notification(message,
                                                                chat_id=customer.user_id)
+            await asyncio.sleep(0.1)
             await self.notificator.send_notification(NotificatorTranslates.User.admin_message.translate(customer.lang).format(username=message.from_user.username),
                                                      chat_id=customer.user_id)
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(2.4)
         
     
     #-----------
