@@ -37,16 +37,23 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
 # класс BaseModel, но со своей функцией для загрузки сериализованных объектов
 class AppBaseModel(BaseModel, Generic[TModel]):
     @classmethod
-    async def from_fsm_context(cls: Type[TModel], ctx: Context, key: str, default: Optional[TModel] = None) -> Optional[TModel]:
+    async def from_fsm_context(cls: Type[TModel], ctx: Context, key: str, default: Optional[TModel] = None) -> Optional[TModel | list[TModel]]:
         """Загрузка напрямую из контекста по ключу"""
-        value: Optional[dict] = await ctx.fsm.get_value(key)
-        return cls(**value) if value else default
+        value: Optional[dict | list[dict]] = await ctx.fsm.get_value(key)
+        if not value: return default
+        
+        if isinstance(value, dict):
+            return cls(**value)
+        elif isinstance(value, list):
+            return [cls(**entry) for entry in value]
+        else:
+            return default
     
     @classmethod
-    async def load_many_from_fsm(cls: Type[TModel], ctx: Context, keys: List[str]) -> tuple[Optional[TModel]]:
-        """Загрузка нескольких моделей из FSM по списку ключей"""
-        tasks = [cls.from_fsm_context(ctx, key) for key in keys]
-        return tuple(await asyncio.gather(*tasks))
+    async def save_many_in_fsm(cls: Type[TModel], ctx: Context, key: str, models: list[TModel]):
+        """Сохранение нескольких моделей в FSM"""
+        dumped_list = [model.model_dump() for model in models]
+        await ctx.fsm.update_data({key: dumped_list})
     
     async def save_in_fsm(self, ctx: Context, key: str):
         """Сохранение в контекст по ключу"""
@@ -1260,6 +1267,9 @@ class CustomersRepository(AppAbstractRepository[Customer]):
 
     async def find_by_user_id(self, user_id: int) -> Optional[Customer]:
         return await self.find_one_by({"user_id": user_id})
+    
+    async def find_by_users_id(self, user_ids: Iterable[int]) -> Optional[Iterable[Customer]]:
+        return await self.find_by({"user_id": {"$in": user_ids}})
     
     async def find_many_by_inviter_id(self, inviter_id: PydanticObjectId) -> Optional[Iterable[Customer]]:
         return await self.find_by({"invited_by": inviter_id})

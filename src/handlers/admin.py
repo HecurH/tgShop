@@ -69,7 +69,6 @@ async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
     except:
         await ctx.message.answer("Неправильный формат суммы")
     
-
 @router.message(Command("toggle_partner"))
 async def toggle_partner_handler(_, ctx: Context, command: CommandObject):
     """/toggle_partner <user_id> - Изменить тип реферальной системы пользователя"""
@@ -106,17 +105,39 @@ async def msg_to_handler(_, ctx: Context, command: CommandObject):
         return
 
     await customer.save_in_fsm(ctx, "customer")
-    await call_state_handler(AdminStates.Customers.AdminMessageSending, ctx, customer=customer)
+    await call_state_handler(AdminStates.Customers.AdminMessageSending, ctx)
+    
+@router.message(Command("mass_msg_to"))
+async def mass_msg_to_handler(_, ctx: Context, command: CommandObject):
+    """/mass_msg_to <user_id>,<user_id>,... - Отправить сообщение нескольким пользователям"""
+    user_ids = command.args.split(',') if command.args else None
+    if not user_ids:
+        await ctx.message.answer("Неправильный формат команды")
+        return
+    
+    customers = await ctx.services.db.customers.find_by_users_id(user_ids)
+    if not customers:
+        await ctx.message.answer("Пользователи не найдены")
+        return
+
+    await Customer.save_many_in_fsm(ctx, "customers", customers)
+    await call_state_handler(AdminStates.Customers.AdminMessageSending, ctx)
 
 @router.message(AdminStates.Customers.AdminMessageSending)
 async def admin_message_sending_handler(_, ctx: Context):
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
+    customers: list[Customer] = await Customer.from_fsm_context(ctx, "customers")
+    
+    await ctx.fsm.update_data(customer=None, customers=None)
     if ctx.message.text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено", 1))
         return
     
-    
-    await ctx.services.notificators.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
+    if customer and not customers:
+        await ctx.services.notificators.UserTelegramNotificator.forward_admin_message(customer, ctx.message)
+    elif customers and not customer:
+        await ctx.services.notificators.UserTelegramNotificator.mass_forward_admin_message(customers, ctx.message)
+        
     await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Сообщение отправлено.", 1))
     
 @router.message(Command("confirm_manual_payment"))

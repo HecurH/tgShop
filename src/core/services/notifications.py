@@ -2,7 +2,7 @@ import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import logging
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 from aiogram import Bot
 from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
@@ -283,6 +283,19 @@ class UserTelegramNotificator:
         
         await self.notificator.send_notification(NotificatorTranslates.User.admin_message.translate(customer.lang).format(username=message.from_user.username),
                                                  chat_id=customer.user_id)
+    
+    async def mass_forward_admin_message(self, customers: Iterable[Customer], message: Message):
+        
+        
+        for customer in customers:
+            if customer.kicked: continue
+            
+            await self.notificator.send_forwarded_notification(message,
+                                                               chat_id=customer.user_id)
+            await self.notificator.send_notification(NotificatorTranslates.User.admin_message.translate(customer.lang).format(username=message.from_user.username),
+                                                     chat_id=customer.user_id)
+            await asyncio.sleep(2.5)
+        
     
     #-----------
     async def send_delivery_price_confirmed(self, customer: Customer):

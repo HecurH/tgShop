@@ -264,7 +264,7 @@ async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeh
         
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
-    await ctx.message.answer("Введите сообщение для пользователя:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
+    await ctx.message.answer("Введите сообщение:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
     
 @state_handlers.register(AdminStates.Order.PriceConfirmationWaiting)
 async def handle_price_confirmation_waiting(ctx: Context, entries: Iterable[CartEntry], **_):
