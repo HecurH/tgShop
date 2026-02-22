@@ -111,7 +111,9 @@ async def msg_to_handler(_, ctx: Context, command: CommandObject):
 async def mass_msg_to_handler(_, ctx: Context, command: CommandObject):
     """/mass_msg_to <user_id>,<user_id>,... - Отправить сообщение нескольким пользователям"""
     user_ids = command.args.split(',') if command.args else None
-    if not user_ids:
+    user_ids = [(int(user_id) if user_id.isdigit() else None) for user_id in user_ids] if user_ids else None
+    
+    if not user_ids or not all(user_ids):
         await ctx.message.answer("Неправильный формат команды")
         return
     
