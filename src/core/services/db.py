@@ -1,17 +1,17 @@
 import logging
-from os import getenv
 
 import pymongo
 from pymongo import AsyncMongoClient
 
+from configs.environment import MONGO_URI, MONGO_TLS_CA_PATH, MONGO_TLS_KEY_PATH
 from schemas.db_models import *
 
 class DatabaseService:
     def __init__(self, db_name="Shop"):
-        self.client = AsyncMongoClient(getenv("MONGO_URI"), 
+        self.client = AsyncMongoClient(MONGO_URI, 
                                        tls=True,
-                                       tlsCAFile=getenv("MONGO_TLS_CA_PATH"),
-                                       tlsCertificateKeyFile=getenv("MONGO_TLS_KEY_PATH"))
+                                       tlsCAFile=MONGO_TLS_CA_PATH,
+                                       tlsCertificateKeyFile=MONGO_TLS_KEY_PATH)
         self.db = self.client.get_database(db_name)
 
         self._init_collections()
@@ -19,6 +19,7 @@ class DatabaseService:
         logging.getLogger(__name__).info("Database service initialized.")
 
     def _init_collections(self):
+        self.logs = LogsRepository(self)
         self.placeholders = PlaceholdersRepository(self)
         self.orders = OrdersRepository(self)
         self.cart_entries = CartEntriesRepository(self)

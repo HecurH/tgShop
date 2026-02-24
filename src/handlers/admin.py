@@ -8,6 +8,7 @@ from aiogram.types import BufferedInputFile
 from pydantic import ValidationError
 from pydantic_mongo import PydanticObjectId
 
+from configs.environment import DEBUG
 from core.services.db import *
 
 from core.helper_classes import Context
@@ -174,7 +175,7 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
     order.price_details.payment_time = parsed_datetime
     order.state.set_state(OrderStateKey.accepted)
     
-    if not order.payment_method.can_register_receipts:
+    if not order.payment_method.can_register_receipts or DEBUG:
         await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order)
     else:
         cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
@@ -187,6 +188,14 @@ async def confirm_manual_payment_handler(_, ctx: Context, command: CommandObject
         await ctx.services.notificators.UserTelegramNotificator.send_order_payment_accepted(customer, order, receipts)
         
     await ctx.services.db.orders.save(order)
+    
+    
+    # Уценка
+    discounted_entries = await ctx.services.db.cart_entries.find_entries_by_order(order, {"source_type": CartItemSource.discounted})
+    
+    for entry in discounted_entries:
+        await ctx.services.db.discounted_products.delete_by_id(entry.source_id)
+        await ctx.services.db.cart_entries.delete_discounted_product_from_carts(entry.source_id)
     
     
     if await ctx.services.db.orders.count_formed_customer_orders(customer) == 1 and customer.invited_by:
@@ -237,10 +246,12 @@ async def unform_ask_for_comment_handler(_, ctx: Context):
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed(customer, order)
     else:
         await ctx.services.notificators.UserTelegramNotificator.send_order_unformed_with_reason(customer, order, text)
+        
+    # Уценка
     entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
-    disounted_products = [ent.frozen_snapshot for ent in entries if ent.source_type == CartItemSource.discounted]
-    for disounted_product in disounted_products:
-        await ctx.services.db.discounted_products.save(disounted_product)
+    disounted_products_id = [ent.source_id for ent in entries if ent.source_type == CartItemSource.discounted]
+    if disounted_products_id:
+        await ctx.services.db.discounted_products.set_reserved(disounted_products_id, False)
     
     await ctx.services.db.cart_entries.unassign_cart_entries_from_order(order)
     await ctx.services.db.orders.delete(order)

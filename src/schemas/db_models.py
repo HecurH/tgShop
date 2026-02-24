@@ -11,6 +11,7 @@ from aiogram.types import Message
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
 
+from core.types.enums import LogType
 from registry.currencies import SUPPORTED_CURRENCIES
 from registry.payments import SUPPORTED_PAYMENT_METHODS
 from configs.referrals import REFERRALS_FIRST_ORDER_PERCENT
@@ -34,6 +35,9 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         super().__init__(dbs.db)
         self.dbs = dbs
         
+    async def log(self, log_type: LogType, data: str):
+        await self.dbs.logs.add_log_entry(log_type, data)
+        
 # класс BaseModel, но со своей функцией для загрузки сериализованных объектов
 class AppBaseModel(BaseModel, Generic[TModel]):
     @classmethod
@@ -50,7 +54,7 @@ class AppBaseModel(BaseModel, Generic[TModel]):
             return default
     
     @classmethod
-    async def save_many_in_fsm(cls: Type[TModel], ctx: Context, key: str, models: list[TModel]):
+    async def save_many_in_fsm(cls: Type[TModel], ctx: Context, key: str, models: Iterable[TModel]):
         """Сохранение нескольких моделей в FSM"""
         dumped_list = [model.model_dump() for model in models]
         await ctx.fsm.update_data({key: dumped_list})
@@ -59,6 +63,24 @@ class AppBaseModel(BaseModel, Generic[TModel]):
         """Сохранение в контекст по ключу"""
         await ctx.fsm.update_data({key: self.model_dump()})
         
+class LogEntry(AppBaseModel):
+    id: Optional[PydanticObjectId] = None
+    log_lype: LogType
+    
+    data: str
+    created_at: datetime
+    
+class LogsRepository(AppAbstractRepository[LogEntry]):
+    class Meta:
+        collection_name = 'logs'
+        
+    async def add_log_entry(self, log_type: LogType, data: str):
+        entry = LogEntry(log_lype=log_type, 
+                         data=data, 
+                         created_at=datetime.now(timezone.utc))
+        
+        await self.save(entry)
+         
 class Placeholder(AppBaseModel):
     id: Optional[PydanticObjectId] = None
     
@@ -106,7 +128,6 @@ class OrderPriceDetails(AppBaseModel):
         if not self.total_price: return None
         reward = self.total_price * REFERRALS_FIRST_ORDER_PERCENT
         return reward
-    
 
 class OrderState(BaseModel):
     key: OrderStateKey
@@ -320,7 +341,6 @@ class CartEntry(AppBaseModel):
         elif self.source_type == CartItemSource.discounted:
             return self.frozen_snapshot.price
 
-
 class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     class Meta:
         collection_name = 'cart_entries'
@@ -343,7 +363,14 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         self.logger.info(f"Added {source.name.get('ru')} to cart for {customer.user_id}")
         
     async def check_product_in_cart(self, product: Product | DiscountedProduct, customer: Customer) -> bool:
-        return await self.get_collection().count_documents({"customer_id": customer.id, "source_id": product.id}) > 0
+        return await self.get_collection().count_documents({"customer_id": customer.id, 
+                                                            "order_id": None,
+                                                            "source_id": product.id}) > 0
+        
+    async def check_product_in_orders(self, product: Product | DiscountedProduct, customer: Customer) -> bool:
+        return await self.get_collection().count_documents({"customer_id": customer.id, 
+                                                            "order_id": {"$ne": None},
+                                                            "source_id": product.id}) > 0
         
     async def delete_discounted_product_from_carts(self, discounted_product_id: PydanticObjectId):
         entries = await self.find_by({"order_id": None, 
@@ -364,8 +391,9 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
 
-    async def find_customer_cart_entries(self, customer: Customer) -> Iterable[CartEntry]:
-        return await self.find_by({"customer_id": customer.id, "order_id": None}, sort=[("_id", 1)])
+    async def find_customer_cart_entries(self, customer: Customer, query: Optional[dict] = None) -> Iterable[CartEntry]:
+        base_query = {**(query or {}), "customer_id": customer.id, "order_id": None}
+        return await self.find_by(base_query, sort=[("_id", 1)])
     
     async def find_entries_by_order(self, order: Order, query: Optional[dict] = None) -> Iterable[CartEntry]:
         base_query = {**(query or {}), "order_id": order.id}
@@ -380,7 +408,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
-    
+        
     async def assign_cart_entries_to_order(self, customer: Customer, order: Order):
         entries = await self.find_customer_cart_entries(customer)
         
@@ -481,6 +509,8 @@ class DiscountedProduct(AppBaseModel):
     media: Optional[LocalizedSavedMedia] = None
     
     price: LocalizedMoney
+    
+    reserved: bool = False
 
 class DiscountedProductsRepository(AppAbstractRepository[DiscountedProduct]):
     class Meta:
@@ -499,6 +529,31 @@ class DiscountedProductsRepository(AppAbstractRepository[DiscountedProduct]):
         if not ids: return None
         
         return await self.find_one_by_id(ids[idx]) if 0 <= idx < len(ids) else None
+    
+    async def check_reserved(self, product_id: PydanticObjectId | list[PydanticObjectId]) -> bool:
+        if isinstance(product_id, list):
+            query = {"_id": {"$in": product_id}, "reserved": True}
+        else:
+            query = {"_id": product_id, "reserved": True}
+        
+        return await self.get_collection().count_documents(query) > 0
+    
+    async def set_reserved(self, product_id: PydanticObjectId | list[PydanticObjectId], reserved: bool):
+        if isinstance(product_id, list):
+            products = await self.find_by({"_id": {"$in": product_id}})
+            if not products: return
+            
+            for product in products:
+                product.reserved = reserved
+                
+            await self.save_many(products)
+        elif isinstance(product_id, PydanticObjectId):
+            product = await self.find_one_by_id(product_id)
+            if not product: return
+            
+            product.reserved = reserved
+            
+            await self.save(product)
 
 class ConfigurationSwitch(AppBaseModel):
     name: LocalizedEntry
@@ -1195,6 +1250,14 @@ class DeliveryInfo(AppBaseModel):
     ## сделать эту модель постоянной, чтобы остальная инфа была дочерней, и waiting_for_manual_delivery_info_confirmation был здесь
     
     service: Optional[DeliveryService] = None
+    
+
+# class PrivacyData(AppBaseModel):
+#     email: Optional[SecureValue] = None
+    
+    
+#     consent_process_pd: Optional[datetime] = None
+    
 
 class Customer(AppBaseModel):
     id: Optional[PydanticObjectId] = None
@@ -1320,6 +1383,7 @@ class CategoriesRepository(AppAbstractRepository[Category]):
         return await self.find_by({})
 
 __all__ = [
+    "LogsRepository",
     "AppBaseModel",
     "Placeholder",
     "PlaceholdersRepository",

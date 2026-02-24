@@ -9,6 +9,8 @@ import shutil
 
 from colorlog import ColoredFormatter
 
+from configs.environment import LOGS_PATH
+
 
 LOG_LEVEL = logging.INFO
 LOGFORMAT = "%(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(message)s%(reset)s // %(name)s - %(funcName)s: %(lineno)d [%(worker_pid)s] | %(asctime)s"
@@ -46,11 +48,8 @@ class AlignedPlainFormatter(_BaseAlignedFormatter, logging.Formatter):
         base_message = super().format(record)
         return self._align(base_message, record)
 
-def load_env(name: str) -> str:
-    if value := getenv(name): return value
-    else: raise KeyError(f"Missing {name} environment variable.")
     
-logs_path = Path(load_env("LOGS_PATH"))
+logs_path = Path(LOGS_PATH)
 
 # Переопределяем метод namer, чтобы архивные логи были вида "18_06_25.log"
 def custom_namer(default_name):

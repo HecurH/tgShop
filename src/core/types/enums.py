@@ -1,5 +1,8 @@
 from enum import Enum
 
+class LogType(str, Enum):
+    personal_data = "personal_data"
+
 class MediaType(str, Enum):
     photo = "photo"
     video = "video"

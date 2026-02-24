@@ -19,20 +19,10 @@ sys.path.insert(0, str(Path(__file__).parent))   # adds src/ directory
 from handlers import admin_menu, discounted_products, profile, admin, bottom, cart, orders, common, assortment
 from core.logger import setup_logging
 from core import middlewares
-
-def load_env(name: str, default: str = None) -> str:
-    if value := getenv(name): return value
-    elif default: return default
-    else: raise KeyError(f"Missing {name} environment variable.")
+from configs.environment import BOT_TOKEN, MONGO_URI, MONGO_TLS_CA_PATH, MONGO_TLS_KEY_PATH, USE_WEBHOOK, APP_SERVER, WEB_SERVER_HOST, WEB_SERVER_PORT
 
 
-
-        
 async def main():
-    BOT_TOKEN = load_env("BOT_TOKEN")
-    MONGO_URI = load_env("MONGO_URI")
-    MONGO_TLS_CA_PATH = load_env("MONGO_TLS_CA_PATH")
-    MONGO_TLS_KEY_PATH = load_env("MONGO_TLS_KEY_PATH")
 
     dp = Dispatcher(storage=PyMongoStorage(AsyncMongoClient(MONGO_URI, 
                     tls=True, 
@@ -65,18 +55,18 @@ async def main():
     dp.workflow_data["context_middleware"] = context_middleware
     dp.workflow_data["bot"] = bot
     
-    if getenv("USE_WEBHOOK") == "1":
+    if USE_WEBHOOK == "1":
         from core.webhook import create_app
         app = create_app(dp, bot)
         
-        app_server = getenv("APP_SERVER", "aiohttp")
+        app_server = APP_SERVER
         if app_server == "gunicorn":
             return app
         else:
             from aiohttp import web
             await web._run_app(app, 
-                        host=load_env('WEB_SERVER_HOST', "0.0.0.0"), 
-                        port=int(load_env('WEB_SERVER_PORT', "80")),
+                        host=WEB_SERVER_HOST, 
+                        port=WEB_SERVER_PORT,
                         access_log=None,
                         print=None)
     else:

@@ -11,7 +11,7 @@ router = Router(name="cart")
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.cart.values()) if message.text else False)
 async def profile_entrance_handler(_, ctx: Context) -> None:
     await ctx.fsm.update_data(current=1)
-    await call_state_handler(CartStates.Menu, current=1, ctx=ctx)
+    await call_state_handler(CartStates.Menu, ctx=ctx)
 
 @router.message(CartStates.Menu)
 async def cart_viewer_handler(_, ctx: Context):
@@ -77,6 +77,10 @@ async def cart_viewer_handler(_, ctx: Context):
         
         requires_price_confirmation = await ctx.services.db.cart_entries.check_price_confirmation_in_cart(ctx.customer)
         order = ctx.services.db.orders.new_order(ctx.customer, products_price, save_delivery_info=not requires_price_confirmation)
+        
+        cart_entries_count = await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer)
+        
+        await ctx.fsm.update_data(cart_entries_count=cart_entries_count)
         await order.save_in_fsm(ctx, "order")
         
         if requires_price_confirmation:
@@ -157,6 +161,7 @@ async def order_configuration_handler(_, ctx: Context):
         await call_state_handler(CartStates.Menu, ctx)
         return
     order: Order = await Order.from_fsm_context(ctx, "order")
+    cart_entries_count: int = await ctx.fsm.get_value("cart_entries_count")
     
     if text == use_promocode:
         await call_state_handler(CartStates.OrderConfiguration.PromocodeSetting, ctx)
@@ -178,15 +183,34 @@ async def order_configuration_handler(_, ctx: Context):
                                      send_before=(ctx.t.CartTranslates.OrderConfiguration.not_all_required_fields_filled, 1))
             return
         
+        # Изменилось ли количество товаров в корзине?
+        if await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer) != cart_entries_count:
+            await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+            await call_state_handler(CartStates.Menu, ctx,
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.cart_changed, 1))
+            return
+        
+        # Есть ли в корзине зарезервированная уценка?
+        if discounted_entries := await ctx.services.db.cart_entries.find_customer_cart_entries(ctx.customer, {"source_type": CartItemSource.discounted}):
+            ids = [ent.source_id for ent in discounted_entries]
+            if await ctx.services.db.discounted_products.check_reserved(ids):
+                await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+                await call_state_handler(CartStates.Menu, ctx,
+                                        send_before=(ctx.t.CartTranslates.OrderConfiguration.reserved_in_cart, 1))
+                return
+                
         # Изменилась ли цена пока он формировал корзину?
         current_products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         order_products_price = order.price_details.products_price
         if order_products_price.amount != current_products_price.get_amount(order_products_price.currency):
             
-            await ctx.fsm.update_data(current=1, order=None)
-            await call_state_handler(CartStates.Menu, ctx, current=1,
+            await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+            await call_state_handler(CartStates.Menu, ctx,
                                      send_before=(ctx.t.CartTranslates.OrderConfiguration.price_changed, 1))
             return
+        
+        
+        
         
         if not payment_method.manual: # TODO когда будет интернет-эквайринг
             return
@@ -253,6 +277,7 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
     text = ctx.message.text
     if not text: return
     order: Order = await Order.from_fsm_context(ctx, "order")
+    cart_entries_count: int = await ctx.fsm.get_value("cart_entries_count")
 
     if text == ctx.t.UncategorizedTranslates.back:
         await call_state_handler(CartStates.OrderConfiguration.Menu, ctx, order=order)
@@ -264,16 +289,34 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
     if text == ctx.t.ReplyButtonsTranslates.Cart.OrderConfiguration.i_paid:
         entries_assigned = order.state == OrderStateKey.waiting_for_forming
         
+        
+        # Изменилось ли количество товаров в корзине?
+        if await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer) != cart_entries_count:
+            await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+            await call_state_handler(CartStates.Menu, ctx,
+                                     send_before=(ctx.t.CartTranslates.OrderConfiguration.cart_changed, 1))
+            return
+        
+        # Есть ли в корзине зарезервированная уценка?
+        if discounted_entries := await ctx.services.db.cart_entries.find_customer_cart_entries(ctx.customer, {"source_type": CartItemSource.discounted}):
+            ids = [ent.source_id for ent in discounted_entries]
+            if await ctx.services.db.discounted_products.check_reserved(ids):
+                await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+                await call_state_handler(CartStates.Menu, ctx,
+                                        send_before=(ctx.t.CartTranslates.OrderConfiguration.reserved_in_cart, 1))
+                return
+        
         # Изменилась ли цена пока он формировал корзину?
         current_products_price = await ctx.services.db.cart_entries.calculate_customer_cart_price(ctx.customer)
         order_products_price = order.price_details.products_price
         if order_products_price.amount != current_products_price.get_amount(order_products_price.currency):
             
-            await ctx.fsm.update_data(current=1, order=None)
-            await call_state_handler(CartStates.Menu, ctx, current=1,
+            await ctx.fsm.update_data(current=1, order=None, cart_entries_count=None)
+            await call_state_handler(CartStates.Menu, ctx,
                                      send_before=(ctx.t.CartTranslates.OrderConfiguration.price_changed, 1))
             return
         
+        # Промокод
         if order.promocode_id:
             promocode = await ctx.services.db.promocodes.find_one_by_id(order.promocode_id)
             if not promocode:
@@ -289,6 +332,8 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
                     return
                     
                 await ctx.services.db.promocodes.update_usage(order.promocode_id, 1)
+                
+        # Снимаем бонусы
         if order.price_details.bonuses_applied:
             await ctx.services.db.customers.remove_bonus_money(ctx.customer, order.price_details.bonuses_applied, ctx)
         
@@ -300,12 +345,16 @@ async def order_configuration_payment_confirmation_handler(_, ctx: Context):
         
         entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
         
+        # Логика с уценкой
         disounted_products_ids = [ent.source_id for ent in entries if ent.source_type == CartItemSource.discounted]
-        for disounted_product_id in disounted_products_ids:
-            await ctx.services.db.discounted_products.delete_by_id(disounted_product_id)
-            await ctx.services.db.cart_entries.delete_discounted_product_from_carts(disounted_product_id)
+        await ctx.services.db.discounted_products.set_reserved(disounted_products_ids, True)
+            
+            # await ctx.services.db.discounted_products.delete_by_id(disounted_product_id)
+            # await ctx.services.db.cart_entries.delete_discounted_product_from_carts(disounted_product_id)
+            
+        # Логика с уценкой
 
         await ctx.services.notificators.AdminChatNotificator.send_payment_confirmation(order, ctx)
         
-        await ctx.fsm.update_data(order=None)
+        await ctx.fsm.update_data(order=None, cart_entries_count=None)
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=(ctx.t.CartTranslates.OrderConfiguration.manual_payment_confirmation_sended, 1))

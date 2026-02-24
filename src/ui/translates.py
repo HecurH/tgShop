@@ -1523,6 +1523,11 @@ class DiscountedProductsTranslates(Translatable):
         "en": "This product is already in the cart!"
     }
     
+    already_ordered = {
+        "ru": "Этот товар уже был вами заказан!",
+        "en": "This product has already been ordered by you!"
+    }
+    
 class CartTranslates(Translatable):
     no_products_in_cart = {
         "ru": "В Вашей корзине нет товаров!",
@@ -1628,6 +1633,16 @@ class CartTranslates(Translatable):
         price_changed = {
             "ru": "Цена одного или нескольких товаров в корзине была изменена. Пожалуйста, оформите заказ заново.",
             "en": "The price of one or more items in the cart has changed. Please place the order again."
+        }
+        
+        cart_changed = {
+            "ru": "Ваша корзина была изменена. Пожалуйста, оформите заказ заново.",
+            "en": "Your cart has been changed. Please place the order again."
+        }
+        
+        reserved_in_cart = {
+            "ru": "Один или несколько ваших товаров временно зарезервированы для другого пользователя на период оплаты. Попробуйте оформить заказ позднее.",
+            "en": "One or more of your items have been temporarily reserved for another user for the duration of payment. Please try to place the order later."
         }
         
         not_using_bonus_money = {

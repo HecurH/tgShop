@@ -58,6 +58,13 @@ async def viewing_discounted_products_handler(_, ctx: Context) -> None:
                                 send_before=(ctx.t.DiscountedProductsTranslates.already_in_cart, 1))
             return
         
+        if await ctx.services.db.cart_entries.check_product_in_orders(discounted_product, ctx.customer):
+            await call_state_handler(DiscountedStates.ViewingProducts,
+                                ctx,
+                                current=current,
+                                send_before=(ctx.t.DiscountedProductsTranslates.already_ordered, 1))
+            return
+        
         await ctx.services.db.cart_entries.add_to_cart(discounted_product, ctx.customer)
         
         await ctx.fsm.update_data(current=None)

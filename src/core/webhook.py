@@ -7,14 +7,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import WebhookInfo
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
+from configs.environment import BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, WEBHOOK_PATH, WEBHOOK_SECRET
 
-def load_env(name: str) -> str:
-    if value := getenv(name): return value
-    else: raise KeyError(f"Missing {name} environment variable.")
 
 async def on_startup(bot: Bot) -> None:
-    url = f"{load_env('BASE_WEBHOOK_URL')}{load_env('WEBHOOK_PATH')}"
-    secret_token = load_env('WEBHOOK_SECRET')
+    url = f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}"
     
     info: WebhookInfo  = await bot.get_webhook_info()
     if info and isinstance(info, WebhookInfo) and info.url != url:
@@ -22,7 +19,7 @@ async def on_startup(bot: Bot) -> None:
     
         await bot.set_webhook(
             url,
-            secret_token=secret_token,
+            secret_token=WEBHOOK_SECRET,
             drop_pending_updates=True
         )
     
@@ -30,8 +27,6 @@ async def on_startup(bot: Bot) -> None:
     logging.getLogger(__name__).info(f"Started bot @{me.username}.")
 
 def create_app(dp: Dispatcher, bot: Bot):
-    webhook_path = load_env('WEBHOOK_PATH')
-    secret_token = load_env('WEBHOOK_SECRET')
     
     dp.startup.register(on_startup)
     
@@ -40,10 +35,10 @@ def create_app(dp: Dispatcher, bot: Bot):
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
-        secret_token=secret_token,
+        secret_token=WEBHOOK_SECRET,
     )
     
-    webhook_requests_handler.register(app, path=webhook_path)
+    webhook_requests_handler.register(app, path=WEBHOOK_PATH)
 
     setup_application(app, dp, bot=bot)
     
