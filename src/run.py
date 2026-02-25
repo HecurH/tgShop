@@ -55,7 +55,7 @@ async def main():
     dp.workflow_data["context_middleware"] = context_middleware
     dp.workflow_data["bot"] = bot
     
-    if USE_WEBHOOK == "1":
+    if USE_WEBHOOK:
         from core.webhook import create_app
         app = create_app(dp, bot)
         
