@@ -382,19 +382,19 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
         await ctx.message.answer("Пользователь или сервис доставки не найдены")
         return
     
-    if customer.delivery_info and customer.delivery_info.service:
+    if customer.privacy_data.delivery_info.service:
         await ctx.message.answer("У пользователя уже выбран другой сервис доставки")
         return
-    if not customer.waiting_for_manual_delivery_info_confirmation:
+    if not customer.privacy_data.delivery_info.waiting_for_manual_delivery_info_confirmation:
         await ctx.message.answer("Пользователь уже не ждет подтверждения цены")
         return
     
     delivery_service.selected_option = delivery_service.requirements_options[req_options_list_idx]
     delivery_service.restore_securs_from_str(securs)
     delivery_service.price = price
-    customer.delivery_info = DeliveryInfo()
-    customer.delivery_info.service = delivery_service
-    customer.waiting_for_manual_delivery_info_confirmation = False
+    
+    customer.privacy_data.delivery_info.service = delivery_service
+    customer.privacy_data.delivery_info.waiting_for_manual_delivery_info_confirmation = False
     await ctx.services.db.customers.save(customer)
     
     await ctx.services.notificators.UserTelegramNotificator.send_delivery_price_confirmed(customer)
@@ -412,7 +412,7 @@ async def cancel_manual_delivery_price_confirm_handler(_, ctx: Context, command:
         await ctx.message.answer("Пользователь не найден")
         return
     
-    if not customer.waiting_for_manual_delivery_info_confirmation:
+    if not customer.privacy_data.delivery_info.waiting_for_manual_delivery_info_confirmation:
         await ctx.message.answer("Пользователь не не ожидает подтверждения")
         return
     
@@ -428,7 +428,7 @@ async def price_confirmation_cancel_handler(_, ctx: Context):
         return
     customer: Customer = await Customer.from_fsm_context(ctx, "customer")
     
-    customer.waiting_for_manual_delivery_info_confirmation = False
+    customer.privacy_data.delivery_info.waiting_for_manual_delivery_info_confirmation = False
     await ctx.services.db.customers.save(customer)
     await ctx.fsm.update_data(customer=None)
     

@@ -222,7 +222,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
         self.logger = logging.getLogger(__name__)
         
     def new_order(self, customer: Customer, products_price: LocalizedMoney, save_delivery_info: bool = True) -> Order:
-        delivery_info = customer.delivery_info if save_delivery_info else None
+        delivery_info = customer.privacy_data.delivery_info if save_delivery_info else None
         price_details = OrderPriceDetails.new(customer, products_price, delivery_info)
         
         return Order(customer_id=customer.id, delivery_info=delivery_info, price_details=price_details)
@@ -1246,17 +1246,29 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
         return await self.find_by({"is_foreign": is_foreign})
 
 class DeliveryInfo(AppBaseModel):
-    ### TODO: 
-    ## сделать эту модель постоянной, чтобы остальная инфа была дочерней, и waiting_for_manual_delivery_info_confirmation был здесь
     
     service: Optional[DeliveryService] = None
+    waiting_for_manual_delivery_info_confirmation: bool = False
+    
+    
+    @model_validator(mode="before")
+    @classmethod
+    def from_v1(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        
+        if "waiting_for_manual_delivery_info_confirmation" in data:
+            return data
+
+        data['waiting_for_manual_delivery_info_confirmation'] = False
+
+        return data
     
 
-# class PrivacyData(AppBaseModel):
-#     email: Optional[SecureValue] = None
+class PrivacyData(AppBaseModel):
+    delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
     
-    
-#     consent_process_pd: Optional[datetime] = None
+    consent_process_pd: Optional[datetime] = None
     
 
 class Customer(AppBaseModel):
@@ -1274,8 +1286,29 @@ class Customer(AppBaseModel):
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
-    delivery_info: Optional[DeliveryInfo] = None
-    waiting_for_manual_delivery_info_confirmation: bool = False
+    privacy_data: PrivacyData = Field(default_factory=PrivacyData)
+    
+    @model_validator(mode="before")
+    @classmethod
+    def from_v1(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        
+        if "privacy_data" in data:
+            return data
+        
+        logging.getLogger(__name__).warning("Customer: converting from v1 to v2")
+
+        if "delivery_info" in data and "waiting_for_manual_delivery_info_confirmation" in data:
+            data['privacy_data'] = PrivacyData().model_dump()
+            
+            if data['delivery_info'] and data['delivery_info']['service']:
+                data['privacy_data']['delivery_info']['service'] = data.pop('delivery_info')['service']
+                
+            data['privacy_data']['delivery_info']['waiting_for_manual_delivery_info_confirmation'] = data.pop('waiting_for_manual_delivery_info_confirmation')
+
+
+        return data
     
     def check_can_change_currency(self) -> bool:
         if self.last_time_changed_currency:

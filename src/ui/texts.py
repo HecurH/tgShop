@@ -99,8 +99,9 @@ class AdminTextGen:
         
         invited_orders = inviter.invited_customers_first_orders if inviter else 0
         
-        def delivery_info(delivery_info: DeliveryInfo):
-            service = delivery_info.service
+        def delivery_info(service: DeliveryService):
+            if not service:
+                return "Нет"
         
             requirements = service.selected_option.requirements
             
@@ -130,8 +131,8 @@ class AdminTextGen:
 
 На бонусном счету {customer.bonus_wallet.to_text()}
 
-Доставка: {delivery_info(customer.delivery_info) if customer.delivery_info else 'Нет'}
-Она ждет подтверждения стоимости? {customer.waiting_for_manual_delivery_info_confirmation}
+Доставка: {delivery_info(customer.privacy_data.delivery_info.service)}
+Она ждет подтверждения стоимости? {customer.privacy_data.delivery_info.waiting_for_manual_delivery_info_confirmation}
 
 Скольких пригласил: {invited} 
 [{', '.join([str(c.user_id) for c in invited_list])}]
@@ -391,8 +392,8 @@ class ProfileTextGen:
         return f"<a href=\"{link}\">@{me.username}</a>"
         
     @staticmethod
-    def delivery_menu_text(delivery_info: Optional[DeliveryInfo], ctx: Context):
-        if not delivery_info:
+    def delivery_menu_text(delivery_info: DeliveryInfo, ctx: Context):
+        if not delivery_info.service:
             return ctx.t.ProfileTranslates.Delivery.menu_not_configured
         service = delivery_info.service
         
@@ -443,9 +444,9 @@ class CartTextGen:
         
         payment_method_info = payment_method.name.get(ctx) if payment_method else ctx.t.CartTranslates.OrderConfiguration.no_payment_method_selected
         
-        delivery_info = ctx.customer.delivery_info
-        delivery_service = f"{delivery_info.service.name.get(ctx)} — {price_details.delivery_price.to_text()}"
-        delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+        service = ctx.customer.privacy_data.delivery_info.service
+        delivery_service = f"{service.name.get(ctx)} — {price_details.delivery_price.to_text()}"
+        delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in service.selected_option.requirements],
                                                 padding=2)
         
         total = price_details.total_price.to_text()

@@ -664,10 +664,10 @@ class ProfileKBs:
     class Delivery:
         
         @staticmethod
-        def menu(delivery_info: Optional[DeliveryInfo], ctx: Context) -> types.ReplyKeyboardMarkup:
+        def menu(delivery_info: DeliveryInfo, ctx: Context) -> types.ReplyKeyboardMarkup:
 
             # Клавиатура, если сервис доставки выбран
-            if delivery_info:
+            if delivery_info.service:
                 # Текст для иностранной доставки
                 foreign_text = (
                     ctx.t.ReplyButtonsTranslates.Profile.Delivery.Edit.foreign + (" ✅"

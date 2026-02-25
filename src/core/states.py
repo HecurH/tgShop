@@ -620,13 +620,13 @@ async def referrals_invitation_link_view_handler(ctx: Context, inviter: Inviter,
 @state_handlers.register(ProfileStates.Delivery.Menu)
 async def delivery_menu_handler(ctx: Context, **_):
     await ctx.message.answer(
-        ProfileTextGen.delivery_menu_text(ctx.customer.delivery_info, ctx),
-        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.delivery_info, ctx)
+        ProfileTextGen.delivery_menu_text(ctx.customer.privacy_data.delivery_info, ctx),
+        reply_markup=ProfileKBs.Delivery.menu(ctx.customer.privacy_data.delivery_info, ctx)
     )
 
 @state_handlers.register(ProfileStates.Delivery.Editables.IsForeign)
 async def delivery_edit_is_foreign_handler(ctx: Context, **_):
-    first_setup: bool = ctx.customer.delivery_info is None
+    first_setup: bool = ctx.customer.privacy_data.delivery_info.service is None
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.is_foreign_text,
@@ -637,7 +637,7 @@ async def delivery_edit_is_foreign_handler(ctx: Context, **_):
     
 @state_handlers.register(ProfileStates.Delivery.Editables.Service)
 async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool, **_):
-    first_setup: bool = ctx.customer.delivery_info is None
+    first_setup: bool = ctx.customer.privacy_data.delivery_info.service is None
     
     services = await ctx.services.db.delivery_services.get_all(is_foreign_services)
     
@@ -649,9 +649,9 @@ async def delivery_edit_service_handler(ctx: Context, is_foreign_services: bool,
     )
     
 @state_handlers.register(ProfileStates.Delivery.Editables.RequirementsLists)
-async def delivery_edit_requirements_lists_handler(ctx: Context, delivery_info: DeliveryInfo, **_):
-    first_setup: bool = ctx.customer.delivery_info is None
-    lists = delivery_info.service.requirements_options
+async def delivery_edit_requirements_lists_handler(ctx: Context, service: DeliveryService, **_):
+    first_setup: bool = ctx.customer.privacy_data.delivery_info.service is None
+    lists = service.requirements_options
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.requirements_list_text,
@@ -661,9 +661,9 @@ async def delivery_edit_requirements_lists_handler(ctx: Context, delivery_info: 
     )
 
 @state_handlers.register(ProfileStates.Delivery.Editables.Requirement)
-async def delivery_edit_requirement_handler(ctx: Context, delivery_info: DeliveryInfo, requirement_index: int = 0, **_):
-    first_setup: bool = ctx.customer.delivery_info is None
-    requirement = delivery_info.service.selected_option.requirements[requirement_index]
+async def delivery_edit_requirement_handler(ctx: Context, service: DeliveryService, requirement_index: int = 0, **_):
+    first_setup: bool = ctx.customer.privacy_data.delivery_info.service is None
+    requirement = service.selected_option.requirements[requirement_index]
     
     await ctx.message.answer(
         ctx.t.ProfileTranslates.Delivery.requirement_value_text.format(name=requirement.name.get(ctx), description=requirement.description.get(ctx)),

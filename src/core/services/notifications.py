@@ -8,7 +8,7 @@ from aiogram.types import ReplyMarkupUnion, InputFile, URLInputFile, Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramAPIError, TelegramBadRequest
 from aiogram.utils.media_group import MediaGroupBuilder
 from core.types.enums import CartItemSource
-from schemas.db_models import Customer, Order, DeliveryInfo
+from schemas.db_models import Customer, DeliveryService, Order
 from core.types.values import SavedTMessage
 from core.types.values import Money
 from ui.keyboards import UncategorizedKBs
@@ -264,12 +264,12 @@ class AdminChatNotificator:
 
         await self.notificator.send_notification(text, reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         
-    async def send_delivery_manual_price_confirmation(self, delivery_info: DeliveryInfo, ctx: Context):
+    async def send_delivery_manual_price_confirmation(self, service: DeliveryService, ctx: Context):
         
-        delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in delivery_info.service.selected_option.requirements],
+        delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in service.selected_option.requirements],
                                                 padding=2)
         
-        await self.notificator.send_notification(f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {delivery_info.service.id} {delivery_info.service.get_selected_option_index()} {delivery_info.service.securs_to_str()} {delivery_info.service.price.to_json()}</code>\n\n<code>/cancel_manual_delivery_price_confirm {ctx.customer.user_id}</code>",
+        await self.notificator.send_notification(f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {service.id} {service.get_selected_option_index()} {service.securs_to_str()} {service.price.to_json()}</code>\n\n<code>/cancel_manual_delivery_price_confirm {ctx.customer.user_id}</code>",
                                                  reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         
 class UserTelegramNotificator:
