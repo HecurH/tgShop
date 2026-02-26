@@ -925,7 +925,7 @@ A primal engine of raw force and relentless desire, a true wild beast that escap
                 can_be_blocked_by=["color/swirl"],
 
                 description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Firmness.Choices.DrianaExtendedFirmnessGradation.description"),
-                price=LocalizedMoney.from_keys(RUB=1800.00, USD=19.00)
+                price=LocalizedMoney.from_keys(RUB=2800.00, USD=34.00)
             )
         }
     )

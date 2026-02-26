@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import pymongo
@@ -13,26 +14,34 @@ class DatabaseService:
                                        tlsCAFile=MONGO_TLS_CA_PATH,
                                        tlsCertificateKeyFile=MONGO_TLS_KEY_PATH)
         self.db = self.client.get_database(db_name)
+        
+        self.collections: dict[str, AppAbstractRepository] = {
+            "logs": LogsRepository,
+            "placeholders": PlaceholdersRepository,
+            "orders": OrdersRepository,
+            "cart_entries": CartEntriesRepository,
+            "delivery_services": DeliveryServicesRepository,
+            "customers": CustomersRepository,
+            "products": ProductsRepository,
+            "discounted_products": DiscountedProductsRepository,
+            "additionals": AdditionalsRepository,
+            "categories": CategoriesRepository,
+            "inviters": InvitersRepository,
+            "promocodes": PromocodesRepository
+        }
 
         self._init_collections()
         
         logging.getLogger(__name__).info("Database service initialized.")
 
     def _init_collections(self):
-        self.logs = LogsRepository(self)
-        self.placeholders = PlaceholdersRepository(self)
-        self.orders = OrdersRepository(self)
-        self.cart_entries = CartEntriesRepository(self)
-        self.delivery_services = DeliveryServicesRepository(self)
-        self.customers = CustomersRepository(self)
-        self.products = ProductsRepository(self)
-        self.discounted_products = DiscountedProductsRepository(self)
-        self.additionals = AdditionalsRepository(self)
-        self.categories = CategoriesRepository(self)
-        self.inviters = InvitersRepository(self)
-        self.promocodes = PromocodesRepository(self)
+        for key, repo_class in self.collections.items():
+            instance = repo_class(self)
+            
+            self.collections[key] = instance
+            setattr(self, key, instance)
 
-    async def create_indexes(self):
+    async def _create_indexes(self):
         await self.db["placeholders"].create_index([("key", pymongo.ASCENDING)], unique=True)
         
         await self.db["orders"].create_index([("customer_id", pymongo.ASCENDING)])
@@ -47,6 +56,29 @@ class DatabaseService:
         await self.db["inviters"].create_index([("customer_id", pymongo.ASCENDING)], unique=True)
 
         await self.db["promocodes"].create_index([("code", pymongo.ASCENDING)], unique=True)
+        
+    async def _check_migrations(self):
+        semaphore = asyncio.Semaphore(3)
+        
+        async def check_with_semaphore(repo):
+            async with semaphore:
+                return await repo.check_migrations()
+        
+        tasks = [check_with_semaphore(repo) for repo in self.collections.values()]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        errors = [r for r in results if isinstance(r, Exception)]
+        
+        if errors:
+            for e in errors:
+                logging.getLogger(__name__).critical(f"Migration failed: {e}")
+            raise errors[0]
+        
+
+    async def prepare(self):
+        await self._create_indexes()
+        await self._check_migrations()
+        
 
     async def get_next_for_counter(self, name):
 

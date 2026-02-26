@@ -4,12 +4,19 @@ from datetime import datetime, timezone, timedelta
 import json
 import logging
 import re
-from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING
+from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING, Union, cast, get_args
 
 from aiogram.types import Message
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+from pymongo import ReplaceOne
+from pymongo.results import InsertOneResult, UpdateResult
 from pydantic_mongo import AsyncAbstractRepository, PydanticObjectId
+from pydantic_mongo.base_abstract_repository import (
+    ModelWithId,
+    T as TPyMongoModel
+)
 
 from core.types.enums import LogType
 from registry.currencies import SUPPORTED_CURRENCIES
@@ -28,6 +35,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 TModel = TypeVar("TModel", bound="AppBaseModel[Any]")
+TDBModel = TypeVar("TDBModel", bound="AppDBModel[Any]")
 
 
 class AppAbstractRepository(AsyncAbstractRepository[T]):
@@ -37,6 +45,83 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         
     async def log(self, log_type: LogType, data: str):
         await self.dbs.logs.add_log_entry(log_type, data)
+        
+    def get_latest_schema_version(self) -> int:
+        model_cls = get_args(type(self).__orig_bases__[0])[0]
+        return model_cls.latest_schema_version()
+
+    async def check_migrations(self):
+        current_version = self.get_latest_schema_version()
+        query = {"$or": [
+            {"schema_version": {"$exists": False}},
+            {"schema_version": {"$lt": current_version}}
+        ]}
+        
+        migrated = await self.find_by(query)
+        await self.save_many_with_replace(migrated)
+          
+    async def save_with_replace(self, model: TPyMongoModel) -> Union[InsertOneResult, UpdateResult]:
+        """Asynchronously save a model instance to the database.
+
+        This method will:
+        - Insert the model if it doesn't have an ID
+        - Update the model if it has an ID
+
+        Args:
+            model: The model instance to save
+
+        Returns:
+            Union[InsertOneResult, UpdateResult]: The result of the save operation
+        """
+        document = self.to_document(model)
+        model_with_id = cast(ModelWithId, model)
+
+        if model_with_id.id:
+            return await self.get_collection().replace_one(
+                {"_id": document.pop("_id")}, document, upsert=True
+            )
+
+        result = await self.get_collection().insert_one(document)
+        model_with_id.id = result.inserted_id
+        return result
+
+    async def save_many_with_replace(self, models: Iterable[TPyMongoModel]):
+        """Asynchronously save multiple model instances to the database in bulk.
+
+        This method optimizes bulk operations by:
+        - Grouping models into insert and update operations
+        - Performing bulk inserts and updates
+
+        Args:
+            models: Iterable of model instances to save
+        """
+        models_to_insert = []
+        models_to_update = []
+
+        for model in models:
+            model_with_id = cast(ModelWithId, model)
+            if model_with_id.id:
+                models_to_update.append(model)
+            else:
+                models_to_insert.append(model)
+        if len(models_to_insert) > 0:
+            result = await self.get_collection().insert_many(
+                (self.to_document(model) for model in models_to_insert)
+            )
+
+            for idx, inserted_id in enumerate(result.inserted_ids):
+                cast(ModelWithId, models_to_insert[idx]).id = inserted_id
+
+        if len(models_to_update) == 0:
+            return
+
+        documents_to_update = [self.to_document(model) for model in models_to_update]
+        mongo_ids = [doc.pop("_id") for doc in documents_to_update]
+        bulk_operations = [
+            ReplaceOne({"_id": mongo_id}, document, upsert=True)
+            for mongo_id, document in zip(mongo_ids, documents_to_update)
+        ]
+        await self.get_collection().bulk_write(bulk_operations, ordered=False)
         
 # класс BaseModel, но со своей функцией для загрузки сериализованных объектов
 class AppBaseModel(BaseModel, Generic[TModel]):
@@ -63,7 +148,25 @@ class AppBaseModel(BaseModel, Generic[TModel]):
         """Сохранение в контекст по ключу"""
         await ctx.fsm.update_data({key: self.model_dump()})
         
-class LogEntry(AppBaseModel):
+class AppDBModel(AppBaseModel[TModel]):
+    schema_version: int = 0
+    
+    @model_validator(mode="before")
+    @classmethod
+    def _base_migrate(cls, data: dict):
+        if not isinstance(data, dict):
+            return data
+        if "schema_version" not in data:
+            data["schema_version"] = 0
+        return data
+    
+    
+    @classmethod
+    def latest_schema_version(cls) -> int:
+        schema_version = cls.model_fields.get("schema_version")
+        return schema_version.default if schema_version else 0
+    
+class LogEntry(AppDBModel):
     id: Optional[PydanticObjectId] = None
     log_lype: LogType
     
@@ -81,7 +184,7 @@ class LogsRepository(AppAbstractRepository[LogEntry]):
         
         await self.save(entry)
          
-class Placeholder(AppBaseModel):
+class Placeholder(AppDBModel):
     id: Optional[PydanticObjectId] = None
     
     key: str
@@ -150,7 +253,7 @@ class OrderState(BaseModel):
     def __eq__(self, value):
         return self.key == value    
 
-class Order(AppBaseModel):
+class Order(AppDBModel):
     id: Optional[PydanticObjectId] = None
     puid: Optional[str] = None
     number: Optional[int] = None
@@ -273,7 +376,7 @@ class OrdersRepository(AppAbstractRepository[Order]):
 #     def need_to_confirm_price(self) -> bool:
 #         return self.configuration.requires_price_confirmation
     
-class CartEntry(AppBaseModel):
+class CartEntry(AppDBModel):
     id: Optional[PydanticObjectId] = None
     customer_id: PydanticObjectId
     order_id: Optional[PydanticObjectId] = None
@@ -501,7 +604,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
 
         return await self.find_by(query)
 
-class DiscountedProduct(AppBaseModel):
+class DiscountedProduct(AppDBModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
     
@@ -965,7 +1068,7 @@ class ProductConfiguration(AppBaseModel):
     def update_price(self):
         self.price = self.calculate_additionals_price() + self.calculate_options_price()
 
-class Product(AppBaseModel):
+class Product(AppDBModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
     name_for_tax: str
@@ -1065,7 +1168,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
         
         return await self.get_collection().count_documents(f)
 
-class ProductAdditional(AppBaseModel):
+class ProductAdditional(AppDBModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString
     category: str
@@ -1086,7 +1189,7 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
     def get_by_name(self, name, allowed_additionals, ctx: Context):
         return next((a for a in allowed_additionals if a.name.get(ctx) == name), None)
 
-class Promocode(AppBaseModel):
+class Promocode(AppDBModel):
     id: Optional[PydanticObjectId] = None
     code: str
     discount: Discount
@@ -1133,7 +1236,7 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
         promocode.already_used += upd
         await self.save(promocode)
 
-class Inviter(AppBaseModel):
+class Inviter(AppDBModel):
     id: Optional[PydanticObjectId] = None
     
     customer_id: PydanticObjectId
@@ -1198,7 +1301,7 @@ class DeliveryRequirementsList(AppBaseModel):
     description: LocalizedEntry
     requirements: list[DeliveryRequirement]
 
-class DeliveryService(AppBaseModel):
+class DeliveryService(AppDBModel):
     id: Optional[PydanticObjectId] = None
     name: LocalizedString  # Название сервиса
     is_foreign: bool = False
@@ -1264,14 +1367,14 @@ class DeliveryInfo(AppBaseModel):
 
         return data
     
-
 class PrivacyData(AppBaseModel):
     delivery_info: DeliveryInfo = Field(default_factory=DeliveryInfo)
     
     consent_process_pd: Optional[datetime] = None
     
-
-class Customer(AppBaseModel):
+class Customer(AppDBModel):
+    schema_version: int = 1
+    
     id: Optional[PydanticObjectId] = None
     user_id: int
     role: str = "default"
@@ -1290,23 +1393,28 @@ class Customer(AppBaseModel):
     
     @model_validator(mode="before")
     @classmethod
-    def from_v1(cls, data: dict):
+    def migrate(cls, data: dict):
         if not isinstance(data, dict):  # уже готовый объект — пропускаем
             return data
+        schema_version = data.get("schema_version", 0)
         
-        if "privacy_data" in data:
-            return data
         
-        logging.getLogger(__name__).warning("Customer: converting from v1 to v2")
+        if schema_version == 0:
+            data['schema_version'] = 1
 
-        if "delivery_info" in data and "waiting_for_manual_delivery_info_confirmation" in data:
-            data['privacy_data'] = PrivacyData().model_dump()
-            
-            if data['delivery_info'] and data['delivery_info']['service']:
-                data['privacy_data']['delivery_info']['service'] = data.pop('delivery_info')['service']
+            if "delivery_info" in data and "waiting_for_manual_delivery_info_confirmation" in data:
+                data['privacy_data'] = PrivacyData().model_dump()
                 
-            data['privacy_data']['delivery_info']['waiting_for_manual_delivery_info_confirmation'] = data.pop('waiting_for_manual_delivery_info_confirmation')
+                if data['delivery_info'] and data['delivery_info']['service']:
+                    data['privacy_data']['delivery_info']['service'] = data.pop('delivery_info')['service']
+                    
+                data['privacy_data']['delivery_info']['waiting_for_manual_delivery_info_confirmation'] = data.pop('waiting_for_manual_delivery_info_confirmation')
 
+            logging.getLogger(__name__).warning("Customer: converting from v0 to v1")
+            schema_version = 1
+        if schema_version == 1:
+            pass
+        
 
         return data
     
@@ -1348,7 +1456,7 @@ class Customer(AppBaseModel):
 class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
-
+        
     async def new_customer(self, user_id, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
         customer = Customer(
                 user_id=user_id,
@@ -1403,7 +1511,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         customer.bonus_wallet -= money
         await self.save(customer)
 
-class Category(AppBaseModel):
+class Category(AppDBModel):
     id: Optional[PydanticObjectId] = None
     name: str
     localized_name: LocalizedString
@@ -1416,8 +1524,10 @@ class CategoriesRepository(AppAbstractRepository[Category]):
         return await self.find_by({})
 
 __all__ = [
-    "LogsRepository",
+    "AppAbstractRepository",
     "AppBaseModel",
+    "AppDBModel",
+    "LogsRepository",
     "Placeholder",
     "PlaceholdersRepository",
     "OrderPriceDetails",

@@ -38,7 +38,7 @@ class ContextMiddleware(BaseMiddleware):
             media_saver=MediaSaver(bot=bot)
         )
         
-        await self.services.db.create_indexes()
+        await self.services.db.prepare()
         
         self.initialized = True
 
