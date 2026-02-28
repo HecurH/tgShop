@@ -269,7 +269,7 @@ class AdminChatNotificator:
         delivery_requirements_info = build_list([f"{requirement.name.get(ctx)} - <tg-spoiler>{requirement.value.get()}</tg-spoiler>" for requirement in service.selected_option.requirements],
                                                 padding=2)
         
-        await self.notificator.send_notification(f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {service.id} {service.get_selected_option_index()} {service.securs_to_str()} {service.price.to_json()}</code>\n\n<code>/cancel_manual_delivery_price_confirm {ctx.customer.user_id}</code>",
+        await self.notificator.send_notification(f"<a href=\"tg://user?id={ctx.customer.user_id}\">Пользователь</a> запросил ручное подтверждение стоимости доставки.\n\n{delivery_requirements_info}\n\n<code>/manual_delivery_price {ctx.customer.user_id} {service.id} {service.get_selected_option_index()} {service.securs_to_str()} {service.price.model_dump_json()}</code>\n\n<code>/cancel_manual_delivery_price_confirm {ctx.customer.user_id}</code>",
                                                  reply_markup=await UncategorizedKBs.go_to_bot(ctx))
         
 class UserTelegramNotificator:

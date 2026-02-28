@@ -288,27 +288,38 @@ async def price_confirmation_waiting_handler(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx, send_before=("Отменено.", 1))
         return
     
-    #формат данных = 0: [{"color": {"data": {"RUB": {"currency": "RUB", "amount": 0.0}, "USD": {"currency": "USD", "amount": 0.0}}}}]\n1: [{"color": {"data": {"RUB": {"currency": "RUB", "amount": 0.0}, "USD": {"currency": "USD", "amount": 0.0}}}}]
-    try:
-        entries = []
-        for line in text.strip().split('\n'):
-            if not line.strip() or ': ' not in line:
-                continue
-            _, json_part = line.split(': ', 1)
-            entry_data = json.loads(json_part)
-            entries.extend({
+    #формат данных = 
+    # 0: [
+        # {"color": 
+        #   {"data": 
+        #     {"RUB": {"currency": "RUB", "amount": 0.0}, 
+        #      "USD": {"currency": "USD", "amount": 0.0}
+        #     }
+        #   }
+        #  }
+        #]
+        # 1: [{"color": {"data": {"RUB": {"currency": "RUB", "amount": 0.0}, "USD": {"currency": "USD", "amount": 0.0}}}}]
+    entries: list[dict] = []
+
+    for line in text.strip().splitlines():
+        line = line.strip()
+        if not line or ': ' not in line:
+            continue
+
+        _, json_part = line.split(': ', 1)
+
+        try:
+            entry_data = json.loads(json_part)          # ожидаем list[dict]
+        except json.JSONDecodeError:
+            continue
+
+        # Для каждого элемента в списке создаём валидированный словарь
+        for item in entry_data:
+            validated_item = {
                 k: LocalizedMoney.model_validate(v)
-                for item in entry_data
                 for k, v in item.items()
-            } for item in entry_data)
-            
-        if not entries:
-            await ctx.message.answer("Неверный формат данных")
-            return
-            
-    except (ValueError, json.JSONDecodeError, ValidationError):
-        await ctx.message.answer("Ошибка при обработке данных")
-        return
+            }
+            entries.append(validated_item)
     
     order: Order = await Order.from_fsm_context(ctx, "order")
     customer = await ctx.services.db.customers.find_one_by_id(order.customer_id)
@@ -370,7 +381,8 @@ async def manual_delivery_price_handler(_, ctx: Context, command: CommandObject)
     # все что после JSON и до конца строки - это price
     price_str = command.args[json_end+1:].strip()
     try:
-        price = LocalizedMoney.from_json(price_str)
+        # price = LocalizedMoney.from_json(price_str)
+        price = LocalizedMoney.model_validate_json(price_str)
     except:
         await ctx.message.answer("Неверный формат цены")
         return

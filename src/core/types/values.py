@@ -1,13 +1,11 @@
 import base64
 from binascii import Error as BinasciiError
-import json
 from typing import Dict, Optional
 
-from bson import Decimal128
 from core.helper_classes import Context, Cryptography
 from core.services.placeholders import PlaceholderManager
 from registry.currencies import SUPPORTED_CURRENCIES
-from core.types.annotations import DecimalAnnotation
+from core.types.annotations import PydanticDecimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -18,11 +16,7 @@ from core.types.enums import DiscountType, MediaType
 
 class Money(BaseModel):
     currency: str
-    amount: DecimalAnnotation
-
-    @field_validator("amount", mode="before")
-    def convert_decimal(cls, v):
-        return Decimal(str(v))
+    amount: PydanticDecimal
 
     @field_validator("currency")
     def check_currency(cls, v):
@@ -104,14 +98,6 @@ class LocalizedMoney(BaseModel):
     @classmethod
     def empty_base(cls) -> "LocalizedMoney":
         return cls(data={cur: Money(currency=cur, amount=0.0) for cur in SUPPORTED_CURRENCIES})
-    
-    def to_json(self) -> str:
-        return json.dumps(self.model_dump(), ensure_ascii=False, default=lambda o: float(o if isinstance(o, Decimal) else o.to_decimal()) if isinstance(o, (Decimal, Decimal128)) else o)
-
-    @classmethod
-    def from_json(cls, json_str: str) -> "LocalizedMoney":
-        data = json.loads(json_str).get("data")
-        return LocalizedMoney(data={cur: Money(currency=cur, amount=Decimal(data[cur]["amount"])) for cur in data})
 
     def get_amount(self, cur: str) -> Decimal:
         return self.data.get(cur, Money(currency=cur, amount=0.0)).amount
@@ -231,11 +217,7 @@ class LocalizedSavedMedia(BaseModel):
 
 class Discount(BaseModel):
     dicount_type: DiscountType  # тип действия: фиксированная сумма или процент
-    value: LocalizedMoney | DecimalAnnotation     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
-
-    @field_validator("value", mode="before")
-    def convert_decimal(cls, v):
-        return v if isinstance(v, LocalizedMoney) or isinstance(v, Decimal) else Decimal(str(v))
+    value: LocalizedMoney | PydanticDecimal     # если процент — 10.0 значит 10%, если фикс — сумма в основной валюте
 
     def get_discount(self, amount: Money | LocalizedMoney) -> Money | LocalizedMoney:
         if isinstance(amount, LocalizedMoney):

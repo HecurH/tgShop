@@ -59,20 +59,8 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         
         migrated = await self.find_by(query)
         await self.save_many_with_replace(migrated)
-          
+
     async def save_with_replace(self, model: TPyMongoModel) -> Union[InsertOneResult, UpdateResult]:
-        """Asynchronously save a model instance to the database.
-
-        This method will:
-        - Insert the model if it doesn't have an ID
-        - Update the model if it has an ID
-
-        Args:
-            model: The model instance to save
-
-        Returns:
-            Union[InsertOneResult, UpdateResult]: The result of the save operation
-        """
         document = self.to_document(model)
         model_with_id = cast(ModelWithId, model)
 
@@ -86,15 +74,6 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         return result
 
     async def save_many_with_replace(self, models: Iterable[TPyMongoModel]):
-        """Asynchronously save multiple model instances to the database in bulk.
-
-        This method optimizes bulk operations by:
-        - Grouping models into insert and update operations
-        - Performing bulk inserts and updates
-
-        Args:
-            models: Iterable of model instances to save
-        """
         models_to_insert = []
         models_to_update = []
 

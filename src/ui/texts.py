@@ -228,9 +228,9 @@ class AdminTextGen:
     def price_confirmation_text(entries: list[CartEntry], ctx: Context):
         
         entries_desc = "\n".join(f"{idx} — {entry.frozen_snapshot.name.get('ru')}: {gen_product_configurable_info_text(entry.configuration, ctx)}\nПолная стоимость: {(entry.calculate_price(entry.frozen_snapshot)).to_text_all()};" for idx, entry in enumerate(entries))
-        next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump()}for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False, default=lambda o: float(o if isinstance(o, Decimal) else o.to_decimal()) if isinstance(o, (Decimal, Decimal128)) else o)}" for idx, entry in enumerate(entries))
+        next_input_info = "\n".join(f"{idx}: {json.dumps([{key: option.get_chosen().price.model_dump(mode='json')} for key, option in entry.configuration.get_price_blocking_options().items()], ensure_ascii=False)}" for idx, entry in enumerate(entries))
 
-
+        
         return f"{entries_desc}\n\nИзмени цену конфигурации для товаров относительно их айди\n\n<code>{next_input_info}</code>"
     
     @staticmethod

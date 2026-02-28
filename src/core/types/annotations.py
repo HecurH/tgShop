@@ -3,68 +3,57 @@ from pydantic_core import core_schema
 
 
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Annotated, Any
 
 
 class DecimalAnnotation:
-
     @classmethod
     def __get_pydantic_core_schema__(
         cls, _source_type: Any, _handler: Any
     ) -> core_schema.CoreSchema:
-        """Схема для валидации и сериализации Decimal полей."""
-
+        
         def validate_to_decimal(value: Any) -> Decimal:
-            """Конвертируем различные типы в Decimal."""
+            """Всегда возвращаем чистый Decimal внутри модели."""
             if isinstance(value, Decimal):
                 return value
-            elif isinstance(value, Decimal128):
-                return value.to_decimal()
-            elif isinstance(value, str):
+            if isinstance(value, Decimal128):
+                return value.to_decimal()          # ← вот ключевой момент
+            if isinstance(value, str):
                 try:
                     return Decimal(value)
                 except InvalidOperation as e:
                     raise ValueError(f"Invalid decimal string: {value}") from e
-            elif isinstance(value, (int, float)):
-                # Для float есть потеря точности, но это ожидаемо
+            if isinstance(value, (int, float)):
                 return Decimal(str(value))
-            else:
-                raise ValueError(f"Cannot convert {type(value).__name__} to Decimal")
+            raise ValueError(f"Cannot convert {type(value).__name__} to Decimal")
 
-        # Схема для валидации входящих данных в Decimal
-        decimal_schema = core_schema.no_info_plain_validator_function(validate_to_decimal)
+        # Основная схема валидации (всегда прогоняем через конвертер)
+        decimal_validator = core_schema.no_info_plain_validator_function(validate_to_decimal)
 
-        # Сериализатор для конвертации Decimal -> Decimal128 при дампе в словарь
-        def serialize_to_decimal128(value: Decimal, _info) -> Decimal128:
-            """Сериализуем Decimal в Decimal128 для Python dict."""
-            return Decimal128(str(value))
-
-        # Схема для конвертации Decimal -> строка при дампе в JSON
-        def serialize_to_string(value: Decimal, _info) -> str:
-            """Сериализуем Decimal в строку для JSON."""
-            return str(value)
+        def serializer(value: Decimal, info) -> str | Decimal128:
+            """Сериализация: в JSON — строка, в Python/Mongo — Decimal128"""
+            if info and info.mode == 'json':
+                return str(value)
+            return Decimal128(str(value))   # для model_dump() и сохранения в Mongo
 
         return core_schema.json_or_python_schema(
-            json_schema=core_schema.str_schema(),
-            python_schema=core_schema.union_schema(
-                [
-                    core_schema.is_instance_schema(Decimal),
-                    core_schema.is_instance_schema(Decimal128),
-                    decimal_schema,
-                ]
-            ),
-            # Двойная сериализация: для JSON и для Python dict
+            json_schema=decimal_validator,
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(Decimal),   # уже Decimal — пропускаем
+                decimal_validator,                         # всё остальное (включая Decimal128) конвертируем
+            ]),
             serialization=core_schema.plain_serializer_function_ser_schema(
-                function=lambda value, info=None: (
-                    serialize_to_string(value, info) if info and info.mode == 'json'
-                    else serialize_to_decimal128(value, info)
-                ),
+                function=serializer,
+                info_arg=True,
                 return_schema=core_schema.union_schema([
                     core_schema.str_schema(),
                     core_schema.is_instance_schema(Decimal128),
                 ]),
-                when_used='always',
-            ),
+                when_used='always'
+            )
         )
+
+
+PydanticDecimal = Annotated[Decimal, DecimalAnnotation]
         
-__all__ = ['DecimalAnnotation']
+__all__ = ['DecimalAnnotation', 'PydanticDecimal']
