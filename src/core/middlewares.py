@@ -25,7 +25,7 @@ class ContextMiddleware(BaseMiddleware):
     
     async def start(self, bot):
         if self.initialized: return
-        db = DatabaseService()
+        db = await DatabaseService.create()
             
         self.services = ServiceHub(
             db=db,
@@ -37,8 +37,6 @@ class ContextMiddleware(BaseMiddleware):
             currency_converter=AsyncCurrencyConverter(),
             media_saver=MediaSaver(bot=bot)
         )
-        
-        await self.services.db.prepare()
         
         self.initialized = True
 

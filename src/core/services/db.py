@@ -7,7 +7,36 @@ from pymongo import AsyncMongoClient
 from configs.environment import MONGO_URI, MONGO_TLS_CA_PATH, MONGO_TLS_KEY_PATH
 from schemas.db_models import *
 
+_REPO_REGISTRY: dict[str, type[AppAbstractRepository]] = {
+    "logs": LogsRepository,
+    "placeholders": PlaceholdersRepository,
+    "orders": OrdersRepository,
+    "cart_entries": CartEntriesRepository,
+    "delivery_services": DeliveryServicesRepository,
+    "customers": CustomersRepository,
+    "products": ProductsRepository,
+    "discounted_products": DiscountedProductsRepository,
+    "additionals": AdditionalsRepository,
+    "categories": CategoriesRepository,
+    "inviters": InvitersRepository,
+    "promocodes": PromocodesRepository,
+}
+
 class DatabaseService:
+    
+    logs: LogsRepository
+    placeholders: PlaceholdersRepository
+    orders: OrdersRepository
+    cart_entries: CartEntriesRepository
+    delivery_services: DeliveryServicesRepository
+    customers: CustomersRepository
+    products: ProductsRepository
+    discounted_products: DiscountedProductsRepository
+    additionals: AdditionalsRepository
+    categories: CategoriesRepository
+    inviters: InvitersRepository
+    promocodes: PromocodesRepository
+    
     def __init__(self, db_name="Shop"):
         self.client = AsyncMongoClient(MONGO_URI, 
                                        tls=True,
@@ -15,31 +44,23 @@ class DatabaseService:
                                        tlsCertificateKeyFile=MONGO_TLS_KEY_PATH)
         self.db = self.client.get_database(db_name)
         
-        self.collections: dict[str, AppAbstractRepository] = {
-            "logs": LogsRepository,
-            "placeholders": PlaceholdersRepository,
-            "orders": OrdersRepository,
-            "cart_entries": CartEntriesRepository,
-            "delivery_services": DeliveryServicesRepository,
-            "customers": CustomersRepository,
-            "products": ProductsRepository,
-            "discounted_products": DiscountedProductsRepository,
-            "additionals": AdditionalsRepository,
-            "categories": CategoriesRepository,
-            "inviters": InvitersRepository,
-            "promocodes": PromocodesRepository
-        }
+        self.repositories: dict[str, AppAbstractRepository] = {}
 
         self._init_collections()
         
         logging.getLogger(__name__).info("Database service initialized.")
+        
+    @classmethod
+    async def create(cls, db_name: str = "Shop") -> "DatabaseService":
+        instance = cls(db_name)
+        await instance.prepare()
+        return instance
 
     def _init_collections(self):
-        for key, repo_class in self.collections.items():
-            instance = repo_class(self)
-            
-            self.collections[key] = instance
-            setattr(self, key, instance)
+        for name, repo_class in _REPO_REGISTRY.items():
+            repo = repo_class(self)
+            self.repositories[name] = repo
+            setattr(self, name, repo)
 
     async def _create_indexes(self):
         await self.db["placeholders"].create_index([("key", pymongo.ASCENDING)], unique=True)
@@ -64,7 +85,7 @@ class DatabaseService:
             async with semaphore:
                 return await repo.check_migrations()
         
-        tasks = [check_with_semaphore(repo) for repo in self.collections.values()]
+        tasks = [check_with_semaphore(repo) for repo in self.repositories.values()]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
         errors = [r for r in results if isinstance(r, Exception)]
