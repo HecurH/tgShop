@@ -17,8 +17,8 @@ async def assortment_command_handler(_, ctx: Context) -> None:
 @router.message(AssortmentStates.Menu)
 async def assortment_category_handler(_, ctx: Context) -> None:
     if ctx.message.text == ctx.t.UncategorizedTranslates.back:
-        await ctx.fsm.update_data(category=category, 
-                                  current=1,
+        await ctx.fsm.update_data(category=None, 
+                                  current=None,
                                   product=None,
                                   current_option_key=None,
                                   before_option=None,
