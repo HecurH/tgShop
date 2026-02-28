@@ -20,6 +20,7 @@ async def profile_entrance_handler(_, ctx: Context) -> None:
 async def profile_command_handler(_, ctx: Context) -> None:
     match ctx.message.text:
         case ctx.t.UncategorizedTranslates.back:
+            await ctx.fsm.update_data(service=None, requirement_index=None, is_foreign=None)
             await call_state_handler(CommonStates.MainMenu, ctx)
         case ctx.t.ReplyButtonsTranslates.Profile.settings:
             await call_state_handler(ProfileStates.Settings.Menu, ctx)

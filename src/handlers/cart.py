@@ -19,6 +19,10 @@ async def cart_viewer_handler(_, ctx: Context):
     if not text: return
     
     if text == ctx.t.UncategorizedTranslates.back:
+        await ctx.fsm.update_data(current=None,
+                                  order=None,
+                                  cart_entries_count=None
+                                  )
         await call_state_handler(CommonStates.MainMenu,
                                 ctx)
         return

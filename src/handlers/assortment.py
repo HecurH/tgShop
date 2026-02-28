@@ -16,7 +16,15 @@ async def assortment_command_handler(_, ctx: Context) -> None:
 
 @router.message(AssortmentStates.Menu)
 async def assortment_category_handler(_, ctx: Context) -> None:
-    if ctx.message.text in UncategorizedTranslates.back.values():
+    if ctx.message.text == ctx.t.UncategorizedTranslates.back:
+        await ctx.fsm.update_data(category=category, 
+                                  current=1,
+                                  product=None,
+                                  current_option_key=None,
+                                  before_option=None,
+                                  changing_option=None,
+                                  switches=None
+                                  )
         await call_state_handler(CommonStates.MainMenu,
                                  ctx)
         return
@@ -43,6 +51,11 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
     if not text: return
     
     if text == ctx.t.UncategorizedTranslates.back:
+        await ctx.fsm.update_data(product=None,
+                                  current_option_key=None,
+                                  before_option=None,
+                                  changing_option=None,
+                                  switches=None)
         await call_state_handler(AssortmentStates.Menu,
                                 ctx)
         return
