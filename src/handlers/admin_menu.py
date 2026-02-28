@@ -368,10 +368,6 @@ async def orders_ask_id_handler(_, ctx: Context):
     if text == ctx.t.UncategorizedTranslates.cancel:
         await call_state_handler(AdminStates.Main.Menu, ctx)
         return
-    if text == "Список активных заказов":
-        await ctx.message.answer(await AdminTextGen.active_orders_menu_text(ctx))
-        await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
-        return
     
     if text.startswith("#"):
         puid = text[1:]

@@ -145,7 +145,10 @@ class AdminTextGen:
     
     @staticmethod
     async def active_orders_menu_text(ctx: Context):
+        STATE_ORDER = {key: i for i, key in enumerate(OrderStateKey)}
         active_orders = await ctx.services.db.orders.find_by({"state.key": {"$ne": OrderStateKey.received}})
+        active_orders.sort(key=lambda order: STATE_ORDER.get(order.state.key, 999))
+        
         
         text = ""
         for order in active_orders:
