@@ -144,6 +144,13 @@ async def handle_admin_orders_ask_id(ctx: Context, **_):
     
 @state_handlers.register(AdminStates.Main.Orders.OrderMenu)
 async def handle_admin_orders_menu(ctx: Context, order: Order, **_):
+    cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+    imgs = [entry.configuration.options.get('size').get_chosen().media for entry in cart_entries if entry.configuration and entry.configuration.options.get('size') and entry.configuration.options.get('size').get_chosen().media]
+    imgs.extend([entry.configuration.options.get('color').get_chosen().media for entry in cart_entries if entry.configuration and entry.configuration.options.get('color') and entry.configuration.options.get('color').get_chosen().media])
+    
+    for img in imgs:
+        await send_media_response(ctx, img)
+        await asyncio.sleep(0.3)
     await ctx.message.answer(await AdminTextGen.order_menu_text(order, ctx),
                              reply_markup=AdminKBs.Orders.order_menu(ctx))
     

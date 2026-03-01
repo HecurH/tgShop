@@ -124,7 +124,6 @@ async def detailed_product_viewing_handler(_, ctx: Context) -> None:
                                 current=current)
         return
         
-
 @router.message(AssortmentStates.FormingOrderEntry)
 async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
     product: Product = await Product.from_fsm_context(ctx, "product")

@@ -407,8 +407,11 @@ async def order_menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Orders.ChangeStatusChoice, ctx)
     elif text == "Посмотреть историю комментариев":
         for comment in order.state.get_comments():
-            await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=comment.chat_id, message_id=comment.message_id)
-            await asyncio.sleep(0.2)
+            try:
+                await ctx.message.bot.copy_message(chat_id=ctx.message.chat.id, from_chat_id=comment.chat_id, message_id=comment.message_id)
+                await asyncio.sleep(0.2)
+            except:
+                continue
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
     else:
         await call_state_handler(AdminStates.Main.Orders.OrderMenu, ctx, order=order)
