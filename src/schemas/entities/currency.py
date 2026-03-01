@@ -1,7 +1,9 @@
+from dataclasses import dataclass
 from decimal import Decimal
-from pydantic import BaseModel
 
-class CurrencyInfo(BaseModel):
+
+@dataclass(frozen=True)
+class CurrencyInfo:
     iso: str
     format_template: str   # "{amount}₽", "${amount}", ...
     precision: int         # количество знаков после точки
