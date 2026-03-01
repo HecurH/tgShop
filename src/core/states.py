@@ -145,7 +145,9 @@ async def handle_admin_orders_ask_id(ctx: Context, **_):
 @state_handlers.register(AdminStates.Main.Orders.OrderMenu)
 async def handle_admin_orders_menu(ctx: Context, order: Order, **_):
     cart_entries = await ctx.services.db.cart_entries.find_entries_by_order(order)
+    
     imgs = [entry.configuration.options.get('size').get_chosen().media for entry in cart_entries if entry.configuration and entry.configuration.options.get('size') and entry.configuration.options.get('size').get_chosen().media]
+    imgs.extend([entry.frozen_snapshot.media for entry in cart_entries if entry.source_type == CartItemSource.discounted and entry.frozen_snapshot])
     imgs.extend([entry.configuration.options.get('color').get_chosen().media for entry in cart_entries if entry.configuration and entry.configuration.options.get('color') and entry.configuration.options.get('color').get_chosen().media])
     imgs.extend([entry.configuration.options.get('firmness').get_chosen().media for entry in cart_entries if entry.configuration and entry.configuration.options.get('firmness') and entry.configuration.options.get('firmness').get_chosen().media])
     
