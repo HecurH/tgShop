@@ -609,7 +609,7 @@ async def statistics_handler(_, ctx: Context):
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
                     
                     
-                lines.append(f"{product.name.get(ctx)} — {len(c)} шт; с 🚚 {len(c_ser)} шт.")
+                lines.append(f"{product.name.get(ctx)} — {len(c)} шт; {len(c_ser)} шт.")
             return lines
                 
         async def gen_discount_prods():
@@ -625,13 +625,21 @@ async def statistics_handler(_, ctx: Context):
                 }
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
                 
-                lines.append(f"{discounted_product.name.get(ctx)} — {len(c)} шт; с 🚚 {len(c_ser)} шт.")
+                lines.append(f"{discounted_product.name.get(ctx)} — {len(c)} шт; {len(c_ser)} шт.")
             return lines
                 
         prods_lines = await gen_prods()
         discount_prods_lines = await gen_discount_prods()
         
-        txt = f"<b>Статистика ассортиментных товаров:</b>\n{'\n'.join(prods_lines)}\n\n<b>Статистика товаров \"В наличии\":</b>\n{'\n'.join(discount_prods_lines)}"
+        txt = f"""<b>Статистика ассортиментных товаров:</b>
+Имя товара — количество в корзине; количество в корзине у пользователей с доставкой.
+
+{'\n'.join(prods_lines)}
+
+<b>Статистика товаров \"В наличии\":</b>
+Имя товара — количество в корзине; количество в корзине у пользователей с доставкой.
+
+{'\n'.join(discount_prods_lines)}"""
             
         await ctx.message.answer(txt)
     elif text == "Заказы":
