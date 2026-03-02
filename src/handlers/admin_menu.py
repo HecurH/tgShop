@@ -609,7 +609,7 @@ async def statistics_handler(_, ctx: Context):
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
                     
                     
-                lines.append(f"{product.name.get(ctx)} — {len(c)} шт; с доставкой {len(c_ser)} шт.")
+                lines.append(f"{product.name.get(ctx)} — {len(c)} шт; с 🚚 {len(c_ser)} шт.")
             return lines
                 
         async def gen_discount_prods():
@@ -625,7 +625,7 @@ async def statistics_handler(_, ctx: Context):
                 }
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
                 
-                lines.append(f"{discounted_product.name.get(ctx)} — {len(c)} шт; с доставкой {len(c_ser)} шт.")
+                lines.append(f"{discounted_product.name.get(ctx)} — {len(c)} шт; с 🚚 {len(c_ser)} шт.")
             return lines
                 
         prods_lines = await gen_prods()
