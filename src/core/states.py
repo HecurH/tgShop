@@ -104,6 +104,9 @@ class AdminStates(StatesGroup):
         class Promocodes(StatesGroup):
             Menu = State()
             Creating = State()
+            
+        class Statistics(StatesGroup):
+            Menu = State()
         
         class GlobalPlaceholders(StatesGroup):
             Menu = State()
@@ -253,6 +256,11 @@ Expire: 30d</code>
 
 Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""
     await ctx.message.answer(txt, reply_markup=UncategorizedKBs.reply_cancel(ctx))
+
+@state_handlers.register(AdminStates.Main.Statistics.Menu)
+async def handle_admin_promocodes(ctx: Context, **_):
+    await ctx.message.answer("Выберите пункт статистики:",
+                             reply_markup=AdminKBs.Statistics.admin_statistics_menu(ctx))
 
 @state_handlers.register(AdminStates.Main.GlobalPlaceholders.Menu)
 async def handle_admin_global_placeholders(ctx: Context, **_):

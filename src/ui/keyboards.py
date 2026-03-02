@@ -73,7 +73,8 @@ class AdminKBs:
             ],
             [
                 types.KeyboardButton(text="Заказы"),
-                types.KeyboardButton(text="Промокоды")
+                types.KeyboardButton(text="Промокоды"),
+                types.KeyboardButton(text="Статистика")
             ],
             [
                 types.KeyboardButton(text="Глобальные Плейсхолдеры"),
@@ -116,6 +117,22 @@ class AdminKBs:
                     types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
                 ]
             ]
+            return types.ReplyKeyboardMarkup(keyboard=kb,
+                                             resize_keyboard=True)
+    
+    class Statistics:
+        @staticmethod
+        def admin_statistics_menu(ctx: Context) -> types.ReplyKeyboardMarkup:
+            kb = [
+                [
+                    types.KeyboardButton(text="Корзины"),
+                    types.KeyboardButton(text="Заказы")
+                ],
+                [
+                    types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back)
+                ]
+            ]
+            
             return types.ReplyKeyboardMarkup(keyboard=kb,
                                              resize_keyboard=True)
     

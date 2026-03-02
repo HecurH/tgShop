@@ -16,7 +16,7 @@ from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
 from core.types.enums import CartItemSource, DiscountType, OrderStateKey
-from core.types.values import Discount, LocalizedSavedMedia
+from core.types.values import Discount, LocalizedSavedMedia, Money
 from core.types.values import LocalizedString
 from core.types.values import LocalizedMoney
 from ui.message_tools import split_message
@@ -50,6 +50,8 @@ async def menu_handler(_, ctx: Context):
         await call_state_handler(AdminStates.Main.Orders.AskId, ctx)
     elif text == "Промокоды": 
         await call_state_handler(AdminStates.Main.Promocodes.Menu, ctx)
+    elif text == "Статистика": 
+        await call_state_handler(AdminStates.Main.Statistics.Menu, ctx)
     elif text == "Глобальные Плейсхолдеры": 
         await call_state_handler(AdminStates.Main.GlobalPlaceholders.Menu, ctx)
     elif text == "Назад в меню":
@@ -580,6 +582,91 @@ async def create_promocode_code_handler(_, ctx: Context):
         
     except Exception as e:
         raise Exception(f"Не удалось создать промокод: {e}")
+
+@router.message(AdminStates.Main.Statistics.Menu)
+async def statistics_handler(_, ctx: Context):
+    text = ctx.message.text
+    if not text: return
+    
+    if text == "Корзины":
+        products = await ctx.services.db.products.find_by({})
+        discounted_products = await ctx.services.db.discounted_products.find_by({})
+        
+        async def gen_prods():
+            lines = []
+            
+            for product in products:
+                c = await ctx.services.db.cart_entries.find_entries_by_product(product, {"order_id": None})
+                
+                seen = set() # у кого-то по два товара в корзине
+                c = [entry for entry in c if entry.customer_id not in seen and not seen.add(entry.customer_id)]
+                
+                customers_ids = [entry.customer_id for entry in c]
+                valid_ids = {
+                    customer.id for customer in
+                    await ctx.services.db.customers.find_by({"id": {"$in": customers_ids}, "privacy_data.delivery_info.service": {"$exists": True, "$ne": None}})
+                }
+                c_ser = [entry for entry in c if entry.customer_id in valid_ids]
+                    
+                    
+                lines.append(f"{product.name.get(ctx)} — {len(c)} шт; с доставкой {len(c_ser)} шт.")
+            return lines
+                
+        async def gen_discount_prods():
+            lines = []
+            
+            for discounted_product in discounted_products:
+                c = await ctx.services.db.cart_entries.find_entries_by_product(discounted_product, {"order_id": None})
+                
+                customers_ids = [entry.customer_id for entry in c]
+                valid_ids = {
+                    customer.id for customer in
+                    await ctx.services.db.customers.find_by({"id": {"$in": customers_ids}, "privacy_data.delivery_info.service": {"$exists": True, "$ne": None}})
+                }
+                c_ser = [entry for entry in c if entry.customer_id in valid_ids]
+                
+                lines.append(f"{discounted_product.name.get(ctx)} — {len(c)} шт; с доставкой {len(c_ser)} шт.")
+            return lines
+                
+        prods_lines = await gen_prods()
+        discount_prods_lines = await gen_discount_prods()
+        
+        txt = f"<b>Статистика ассортиментных товаров:</b>\n{'\n'.join(prods_lines)}\n\n<b>Статистика товаров \"В наличии\":</b>\n{'\n'.join(discount_prods_lines)}"
+            
+        await ctx.message.answer(txt)
+    elif text == "Заказы":
+        
+        async def gen_prods():
+            lines = []
+            
+            products = await ctx.services.db.products.find_by({})
+            for product in products:
+                c = await ctx.services.db.cart_entries.find_entries_by_product(product, {"order_id": {"$ne": None}})
+                    
+                lines.append(f"{product.name.get(ctx)} — заказано {len(c)} шт.")
+            return lines
+                
+        async def gen_discount_prods():
+            c = await ctx.services.db.cart_entries.find_by({"source_type": CartItemSource.discounted, "order_id": {"$ne": None}})
+            return f"Продано {len(c)} шт."
+                
+        prods_lines = await gen_prods()
+        discount_prods_txt = await gen_discount_prods()
+        
+        orders = await ctx.services.db.orders.find_by({})
+        total_rub = sum([order.price_details.total_price for order in orders if order.price_details.customer_paid and order.price_details.total_price.currency == "RUB"], 
+                    start=Money(currency="RUB", amount=0.0)).to_text()
+        total_usd = sum([order.price_details.total_price for order in orders if order.price_details.customer_paid and order.price_details.total_price.currency == "USD"], 
+                    start=Money(currency="USD", amount=0.0)).to_text()
+        
+        txt = f"<b>Статистика ассортиментных товаров:</b>\n{'\n'.join(prods_lines)}\n\n<b>Статистика товаров \"В наличии\":</b>\n{discount_prods_txt}\n\n<b>Общая статистика:</b>\nВсего заказов — {len(orders)}\nВ рублях на {total_rub}\nВ долларах на {total_usd}"
+            
+        await ctx.message.answer(txt)
+    elif text == ctx.t.UncategorizedTranslates.back:
+        await call_state_handler(AdminStates.Main.Menu, ctx)
+        return
+        
+    await call_state_handler(AdminStates.Main.Statistics.Menu, ctx)
 
 @router.message(AdminStates.Main.GlobalPlaceholders.Menu)
 async def global_placeholders_handler(_, ctx: Context):
