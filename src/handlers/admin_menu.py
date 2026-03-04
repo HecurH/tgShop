@@ -652,7 +652,7 @@ async def statistics_handler(_, ctx: Context):
                 c = await ctx.services.db.cart_entries.find_entries_by_product(product, {"order_id": {"$ne": None}})
                 quants = [entry.quantity for entry in c]
                     
-                lines.append(f"{product.name.get(ctx)} — заказано {len(sum(quants))} шт.")
+                lines.append(f"{product.name.get(ctx)} — заказано {sum(quants)} шт.")
             return lines
                 
         async def gen_discount_prods():
