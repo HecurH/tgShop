@@ -236,7 +236,7 @@ class AssortmentKBs:
         
         kb = [
             [
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart)
+                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.configuration)
             ],
             controls,
             [
@@ -249,20 +249,6 @@ class AssortmentKBs:
             resize_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
-
-    @staticmethod
-    def detailed_view(ctx: Context) -> types.ReplyKeyboardMarkup:
-        kb = [
-            [
-                types.KeyboardButton(text=ctx.t.UncategorizedTranslates.back),
-
-                types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart)
-            ]
-        ]
-        return types.ReplyKeyboardMarkup(
-            keyboard=kb,
-            resize_keyboard=True,
-            input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item)
 
     @staticmethod
     def adding_to_cart_main(options: list[ConfigurationOption], has_additionals: bool, ctx: Context) -> types.ReplyKeyboardMarkup:
@@ -287,7 +273,7 @@ class AssortmentKBs:
                 )
             )
         btns.append(
-            types.KeyboardButton(text=ctx.t.UncategorizedTranslates.finish)
+            types.KeyboardButton(text=ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart)
         )
 
         markup = types.ReplyKeyboardMarkup(keyboard=

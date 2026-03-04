@@ -75,7 +75,7 @@ async def assortment_viewing_handler(_, ctx: Context) -> None:
                                 ctx,
                                 category=category,
                                 current=new_order)
-    elif text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.configuration:
         if amount == 0: 
             await ctx.message.delete()
             return
@@ -145,7 +145,7 @@ async def forming_order_entry_viewing_handler(_, ctx: Context) -> None:
                                 current=current)
         return
         
-    elif text == ctx.t.UncategorizedTranslates.finish:
+    elif text == ctx.t.ReplyButtonsTranslates.Assortment.add_to_cart:
         if await ctx.services.db.cart_entries.count_customer_cart_entries(ctx.customer) >= 10:
             await call_state_handler(AssortmentStates.MainMenu,
                                     ctx,

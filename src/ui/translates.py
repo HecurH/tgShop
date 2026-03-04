@@ -2066,6 +2066,11 @@ class ReplyButtonsTranslates(Translatable):
             "en": "Details"
         }
         
+        configuration = {
+            "ru": "Конфигурация",
+            "en": "Configuration"
+        }
+        
         add_to_cart = {
             "ru": "Добавить в корзину",
             "en": "Add to cart"
@@ -2156,7 +2161,6 @@ class ReplyButtonsTranslates(Translatable):
             "en": "View comments"
         }
             
-    
     class Profile(Translatable):
         settings = {
             "ru": "Настройки",
