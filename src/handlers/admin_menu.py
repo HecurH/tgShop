@@ -607,7 +607,7 @@ async def statistics_handler(_, ctx: Context):
                     await ctx.services.db.customers.find_by({"id": {"$in": customers_ids}, "privacy_data.delivery_info.service": {"$exists": True, "$ne": None}})
                 }
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
-                count_txt = f"{len(c)} шт; {len(c_ser)} шт." if len(c) > 0 and len(c_ser) > 0 else "ни у кого." 
+                count_txt = f"{len(c)} шт; {len(c_ser)} шт." if (len(c) != 0 or len(c_ser) != 0) else "ни у кого." 
                     
                 lines.append(f"{product.name.get(ctx)} — {count_txt}")
             return lines
@@ -624,7 +624,7 @@ async def statistics_handler(_, ctx: Context):
                     await ctx.services.db.customers.find_by({"id": {"$in": customers_ids}, "privacy_data.delivery_info.service": {"$exists": True, "$ne": None}})
                 }
                 c_ser = [entry for entry in c if entry.customer_id in valid_ids]
-                count_txt = f"{len(c)} шт; {len(c_ser)} шт." if len(c) > 0 and len(c_ser) > 0 else "ни у кого." 
+                count_txt = f"{len(c)} шт; {len(c_ser)} шт." if (len(c) != 0 or len(c_ser) != 0) else "ни у кого." 
                 
                 lines.append(f"{discounted_product.name.get(ctx)} — {count_txt}")
             return lines
