@@ -26,7 +26,7 @@ class NotificatorConfig:
     base_backoff: float = 0.5
     between_messages_delay: float = 0.4
     use_queue: bool = True
-    queue_workers: int = 2
+    queue_workers: int = 1
 
 class TelegramNotificator:
     def __init__(self, bot: Bot, default_chat_id: Optional[int] = None,
