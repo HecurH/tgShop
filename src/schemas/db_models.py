@@ -61,8 +61,8 @@ class AppAbstractRepository(AsyncAbstractRepository[T]):
         if len(migrated) == 0:
             return
         
-        logging.getLogger(__name__).info(f"Migrating {len(migrated)} documents in {self._collection_name} collection")
         await self.save_many_with_replace(migrated)
+        logging.getLogger(__name__).info(f"Migrated {len(migrated)} documents in {self._collection_name} collection")
 
     async def save_with_replace(self, model: TPyMongoModel) -> Union[InsertOneResult, UpdateResult]:
         document = self.to_document(model)
