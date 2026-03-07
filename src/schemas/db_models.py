@@ -1196,7 +1196,7 @@ class Promocode(AppDBModel):
                 data['conditions']['only_newbies'] = data.pop('only_newbies')
                 data['conditions']['max_usages'] = data.pop('max_usages')
                     
-            logging.getLogger(__name__).warning("Promocode: converting from v0 to v1")
+                logging.getLogger(__name__).warning("Promocode: converting from v0 to v1")
             schema_version = 1
         if schema_version == 1:
             pass
