@@ -228,10 +228,11 @@ async def entry_option_select(message: Message, ctx: Context) -> None:
             product.configuration.update_price()
             
             await product.save_in_fsm(ctx, "product")
+            await product.configuration.options[current_option_key].save_in_fsm(ctx, "changing_option")
             await call_state_handler(AssortmentStates.EntryOptionSelect,
                                      ctx,
                                      product=product,
-                                     option=changing_option)
+                                     option=product.configuration.options[current_option_key])
             return
         else:
             await changing_option.save_in_fsm(ctx, "before_option")
@@ -356,15 +357,14 @@ async def additionals_handler(message: Message, ctx: Context) -> None:
 async def choice_edit_value(callback: CallbackQuery, ctx: Context) -> None:
     if callback.data != "cancel": return
 
-    before_option = await ctx.fsm.get_value("before_option")
-    await ctx.fsm.update_data(changing_option=before_option)
-    changing_option = ConfigurationOption(**before_option)
+    before_option = await ConfigurationOption.from_fsm_context(ctx, "before_option")
+    await before_option.save_in_fsm(ctx, "changing_option")
 
     await call_state_handler(AssortmentStates.EntryOptionSelect,
                              ctx,
                              product=await Product.from_fsm_context(ctx, "product"),
                              delete_prev=True,
-                             option=changing_option)
+                             option=before_option)
 
     await callback.answer()
 
@@ -389,6 +389,7 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
 
         product.configuration.update_price()
         await product.save_in_fsm(ctx, "product")
+        await changing_option.save_in_fsm(ctx, "changing_option")
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
                                  product=product,
@@ -404,6 +405,7 @@ async def advanced_edit_value(message: Message, ctx: Context) -> None:
 
         product.configuration.update_price()
         await product.save_in_fsm(ctx, "product")
+        await changing_option.save_in_fsm(ctx, "changing_option")
         await call_state_handler(AssortmentStates.EntryOptionSelect,
                                  ctx,
                                  product=product,

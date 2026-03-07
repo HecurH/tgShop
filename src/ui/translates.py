@@ -1223,6 +1223,17 @@ The final cost for a custom paint job is calculated individually and depends on 
                     
                         }
                     
+                    class SurpriseMe(Translatable):
+                        name = {
+                            "ru": "Удиви меня",
+                            "en": "Surprise me"
+                        }
+
+                        description = {
+                            "ru": "Вы получите изделие со случайным окрасом.",
+                            "en": "You will receive a product with a random color."
+                        }
+                    
                     class Additionals(Translatable):
                         name = {
                             "ru": "Дополнения",

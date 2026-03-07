@@ -668,6 +668,10 @@ async def image_saving_handler(_, ctx: Context) -> None:
 
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Custom.description"),
                 ),
+                "surprise-me": ConfigurationChoice(
+                    name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.SurpriseMe.name"),
+                    description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.SurpriseMe.description"),
+                ),
                 "additionals": ConfigurationSwitches(
                     name=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.name"),
                     description=LocalizedEntry(path="ProductConfigurationTranslates.Options.Color.Choices.Additionals.description"),
