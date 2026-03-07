@@ -246,12 +246,13 @@ class AdminTextGen:
             expires_formated = promocode.expire_date.strftime("%d.%m.%Y %H:%M") if promocode.expire_date else None
             expired = " (истек)" if expires_formated and datetime.now(timezone.utc)  > promocode.expire_date else ""
             
-            used_text = f" {promocode.already_used}/{promocode.max_usages}" if promocode.max_usages != -1 else f" {promocode.already_used}"
+            used_text = f" {promocode.already_used}/{promocode.conditions.max_usages}" if promocode.conditions.max_usages != -1 else f" {promocode.already_used}"
             
             ll = [
                 f"➝ Скидка:{f' {promocode.discount.value.to_text_all()}' if promocode.discount.dicount_type == DiscountType.fixed else f' {promocode.discount.value}%' if promocode.discount.dicount_type == DiscountType.percent else ''}",
-                ("📌 Только для новичков" if promocode.only_newbies else "📌 Для всех пользователей"),
+                ("📌 Только для новичков" if promocode.conditions.only_newbies else "📌 Для всех пользователей"),
                 (f"⏳ Действует до: {expires_formated}{expired}" if expires_formated else "⏳ Неограниченно"),
+                (f"🔘 Разрешенные чойсы: {', '.join(promocode.conditions.only_with_choices)}" if promocode.conditions.only_with_choices else "🔘 Все"),
                 (f"🔢 Использовано: {used_text}")
             ]
             

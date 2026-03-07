@@ -528,7 +528,7 @@ async def create_promocode_code_handler(_, ctx: Context):
             return None
         if t.endswith("d"):
             days = int(t[:-1])
-            return datetime.now(datetime.timezone.utc) + timedelta(days=days)
+            return datetime.now(timezone.utc) + timedelta(days=days)
         return datetime.strptime(t, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
     fields = {}
@@ -556,6 +556,7 @@ async def create_promocode_code_handler(_, ctx: Context):
         "type": fields["тип"].lower(),
         "only_newbies": fields.get("только_новички", "no").lower() in ("yes", "true", "да"),
         "max_usages": -1 if fields.get("макс_использований", "-1").lower() in ("none", "-1") else int(fields["макс_использований"]),
+        "only_with_choices": None if fields.get("разрешенные_чойсы", "0").lower() in ("none", "0") else fields["разрешенные_чойсы"].split(","),
         "expire_date": parse_expire(fields.get("expire", "none")),
     }
     if result["type"] == "percent":
@@ -572,8 +573,11 @@ async def create_promocode_code_handler(_, ctx: Context):
                 value=result["value"]
             ),
             description=result["description"],
-            only_newbies=result["only_newbies"],
-            max_usages=result["max_usages"],
+            conditions=PromocodeConditions(
+                only_newbies=result["only_newbies"],
+                max_usages=result["max_usages"],
+                only_with_choices=result["only_with_choices"]
+                ),
             expire_date=result["expire_date"]
         )
         

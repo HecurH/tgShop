@@ -20,6 +20,7 @@ class PromocodeCheckResult(str, Enum):
     ok = "ok"
     only_newbies = "only_newbies"
     max_usages_reached = "max_usages_reached"
+    no_matching_choices = "no_matching_choices"
     expired = "expired"
     error = "error"
     

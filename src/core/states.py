@@ -242,6 +242,7 @@ async def handle_admin_create_promocode(ctx: Context, **_):
   en: 10% discount for new customers
 Только_новички: yes | no
 Макс_использований: -1 — без ограничений
+Разрешенные_чойсы: 0 — если не надо, а так option_name/choice_name через запятую без пробелов
 Expire: 2025-12-31    # YYYY-MM-DD или 30d (только в днях) или none
 
 <code>Код:
@@ -252,6 +253,7 @@ Expire: 2025-12-31    # YYYY-MM-DD или 30d (только в днях) или 
   en:
 Только_новички: no
 Макс_использований: -1
+Разрешенные_чойсы: 0
 Expire: 30d</code>
 
 Введите ОБЯЗАТЕЛЬНО все поля по шаблону:"""

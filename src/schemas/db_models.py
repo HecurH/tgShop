@@ -341,23 +341,6 @@ class OrdersRepository(AppAbstractRepository[Order]):
             self.logger.info(f"New order {order.id} for customer {order.customer_id}")
             
         await super().save(order)
-
-# class CartEntryOLD(AppBaseModel):
-#     id: Optional[PydanticObjectId] = None
-#     customer_id: PydanticObjectId
-#     product_id: PydanticObjectId
-    
-#     frozen_product: Optional[Product] = None # только для сформированных заказов
-    
-#     order_id: Optional[PydanticObjectId] = None
-
-#     quantity: int = Field(default=1, gt=0)
-
-#     configuration: "ProductConfiguration"
-    
-#     @property
-#     def need_to_confirm_price(self) -> bool:
-#         return self.configuration.requires_price_confirmation
     
 class CartEntry(AppDBModel):
     id: Optional[PydanticObjectId] = None
@@ -1172,16 +1155,22 @@ class AdditionalsRepository(AppAbstractRepository[ProductAdditional]):
     def get_by_name(self, name, allowed_additionals, ctx: Context):
         return next((a for a in allowed_additionals if a.name.get(ctx) == name), None)
 
+class PromocodeConditions(AppBaseModel):
+    only_newbies: bool = False
+    max_usages: int = -1
+    only_with_choices: Optional[list[str]] = None # ["option/choice", ...]
+
 class Promocode(AppDBModel):
+    schema_version: int = 1
+    
     id: Optional[PydanticObjectId] = None
     code: str
     discount: Discount
     
     description: LocalizedString
-    only_newbies: bool = False
 
     already_used: int = 0
-    max_usages: int = -1
+    conditions: PromocodeConditions
 
     expire_date: Optional[datetime] = None
 
@@ -1189,21 +1178,62 @@ class Promocode(AppDBModel):
         super().__init__(**data)
         if self.expire_date and self.expire_date.tzinfo is None:
             self.expire_date = self.expire_date.replace(tzinfo=timezone.utc)
+            
+    @model_validator(mode="before")
+    @classmethod
+    def migrate(cls, data: dict):
+        if not isinstance(data, dict):  # уже готовый объект — пропускаем
+            return data
+        schema_version = data.get("schema_version", 0)
+        
+        
+        if schema_version == 0:
+            data['schema_version'] = 1
 
-    def check_promocode(self, customer_orders_amount: Optional[int] = None) -> PromocodeCheckResult:
+            if "only_newbies" in data and "max_usages" in data:
+                data['conditions'] = PromocodeConditions().model_dump()
+                
+                data['conditions']['only_newbies'] = data.pop('only_newbies')
+                data['conditions']['max_usages'] = data.pop('max_usages')
+                    
+            logging.getLogger(__name__).warning("Promocode: converting from v0 to v1")
+            schema_version = 1
+        if schema_version == 1:
+            pass
+        
+
+        return data
+
+    def _check_choices(self, cart_entries: List[CartEntry]) -> bool:
+        paths = [tuple(txt.split("/")) for txt in self.conditions.only_with_choices]
+        
+        for entry in cart_entries:
+            if not entry.configuration: continue
+            configuration = entry.configuration
+            
+            for opt_name, choice_name in paths:
+                if option := configuration.options.get(opt_name):
+                    if option.chosen_key == choice_name:
+                        return True
+                    
+        return False
+            
+    async def check_promocode(self, ctx: Context, cart_entries: List[CartEntry]) -> PromocodeCheckResult:
         if self.expire_date and self.expire_date < datetime.now(timezone.utc):
             return PromocodeCheckResult.expired
-        elif self.only_newbies and customer_orders_amount and customer_orders_amount > 0:
+        elif self.conditions.only_newbies and (await ctx.services.db.orders.count_formed_customer_orders(ctx.customer)) > 0:
             return PromocodeCheckResult.only_newbies
-        elif self.max_usages != -1 and self.max_usages <= self.already_used:
+        elif self.conditions.max_usages != -1 and self.conditions.max_usages <= self.already_used:
             return PromocodeCheckResult.max_usages_reached
+        elif self.conditions.only_with_choices and not self._check_choices(cart_entries):
+            return PromocodeCheckResult.no_matching_choices
         
         return PromocodeCheckResult.ok
 
 class PromocodesRepository(AppAbstractRepository[Promocode]):
     class Meta:
         collection_name = 'promocodes'
-        
+       
     async def find_by_code(self, code: str) -> Optional[Promocode]:
         return await self.find_one_by({"code": code})
     
@@ -1213,7 +1243,7 @@ class PromocodesRepository(AppAbstractRepository[Promocode]):
     async def update_usage(self, promocode_id: PydanticObjectId, upd: int = 1):
         promocode = await self.find_one_by_id(promocode_id)
         if not promocode: return
-        if promocode.max_usages != -1 and (promocode.max_usages < promocode.already_used + upd):
+        if promocode.conditions.max_usages != -1 and (promocode.conditions.max_usages < promocode.already_used + upd):
             raise ValueError("Promocode max usages reached")
 
         promocode.already_used += upd
@@ -1372,13 +1402,11 @@ class Customer(AppDBModel):
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
-    privacy_data: PrivacyData = Field(default_factory=PrivacyData)
+    privacy_data: PrivacyData
     
     @model_validator(mode="before")
     @classmethod
     def migrate(cls, data: dict):
-        if not isinstance(data, dict):  # уже готовый объект — пропускаем
-            return data
         schema_version = data.get("schema_version", 0)
         
         
@@ -1531,6 +1559,7 @@ __all__ = [
     "ProductsRepository",
     "ProductAdditional",
     "AdditionalsRepository",
+    "PromocodeConditions",
     "Promocode",
     "PromocodesRepository",
     "Inviter",

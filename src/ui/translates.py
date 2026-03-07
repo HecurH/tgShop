@@ -230,6 +230,11 @@ class EnumTranslates(Translatable):
             "en": "This promo code has been used the maximum number of times."
         }
         
+        no_matching_choices = {
+            "ru": "Данный промокод не может быть применён к вашему заказу.",
+            "en": "This promo code cannot be applied to your order."
+        }
+        
         expired = {
             "ru": "Истёк срок действия промокода.",
             "en": "The promo code has expired."
