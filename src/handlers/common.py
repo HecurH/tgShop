@@ -27,6 +27,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         
         ctx.customer = await ctx.services.db.customers.new_customer(
             user_id=ctx.message.from_user.id,
+            username=ctx.message.from_user.username,
             inviter=inviter,
             lang="?",
             currency="RUB"

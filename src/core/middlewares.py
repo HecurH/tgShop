@@ -67,6 +67,10 @@ class ContextMiddleware(BaseMiddleware):
         if not customer and not state == NewUserStates.LangChoosing and state != None:
             await data["ctx"].fsm.set_state(NewUserStates.LangChoosing)
             return await data["ctx"].message.answer("Account deleted. Enter /start.", reply_keyboard=ReplyKeyboardRemove())
+        
+        if customer.username != data["ctx"].message.from_user.username:
+            customer.username = data["ctx"].message.from_user.username
+            await self.services.db.customers.save(customer)
 
         try:
             if hasattr(event, "message") and event.message: await data["ctx"].update_messages_log(event.message)

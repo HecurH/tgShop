@@ -1386,10 +1386,12 @@ class PrivacyData(AppBaseModel):
     consent_process_pd: Optional[datetime] = None
     
 class Customer(AppDBModel):
-    schema_version: int = 1
+    schema_version: int = 2
     
     id: Optional[PydanticObjectId] = None
     user_id: int
+    username: Optional[str] = None
+    
     role: str = "default"
 
     invited_by: Optional[PydanticObjectId] = None
@@ -1424,7 +1426,9 @@ class Customer(AppDBModel):
             logging.getLogger(__name__).warning("Customer: converting from v0 to v1")
             schema_version = 1
         if schema_version == 1:
-            pass
+            data['schema_version'] = 2
+            data['username'] = None
+            schema_version = 2
         
 
         return data
@@ -1468,9 +1472,10 @@ class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
         collection_name = 'customers'
         
-    async def new_customer(self, user_id, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
+    async def new_customer(self, user_id, username, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
         customer = Customer(
                 user_id=user_id,
+                username=username,
                 invited_by=inviter.id if inviter else None,
                 lang=lang,
                 currency=currency,
