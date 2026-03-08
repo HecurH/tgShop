@@ -1474,7 +1474,7 @@ class CustomersRepository(AppAbstractRepository[Customer]):
         
     async def new_customer(self, user_id, username, inviter: Inviter = None, lang: str = "?", currency: str = "RUB") -> Customer:
         customer = Customer(
-                schema_version=2,
+                schema_version=self.get_latest_schema_version(),
                 user_id=user_id,
                 username=username,
                 invited_by=inviter.id if inviter else None,
