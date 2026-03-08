@@ -567,6 +567,7 @@ async def create_promocode_code_handler(_, ctx: Context):
     
     try:
         promocode = Promocode(
+            schema_version=1,
             code=result["code"],
             discount=Discount(
                 dicount_type=getattr(DiscountType, result["type"]),
