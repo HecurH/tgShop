@@ -117,9 +117,9 @@ class AdminTextGen:
                 txt += f"\n🛒 {order.id} — {order.state.get_localized_name(ctx.lang)} — {order.price_details.total_price.to_text()}"
             return txt
             
-            
+        username_text = f" @{customer.username}" if customer.username else ""
         
-        text = f"""👤 <a href=\"tg://user?id={customer.user_id}\">{customer.user_id}</a>
+        text = f"""👤 <a href=\"tg://user?id={customer.user_id}\">{customer.user_id}{username_text}</a>
 
 Приглашён: {(await ctx.services.db.inviters.find_one_by_id(customer.invited_by)).customer_id if customer.invited_by else 'Никем'}
 Зарегистрировался: {customer.id.generation_time.strftime("%d.%m.%Y %H:%M")} UTC
