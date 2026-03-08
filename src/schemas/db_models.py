@@ -1402,7 +1402,7 @@ class Customer(AppDBModel):
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
-    privacy_data: PrivacyData
+    privacy_data: PrivacyData = Field(default_factory=PrivacyData)
     
     @model_validator(mode="before")
     @classmethod
