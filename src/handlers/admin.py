@@ -64,11 +64,13 @@ async def code_execution(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx)
     
     buf = io.StringIO()
-    with contextlib.redirect_stderr(buf):
-        with contextlib.redirect_stdout(buf):
-            exec(text, cmd_namespace)
-    
-    await ctx.message.answer(buf.getvalue() or "Пустой вывод")
+    try:
+        with contextlib.redirect_stderr(buf):
+            with contextlib.redirect_stdout(buf):
+                exec(text, cmd_namespace)
+    except: ...
+    finally:
+        await ctx.message.answer(buf.getvalue() or "Пустой вывод")
     
 @router.message(Command("add_bonus_money"))
 async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
