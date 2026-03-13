@@ -1,7 +1,6 @@
 import contextlib
 from datetime import datetime
 from decimal import Decimal
-import html
 import io
 import json
 import textwrap
@@ -81,10 +80,10 @@ async def __user_code__():
         with contextlib.redirect_stdout(buf):
             await run(text, cmd_namespace)
     except Exception as e:
-        await ctx.message.answer(str(e))
+        await ctx.message.answer(str(e), parse_mode=None)
         return
     
-    await ctx.message.answer(html.escape(str(buf.getvalue())) or "Пустой вывод")
+    await ctx.message.answer(str(buf.getvalue()) or "Пустой вывод", parse_mode=None)
     
 @router.message(Command("add_bonus_money"))
 async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
