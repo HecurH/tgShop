@@ -63,6 +63,7 @@ async def code_execution(_, ctx: Context):
     if text == "0":
         cmd_namespace = None
         await call_state_handler(CommonStates.MainMenu, ctx)
+        return
     
     buf = io.StringIO()
     try:
@@ -70,8 +71,9 @@ async def code_execution(_, ctx: Context):
             exec(text, cmd_namespace)
     except Exception as e:
         await ctx.message.answer(str(e))
-    finally:
-        await ctx.message.answer(buf.getvalue() or "Пустой вывод")
+        return
+    
+    await ctx.message.answer(str(buf.getvalue()) or "Пустой вывод")
     
 @router.message(Command("add_bonus_money"))
 async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
