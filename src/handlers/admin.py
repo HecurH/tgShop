@@ -49,6 +49,7 @@ async def code_execution_entry_point(_, ctx: Context):
     global cmd_namespace
     cmd_namespace = {}
     cmd_namespace['__builtins__'] = __builtins__
+    cmd_namespace['loop'] = asyncio.get_running_loop()
     cmd_namespace['core'] = core
     cmd_namespace['ctx'] = ctx
     
@@ -65,10 +66,10 @@ async def code_execution(_, ctx: Context):
     
     buf = io.StringIO()
     try:
-        with contextlib.redirect_stderr(buf):
-            with contextlib.redirect_stdout(buf):
-                exec(text, cmd_namespace)
-    except: ...
+        with contextlib.redirect_stdout(buf):
+            exec(text, cmd_namespace)
+    except Exception as e:
+        await ctx.message.answer(str(e))
     finally:
         await ctx.message.answer(buf.getvalue() or "Пустой вывод")
     
