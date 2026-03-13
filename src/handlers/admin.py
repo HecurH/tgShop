@@ -70,6 +70,7 @@ async def code_execution(_, ctx: Context):
         wrapped = f"""
 async def __user_code__():
 {textwrap.indent(code, "    ")}
+    globals().update(locals())
 """ 
         exec(wrapped, env)
         await env["__user_code__"]()
