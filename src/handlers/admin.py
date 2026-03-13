@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 import io
 import json
+import textwrap
 
 from aiogram import Bot, Router
 from aiogram.filters import CommandObject, Command
@@ -65,10 +66,18 @@ async def code_execution(_, ctx: Context):
         await call_state_handler(CommonStates.MainMenu, ctx)
         return
     
+    async def run(code, env):
+        wrapped = f"""
+async def __user_code__():
+{textwrap.indent(code, "    ")}
+""" 
+        exec(wrapped, env)
+        await env["__user_code__"]()
+    
     buf = io.StringIO()
     try:
         with contextlib.redirect_stdout(buf):
-            exec(text, cmd_namespace)
+            await run(text, cmd_namespace)
     except Exception as e:
         await ctx.message.answer(str(e))
         return
