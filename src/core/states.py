@@ -115,6 +115,9 @@ class AdminStates(StatesGroup):
             EditKey = State()
             EditLangs = State()
     
+    class Commands(StatesGroup):
+        Console = State()
+    
     class Customers(StatesGroup):
         AdminMessageSending = State()
     
@@ -290,7 +293,11 @@ async def handle_admin_edit_global_placeholder(ctx: Context, placeholder: Placeh
         if not await ctx.fsm.get_value(lang):
             await ctx.message.answer(f"Было: {placeholder.value.get(lang)}\nВведите новое значение для языка {lang}:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
             return
-        
+
+@state_handlers.register(AdminStates.Commands.Console)
+async def handle_code_execution_entry_point_message(ctx: Context, **_):
+    await ctx.message.answer("Введите 0 если хотите выйти:")
+
 @state_handlers.register(AdminStates.Customers.AdminMessageSending)
 async def handle_admin_message_sending(ctx: Context, **_):
     await ctx.message.answer("Введите сообщение:", reply_markup=UncategorizedKBs.reply_cancel(ctx))
