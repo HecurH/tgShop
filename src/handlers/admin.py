@@ -83,7 +83,7 @@ async def __user_code__():
         await ctx.message.answer(str(e))
         return
     
-    await ctx.message.answer(str(buf.getvalue()) or "Пустой вывод", parse_mode=None)
+    await ctx.message.answer(str(buf.getvalue()) or "Пустой вывод", parse_mode='none')
     
 @router.message(Command("add_bonus_money"))
 async def add_bonus_money_handler(_, ctx: Context, command: CommandObject):
