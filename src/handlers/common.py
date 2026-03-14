@@ -35,7 +35,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             lang="?",
             currency="RUB"
         )
-    giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else (None, None)
+    giveaway = await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else None
     if giveaway:
         await ctx.fsm.update_data(proceed_giveaway=command.args)
     
@@ -66,8 +66,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
                                     send_before=(check_result_text, 1))
             return
         
-        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
-                                                    marker=marker if marker and marker in giveaway.allowed_markers else None,
+        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id,
                                                     when=datetime.now(timezone.utc)))
         await ctx.services.db.customers.save(ctx.customer)
         await call_state_handler(CommonStates.MainMenu,
@@ -129,7 +128,7 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
     
     dl = await ctx.fsm.get_value("proceed_giveaway")
     if dl:
-        giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(dl)
+        giveaway = await ctx.services.db.giveaways.find_giveaway_by_deep_link(dl)
         await ctx.fsm.update_data(proceed_giveaway=None)
         
         if not giveaway:
@@ -143,8 +142,7 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
                                     send_before=(check_result_text, 1))
             return
         
-        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
-                                                    marker=marker if marker and marker in giveaway.allowed_markers else None,
+        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id,
                                                     when=datetime.now(timezone.utc)))
         await ctx.services.db.customers.save(ctx.customer)
         

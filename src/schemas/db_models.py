@@ -177,8 +177,6 @@ class Giveaway(AppDBModel):
     
     end_date: Optional[datetime]
     
-    allowed_markers: list[str] = []
-    
     async def can_join(self, ctx: Context) -> GiveawayCheckResult:
         if not self.active or (self.end_date and self.end_date < datetime.now(timezone.utc)):
             return GiveawayCheckResult.giveaway_ended
@@ -205,27 +203,21 @@ class GiveawaysRepository(AppAbstractRepository[Giveaway]):
     async def new(self, 
                   channel_id: Optional[str],
                   name: LocalizedString, 
-                  end_date: Optional[datetime] = None, 
-                  allowed_markers: list[str] = []):
+                  end_date: Optional[datetime] = None):
         
         giveaway = Giveaway(schema_version=self.get_latest_schema_version(),
                             channel_id=channel_id,
                             name=name,
-                            end_date=end_date,
-                            allowed_markers=allowed_markers)
+                            end_date=end_date)
         
         await self.save(giveaway)
         
-    async def find_giveaway_by_deep_link(self, deep_link: str) -> Optional[tuple[Giveaway, str | None]]:
+    async def find_giveaway_by_deep_link(self, deep_link: str) -> Optional[Giveaway]:
         try:
             if "_" not in deep_link:
                 return None
             data = deep_link.split("_")
-            if len(data) == 2:
-                return await self.find_one_by_id(PydanticObjectId(data[1])), None
-            elif len(data) == 3:
-                return await self.find_one_by_id(PydanticObjectId(data[1])), data[2]
-            else: return None
+            return await self.find_one_by_id(PydanticObjectId(data[1])), None
         except Exception:
             return None
  
@@ -1425,7 +1417,6 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
 
 class Participation(AppBaseModel):
     giveaway_id: PydanticObjectId
-    marker: Optional[str] = None
     
     when: datetime
 
