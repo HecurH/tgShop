@@ -75,6 +75,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
                                     ctx.t.CommonTranslates.you_are_participating_in_giveaway,
                                     1
                                 ))
+        return
     
     await ctx.message.answer(ctx.t.CommonTranslates.hi)
 
@@ -152,6 +153,7 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
                                     ctx.t.CommonTranslates.you_are_participating_in_giveaway.format(giveaway_name=giveaway.name.get(ctx)),
                                     1
                                 ))
+        return
 
     await call_state_handler(CommonStates.MainMenu,
                              ctx)
