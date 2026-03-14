@@ -113,7 +113,7 @@ async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
         return
     await callback.message.delete()
     
-    giveaway = await ctx.services.db.giveaways.find_giveaway_by_deep_link(await ctx.fsm.get_value("proceed_giveaway"))
+    giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(await ctx.fsm.get_value("proceed_giveaway"))
     await ctx.fsm.update_data(proceed_giveaway=None)
     
     if not giveaway:
@@ -127,7 +127,7 @@ async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
                                  send_before=(check_result_text, 1))
         return
     
-    ctx.customer.giveaways.append(giveaway.id)
+    ctx.customer.giveaways[giveaway.id] = marker
     await ctx.services.db.customers.save(ctx.customer)
     
     await call_state_handler(CommonStates.MainMenu,

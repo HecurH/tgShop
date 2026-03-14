@@ -195,12 +195,16 @@ class GiveawaysRepository(AppAbstractRepository[Giveaway]):
         
         await self.save(giveaway)
         
-    async def find_giveaway_by_deep_link(self, deep_link: str) -> Optional[Giveaway]:
+    async def find_giveaway_by_deep_link(self, deep_link: str) -> Optional[tuple[Giveaway, str | None]]:
         try:
             if "_" not in deep_link:
                 return None
-            object_id_str = deep_link.split("_")[-1]
-            return await self.find_one_by_id(PydanticObjectId(object_id_str))
+            data = deep_link.split("_")
+            if len(data) == 2:
+                return await self.find_one_by_id(PydanticObjectId(data[1])), None
+            elif len(data) == 3:
+                return await self.find_one_by_id(PydanticObjectId(data[1])), data[2]
+            else: return None
         except Exception:
             return None
  
@@ -1423,7 +1427,7 @@ class PrivacyData(AppBaseModel):
     consent_process_pd: Optional[datetime] = None
     
 class Customer(AppDBModel):
-    schema_version: int = 3
+    schema_version: int = 4
     
     id: Optional[PydanticObjectId] = None
     user_id: int
@@ -1441,7 +1445,8 @@ class Customer(AppDBModel):
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
-    giveaways: list[PydanticObjectId] = []
+    giveaways: dict[PydanticObjectId, None | str] = {}
+    # айди: маркер
     
     privacy_data: PrivacyData = Field(default_factory=PrivacyData)
     
@@ -1467,10 +1472,10 @@ class Customer(AppDBModel):
             data['schema_version'] = 2
             data['username'] = None
             schema_version = 2
-        if schema_version == 2:
-            data['schema_version'] = 3
-            data['giveaways'] = []
-            schema_version = 3
+        if schema_version in [2, 3]:
+            data['schema_version'] = 4
+            data['giveaways'] = {}
+            schema_version = 4
         
 
         return data
