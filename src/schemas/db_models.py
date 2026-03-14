@@ -192,10 +192,11 @@ class GiveawaysRepository(AppAbstractRepository[Giveaway]):
     class Meta:
         collection_name = 'giveaways'
         
-    async def new(self, name: LocalizedString, end_date: Optional[datetime] = None):
+    async def new(self, name: LocalizedString, end_date: Optional[datetime] = None, allowed_markers: list[str] = []):
         giveaway = Giveaway(schema_version=self.get_latest_schema_version(),
                             name=name,
-                            end_date=end_date)
+                            end_date=end_date,
+                            allowed_markers=allowed_markers)
         
         await self.save(giveaway)
         
