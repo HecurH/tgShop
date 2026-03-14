@@ -53,6 +53,8 @@ async def code_execution_entry_point(_, ctx: Context):
     cmd_namespace['loop'] = asyncio.get_running_loop()
     cmd_namespace['core'] = core
     cmd_namespace['ctx'] = ctx
+    cmd_namespace['db'] = ctx.services.db
+    cmd_namespace['me'] = ctx.customer
     
     await call_state_handler(AdminStates.Commands.Console, ctx)
     

@@ -176,12 +176,14 @@ class Giveaway(AppDBModel):
     end_date: Optional[datetime]
     
     def can_join(self, ctx: Context) -> GiveawayCheckResult:
-        if self.end_date and self.end_date < datetime.now(timezone.utc):
+        if not self.active or (self.end_date and self.end_date < datetime.now(timezone.utc)):
             return GiveawayCheckResult.giveaway_ended
-        if not self.active:
-            return GiveawayCheckResult.giveaway_ended
-        if self.id in ctx.customer.giveaways:
+        
+        joined_ids = {p.giveaway_id for p in ctx.customer.giveaways} 
+    
+        if self.id in joined_ids:
             return GiveawayCheckResult.already_in
+        
         return GiveawayCheckResult.ok
 
 class GiveawaysRepository(AppAbstractRepository[Giveaway]):
