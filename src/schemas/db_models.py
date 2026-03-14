@@ -175,6 +175,8 @@ class Giveaway(AppDBModel):
     name: LocalizedString
     end_date: Optional[datetime]
     
+    allowed_markers: list[str] = []
+    
     def can_join(self, ctx: Context) -> GiveawayCheckResult:
         if not self.active or (self.end_date and self.end_date < datetime.now(timezone.utc)):
             return GiveawayCheckResult.giveaway_ended
