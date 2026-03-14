@@ -1402,6 +1402,10 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
     async def get_all(self, is_foreign: bool) -> Iterable[DeliveryService]:
         return await self.find_by({"is_foreign": is_foreign})
 
+class Participation(AppBaseModel):
+    giveaway_id: PydanticObjectId
+    marker: Optional[str] = None
+
 class DeliveryInfo(AppBaseModel):
     
     service: Optional[DeliveryService] = None
@@ -1445,8 +1449,7 @@ class Customer(AppDBModel):
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
     
-    giveaways: dict[PydanticObjectId, None | str] = {}
-    # айди: маркер
+    giveaways: list[Participation] = []
     
     privacy_data: PrivacyData = Field(default_factory=PrivacyData)
     
@@ -1472,10 +1475,10 @@ class Customer(AppDBModel):
             data['schema_version'] = 2
             data['username'] = None
             schema_version = 2
-        if schema_version in [2, 3]:
-            data['schema_version'] = 4
-            data['giveaways'] = {}
-            schema_version = 4
+        if schema_version in [2, 3, 4]:
+            data['schema_version'] = 5
+            data['giveaways'] = []
+            schema_version = 5
         
 
         return data
@@ -1625,6 +1628,7 @@ __all__ = [
     "DeliveryRequirementsList",
     "DeliveryService",
     "DeliveryServicesRepository",
+    "Participation",
     "DeliveryInfo",
     "Customer",
     "CustomersRepository",

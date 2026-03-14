@@ -9,6 +9,7 @@ from core.helper_classes import Context
 from core.states import CommonStates, NewUserStates, call_state_handler
 from registry.currencies import SUPPORTED_CURRENCIES
 from core.types.enums import GiveawayCheckResult
+from schemas.db_models import Participation
 from ui.translates import ReplyButtonsTranslates, TranslatorHub
 
 router = Router(name="common")
@@ -127,7 +128,7 @@ async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
                                  send_before=(check_result_text, 1))
         return
     
-    ctx.customer.giveaways[giveaway.id] = marker
+    ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, marker=marker))
     await ctx.services.db.customers.save(ctx.customer)
     
     await call_state_handler(CommonStates.MainMenu,
