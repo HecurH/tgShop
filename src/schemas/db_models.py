@@ -217,7 +217,7 @@ class GiveawaysRepository(AppAbstractRepository[Giveaway]):
             if "_" not in deep_link:
                 return None
             data = deep_link.split("_")
-            return await self.find_one_by_id(PydanticObjectId(data[1])), None
+            return await self.find_one_by_id(PydanticObjectId(data[1]))
         except Exception:
             return None
  
