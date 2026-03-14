@@ -130,7 +130,7 @@ async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
         return
     
     ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
-                                                marker=marker if marker and marker in giveaway.markers else None,
+                                                marker=marker if marker and marker in giveaway.allowed_markers else None,
                                                 when=datetime.now(timezone.utc)))
     await ctx.services.db.customers.save(ctx.customer)
     
