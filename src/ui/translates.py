@@ -230,6 +230,11 @@ class EnumTranslates(Translatable):
             "en": "You are already participating!"
         }
         
+        not_in_channel = {
+            "ru": "Вы не состоите в канале!",
+            "en": "You are not in the channel!"
+        }
+        
         error = {
             "ru": "Вы не можете участвовать в этом розыгрыше.",
             "en": "You cannot participate in this giveaway."

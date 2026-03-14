@@ -20,6 +20,7 @@ class GiveawayCheckResult(str, Enum):
     ok = "ok"
     giveaway_ended = "giveaway_ended"
     already_in = "already_in"
+    not_in_channel = "not_in_channel"
     error = "error"
 
 class PromocodeCheckResult(str, Enum):
