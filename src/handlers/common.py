@@ -58,7 +58,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
     if giveaway:
         await ctx.fsm.update_data(proceed_giveaway=None)
         
-        check_result = giveaway.can_join(ctx)
+        check_result = await giveaway.can_join(ctx)
         if check_result != GiveawayCheckResult.ok:
             check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
             await call_state_handler(CommonStates.MainMenu,
@@ -135,7 +135,7 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
         if not giveaway:
             await call_state_handler(CommonStates.MainMenu,
                                     ctx)
-        check_result = giveaway.can_join(ctx)
+        check_result = await giveaway.can_join(ctx)
         if check_result != GiveawayCheckResult.ok:
             check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
             await call_state_handler(CommonStates.MainMenu,

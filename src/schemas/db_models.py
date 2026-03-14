@@ -170,14 +170,16 @@ class LogsRepository(AppAbstractRepository[LogEntry]):
 class Giveaway(AppDBModel):
     id: Optional[PydanticObjectId] = None
     
+    channel_id: Optional[str] = None
+    name: LocalizedString
+    
     active: bool = True
     
-    name: LocalizedString
     end_date: Optional[datetime]
     
     allowed_markers: list[str] = []
     
-    def can_join(self, ctx: Context) -> GiveawayCheckResult:
+    async def can_join(self, ctx: Context) -> GiveawayCheckResult:
         if not self.active or (self.end_date and self.end_date < datetime.now(timezone.utc)):
             return GiveawayCheckResult.giveaway_ended
         
@@ -186,14 +188,28 @@ class Giveaway(AppDBModel):
         if self.id in joined_ids:
             return GiveawayCheckResult.already_in
         
+        if self.channel_id:
+            try:
+                member = await ctx.message.bot.get_chat_member(self.channel_id, ctx.customer.user_id)
+                if member.status in ["left", "kicked"]:
+                    return GiveawayCheckResult.not_in_channel
+            except Exception:
+                return GiveawayCheckResult.not_in_channel
+        
         return GiveawayCheckResult.ok
 
 class GiveawaysRepository(AppAbstractRepository[Giveaway]):
     class Meta:
         collection_name = 'giveaways'
         
-    async def new(self, name: LocalizedString, end_date: Optional[datetime] = None, allowed_markers: list[str] = []):
+    async def new(self, 
+                  channel_id: Optional[str],
+                  name: LocalizedString, 
+                  end_date: Optional[datetime] = None, 
+                  allowed_markers: list[str] = []):
+        
         giveaway = Giveaway(schema_version=self.get_latest_schema_version(),
+                            channel_id=channel_id,
                             name=name,
                             end_date=end_date,
                             allowed_markers=allowed_markers)
