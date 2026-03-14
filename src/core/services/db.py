@@ -8,6 +8,7 @@ from schemas.db_models import *
 
 _REPO_REGISTRY: dict[str, type[AppAbstractRepository]] = {
     "logs": LogsRepository,
+    "giveaways": GiveawaysRepository,
     "placeholders": PlaceholdersRepository,
     "orders": OrdersRepository,
     "cart_entries": CartEntriesRepository,
@@ -24,6 +25,7 @@ _REPO_REGISTRY: dict[str, type[AppAbstractRepository]] = {
 class DatabaseService:
     
     logs: LogsRepository
+    giveaways: GiveawaysRepository
     placeholders: PlaceholdersRepository
     orders: OrdersRepository
     cart_entries: CartEntriesRepository

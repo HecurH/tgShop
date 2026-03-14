@@ -219,6 +219,22 @@ class TranslatorHub:
 
 class EnumTranslates(Translatable):
     
+    class GiveawayCheckResult(Translatable):
+        giveaway_ended = {
+            "ru": "Этот розыгрыш окончен!",
+            "en": "This giveaway is over!"
+        }
+        
+        already_in = {
+            "ru": "Вы уже участвуете!",
+            "en": "You are already participating!"
+        }
+        
+        error = {
+            "ru": "Вы не можете участвовать в этом розыгрыше.",
+            "en": "You cannot participate in this giveaway."
+        }
+    
     class PromocodeCheckResult(Translatable):
         only_newbies = {
             "ru": "Этот промокод можно использовать только при первом заказе!",
@@ -1363,6 +1379,11 @@ class UncategorizedTranslates(Translatable):
         "ru": "Окей, оставим как есть 👌",
         "en": "Okay, let's leave it as is 👌"
     }
+    
+    i_am_not_a_bot = {
+        "ru": "Я не бот",
+        "en": "I'm not a bot"
+    }
 
     back = {
         "ru": "Назад",
@@ -1434,6 +1455,18 @@ class CommonTranslates(Translatable):
     currency_choosing = {
         "ru": "Выберите валюту (можно изменить в настройках):",
         "en": "Select a currency (you can change it in the settings):"
+    }
+    
+    giveaway_verification = {
+        "ru": "Нажмите на кнопку ниже для подтверждения:",
+        "en": "Click on the button below to confirm:"
+    }
+    
+    you_are_participating_in_giveaway = {
+        "ru": """Теперь вы участвуете в \"{giveaway_name}\"! 🎉
+Следите за новостями об итогах через наш канал или ждите сообщения от бота.""",
+        "en": """Now you are participating in \"{giveaway_name}\"! 🎉
+Stay tuned for updates on the results through our channel or wait for a message from the bot."""
     }
 
     heres_the_menu = {

@@ -8,6 +8,7 @@ from configs.languages import SUPPORTED_LANGUAGES_TEXT
 from core.helper_classes import Context
 from core.states import CommonStates, NewUserStates, call_state_handler
 from registry.currencies import SUPPORTED_CURRENCIES
+from core.types.enums import GiveawayCheckResult
 from ui.translates import ReplyButtonsTranslates, TranslatorHub
 
 router = Router(name="common")
@@ -32,6 +33,10 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             lang="?",
             currency="RUB"
         )
+        
+    if (await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else None):
+        await ctx.fsm.update_data(proceed_giveaway=command.args)
+    
         
     if ctx.lang == "?":
         lang = ctx.message.from_user.language_code.split("-")[0]
@@ -84,8 +89,6 @@ async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
         
     await callback.message.delete()
 
-    
-
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
     if callback.data.upper() not in SUPPORTED_CURRENCIES.keys():
@@ -102,6 +105,37 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
                              ctx)
 
     await callback.answer()
+
+@router.callback_query(CommonStates.GiveawayVerifictaion)
+async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
+    await callback.answer()
+    if callback.data != "i_am_not_a_bot":
+        return
+    await callback.message.delete()
+    
+    giveaway = await ctx.services.db.giveaways.find_giveaway_by_deep_link(await ctx.fsm.get_value("proceed_giveaway"))
+    await ctx.fsm.update_data(proceed_giveaway=None)
+    
+    if not giveaway:
+        await call_state_handler(CommonStates.MainMenu,
+                                ctx)
+    check_result = giveaway.can_join(ctx)
+    if check_result != GiveawayCheckResult.ok:
+        check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
+        await call_state_handler(CommonStates.MainMenu,
+                                 ctx,
+                                 send_before=(check_result_text, 1))
+        return
+    
+    ctx.customer.giveaways.append(giveaway.id)
+    await ctx.services.db.customers.save(ctx.customer)
+    
+    await call_state_handler(CommonStates.MainMenu,
+                             ctx,
+                             send_before=(
+                                 ctx.t.CommonTranslates.you_are_participating_in_giveaway.format(giveaway_name=giveaway.name.get(ctx)),
+                                 1
+                             ))
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.about.values()) if message.text else False)
 async def about_command_handler(_, ctx: Context) -> None:

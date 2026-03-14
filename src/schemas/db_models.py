@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 import json
 import logging
 import re
-from typing import Any, Dict, Generic, Type, TypeVar, Optional, List, Iterable, TYPE_CHECKING, Union, cast, get_args
+from typing import Any, Generic, Type, TypeVar, Optional, Iterable, TYPE_CHECKING, Union, cast, get_args
 
 from aiogram.types import Message
 
@@ -166,7 +166,44 @@ class LogsRepository(AppAbstractRepository[LogEntry]):
                          created_at=datetime.now(timezone.utc))
         
         await self.save(entry)
-         
+
+class Giveaway(AppDBModel):
+    id: Optional[PydanticObjectId] = None
+    
+    active: bool = True
+    
+    name: LocalizedString
+    end_date: Optional[datetime]
+    
+    def can_join(self, ctx: Context) -> GiveawayCheckResult:
+        if self.end_date and self.end_date < datetime.now(timezone.utc):
+            return GiveawayCheckResult.giveaway_ended
+        if not self.active:
+            return GiveawayCheckResult.giveaway_ended
+        if self.id in ctx.customer.giveaways:
+            return GiveawayCheckResult.already_in
+        return GiveawayCheckResult.ok
+
+class GiveawaysRepository(AppAbstractRepository[Giveaway]):
+    class Meta:
+        collection_name = 'giveaways'
+        
+    async def new(self, name: LocalizedString, end_date: Optional[datetime] = None):
+        giveaway = Giveaway(schema_version=self.get_latest_schema_version(),
+                            name=name,
+                            end_date=end_date)
+        
+        await self.save(giveaway)
+        
+    async def find_giveaway_by_deep_link(self, deep_link: str) -> Optional[Giveaway]:
+        try:
+            if "_" not in deep_link:
+                return None
+            object_id_str = deep_link.split("_")[-1]
+            return await self.find_one_by_id(PydanticObjectId(object_id_str))
+        except Exception:
+            return None
+ 
 class Placeholder(AppDBModel):
     id: Optional[PydanticObjectId] = None
     
@@ -180,7 +217,7 @@ class PlaceholdersRepository(AppAbstractRepository[Placeholder]):
     async def find_by_key(self, key: str) -> Optional[Placeholder]:
         return await self.find_one_by({'key': key})
     
-    async def get_all(self) -> List[Placeholder]:
+    async def get_all(self) -> list[Placeholder]:
         return list(await self.find_by({}))
 
 class OrderPriceDetails(AppBaseModel):
@@ -451,7 +488,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def count_customer_cart_entries(self, customer: Customer):
         return await self.get_collection().count_documents({"customer_id": customer.id, "order_id": None})
     
-    async def find_customer_cart_ids_sorted_by_date(self, customer: Customer) -> List[PydanticObjectId]:
+    async def find_customer_cart_ids_sorted_by_date(self, customer: Customer) -> list[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         cursor = self.get_collection().find(
             {"customer_id": customer.id,
@@ -524,7 +561,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def calculate_customer_cart_price(self, customer: Customer) -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"customer_id": customer.id, "order_id": None})
         products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]}})
-        product_map: Dict[PydanticObjectId, Product] = {
+        product_map: dict[PydanticObjectId, Product] = {
             product.id: product for product in products
         }
 
@@ -539,7 +576,7 @@ class CartEntriesRepository(AppAbstractRepository[CartEntry]):
     async def calculate_cart_entries_price_by_order(self, order: Order) -> LocalizedMoney:
         entries: Iterable[CartEntry] = await self.find_by({"order_id": order.id})
         products: Iterable[Product] = await self.dbs.products.find_by({"_id": {"$in": [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]}})
-        product_map: Dict[PydanticObjectId, Product] = {
+        product_map: dict[PydanticObjectId, Product] = {
             product.id: product for product in products
         }
 
@@ -629,7 +666,7 @@ class ConfigurationSwitch(AppBaseModel):
     description: Optional[LocalizedEntry] = None
     
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
-    can_be_blocked_by: List[str] = Field(default_factory=list)
+    can_be_blocked_by: list[str] = Field(default_factory=list)
 
     enabled: bool = False
     
@@ -640,13 +677,13 @@ class ConfigurationSwitch(AppBaseModel):
         self.name=base_sw.name
         self.price=base_sw.price
         
-    def check_blocked_all(self, options: Dict[str, Any]) -> bool:
+    def check_blocked_all(self, options: dict[str, Any]) -> bool:
         return any(
             self.check_blocked_path(path, options)
             for path in self.can_be_blocked_by
         )
         
-    def get_blocking_path(self, options: Dict[str, Any]) -> Optional[str]:
+    def get_blocking_path(self, options: dict[str, Any]) -> Optional[str]:
         return next(
             (
                 path
@@ -656,7 +693,7 @@ class ConfigurationSwitch(AppBaseModel):
             None
         )
     
-    def check_blocked_path(self, path: str, options: Dict[str, "ConfigurationOption"]) -> bool:
+    def check_blocked_path(self, path: str, options: dict[str, "ConfigurationOption"]) -> bool:
         keys = path.split("/")
         
         option = options.get(keys[0]) if keys else None
@@ -683,7 +720,7 @@ class ConfigurationSwitch(AppBaseModel):
 class ConfigurationSwitchesGroup(AppBaseModel):
     name: LocalizedEntry
     description: LocalizedEntry
-    switches: Dict[str, ConfigurationSwitch]
+    switches: dict[str, ConfigurationSwitch]
     
     def get_all(self):
         return self.switches.values()
@@ -707,7 +744,7 @@ class ConfigurationSwitches(AppBaseModel):
     description: LocalizedEntry
     media: Optional[LocalizedSavedMedia] = None
 
-    switches: Dict[str, ConfigurationSwitch | ConfigurationSwitchesGroup]
+    switches: dict[str, ConfigurationSwitch | ConfigurationSwitchesGroup]
 
     def get_all(self):
         return self.switches.values()
@@ -758,12 +795,12 @@ class ConfigurationChoice(AppBaseModel):
     existing_presets: bool = Field(default=False)
     existing_presets_pattern: str = "int"
     existing_presets_chosen: str = ""
-    price_by_preset: Optional[Dict[str, LocalizedMoney]] = None
+    price_by_preset: Optional[dict[str, LocalizedMoney]] = None
 
     is_custom_input: bool = Field(default=False)
     custom_input_text: Optional[str] = None
     
-    can_be_blocked_by: List[str] = Field(default_factory=list) # формат типо 'option/choice'
+    can_be_blocked_by: list[str] = Field(default_factory=list) # формат типо 'option/choice'
     blocks_price_determination: bool = Field(default=False)
     price: LocalizedMoney = Field(default_factory=lambda: LocalizedMoney.empty_base())
     
@@ -809,13 +846,13 @@ class ConfigurationChoice(AppBaseModel):
         pattern = '^' + ''.join(regex_parts) + '$'
 
         return bool(re.compile(pattern).match(text))
-    def check_blocked_all(self, options: Dict[str, Any]) -> bool:
+    def check_blocked_all(self, options: dict[str, Any]) -> bool:
         return any(
             self.check_blocked_path(path, options)
             for path in self.can_be_blocked_by
         )
         
-    def get_blocking_path(self, options: Dict[str, Any]) -> Optional[str]:
+    def get_blocking_path(self, options: dict[str, Any]) -> Optional[str]:
         return next(
             (
                 path
@@ -825,7 +862,7 @@ class ConfigurationChoice(AppBaseModel):
             None
         )
     
-    def check_blocked_path(self, path: str, options: Dict[str, "ConfigurationOption"]) -> bool:
+    def check_blocked_path(self, path: str, options: dict[str, "ConfigurationOption"]) -> bool:
         keys = path.split("/")
         
         option = options.get(keys[0]) if keys else None
@@ -863,7 +900,7 @@ class ConfigurationOption(AppBaseModel):
     text: LocalizedEntry
     chosen_key: str # ConfigurationSwitches нельзя выбрать, это лишь группа выключателей относящейся к целевой опции
 
-    choices: Dict[str, ConfigurationChoice | ConfigurationSwitches | ConfigurationAnnotation]
+    choices: dict[str, ConfigurationChoice | ConfigurationSwitches | ConfigurationAnnotation]
     
     def get_chosen(self) -> Optional[ConfigurationChoice]:
         choice = self.choices.get(self.chosen_key) or list(self.choices.values())[0] if self.choices else None
@@ -919,7 +956,7 @@ class ConfigurationOption(AppBaseModel):
                 del self.choices[choice_key]
 
 class ProductConfiguration(AppBaseModel):
-    options: Dict[str, ConfigurationOption | ConfigurationAnnotation]
+    options: dict[str, ConfigurationOption | ConfigurationAnnotation]
     additionals: list["ProductAdditional"] = Field(default_factory=list)
     price: Optional[LocalizedMoney] = None
     
@@ -954,7 +991,7 @@ class ProductConfiguration(AppBaseModel):
         else:
             return self.options
     
-    def update(self, base_configuration: "ProductConfiguration", allowed_additionals: List["ProductAdditional"]):
+    def update(self, base_configuration: "ProductConfiguration", allowed_additionals: list["ProductAdditional"]):
         """
         Обновляет текущую конфигурацию на основе base_configuration,
         сохраняя пользовательские выборы.
@@ -993,7 +1030,7 @@ class ProductConfiguration(AppBaseModel):
     def get_additionals_ids(self) -> Iterable[PydanticObjectId]:
         return [add.id for add in self.additionals]
     
-    def get_localized_names_by_path(self, path, ctx: Context) -> List[str]:
+    def get_localized_names_by_path(self, path, ctx: Context) -> list[str]:
         keys = path.split("/")
         result = []
         option_key = keys[0] if keys else None
@@ -1099,7 +1136,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
     class Meta:
         collection_name = 'products'
     
-    async def get_ids_by_category_sorted_by_date(self, category: str, only_visible: bool = True) -> List[PydanticObjectId]:
+    async def get_ids_by_category_sorted_by_date(self, category: str, only_visible: bool = True) -> list[PydanticObjectId]:
         """Получить список id продуктов в категории, отсортированных по дате создания (ObjectId)."""
         f = {"category": category, "visible": True} if only_visible else {"category": category}
         
@@ -1109,7 +1146,7 @@ class ProductsRepository(AppAbstractRepository[Product]):
         ).sort("_id", 1)
         return [PydanticObjectId(doc["_id"]) async for doc in cursor]
     
-    async def find_by_entries(self, entries: List[CartEntry]) -> Iterable[Product]:
+    async def find_by_entries(self, entries: list[CartEntry]) -> Iterable[Product]:
         ids = [entry.source_id for entry in entries if entry.source_type == CartItemSource.product]
         return (
             await self.find_by({"_id": {"$in": ids}})
@@ -1204,7 +1241,7 @@ class Promocode(AppDBModel):
 
         return data
 
-    def _check_choices(self, cart_entries: List[CartEntry]) -> bool:
+    def _check_choices(self, cart_entries: list[CartEntry]) -> bool:
         paths = [tuple(txt.split("/")) for txt in self.conditions.only_with_choices]
         
         for entry in cart_entries:
@@ -1218,7 +1255,7 @@ class Promocode(AppDBModel):
                     
         return False
             
-    async def check_promocode(self, ctx: Context, cart_entries: List[CartEntry]) -> PromocodeCheckResult:
+    async def check_promocode(self, ctx: Context, cart_entries: list[CartEntry]) -> PromocodeCheckResult:
         if self.expire_date and self.expire_date < datetime.now(timezone.utc):
             return PromocodeCheckResult.expired
         elif self.conditions.only_newbies and (await ctx.services.db.orders.count_formed_customer_orders(ctx.customer)) > 0:
@@ -1278,7 +1315,7 @@ class InvitersRepository(AppAbstractRepository[Inviter]):
                 return None
             object_id_str = deep_link.split("_")[-1]
             return await self.find_one_by_id(PydanticObjectId(object_id_str))
-        except (ValueError, IndexError):
+        except Exception:
             return None
 
     async def count_new_customer(self, inviter: Inviter):
@@ -1386,7 +1423,7 @@ class PrivacyData(AppBaseModel):
     consent_process_pd: Optional[datetime] = None
     
 class Customer(AppDBModel):
-    schema_version: int = 2
+    schema_version: int = 3
     
     id: Optional[PydanticObjectId] = None
     user_id: int
@@ -1403,6 +1440,8 @@ class Customer(AppDBModel):
     currency: str
     last_time_changed_currency: Optional[datetime] = None
     bonus_wallet: Money
+    
+    giveaways: list[PydanticObjectId] = []
     
     privacy_data: PrivacyData = Field(default_factory=PrivacyData)
     
@@ -1423,12 +1462,15 @@ class Customer(AppDBModel):
                     
                 data['privacy_data']['delivery_info']['waiting_for_manual_delivery_info_confirmation'] = data.pop('waiting_for_manual_delivery_info_confirmation')
 
-            logging.getLogger(__name__).warning("Customer: converting from v0 to v1")
             schema_version = 1
         if schema_version == 1:
             data['schema_version'] = 2
             data['username'] = None
             schema_version = 2
+        if schema_version == 2:
+            data['schema_version'] = 3
+            data['giveaways'] = []
+            schema_version = 3
         
 
         return data
@@ -1467,6 +1509,7 @@ class Customer(AppDBModel):
 
             self.last_time_changed_currency = datetime.now(timezone.utc)
         self.currency = iso
+
 
 class CustomersRepository(AppAbstractRepository[Customer]):
     class Meta:
@@ -1544,7 +1587,10 @@ __all__ = [
     "AppAbstractRepository",
     "AppBaseModel",
     "AppDBModel",
+    "LogEntry",
     "LogsRepository",
+    "Giveaway",
+    "GiveawaysRepository",
     "Placeholder",
     "PlaceholdersRepository",
     "OrderPriceDetails",

@@ -60,7 +60,18 @@ class CommonKBs:
             resize_keyboard=True,
             input_field_placeholder=ctx.t.ReplyButtonsTranslates.choose_an_item
         )
-
+    
+    @staticmethod
+    def i_am_not_a_bot(ctx: Context) -> types.InlineKeyboardMarkup:
+        kb = [
+            [
+                types.InlineKeyboardButton(text=ctx.t.UncategorizedTranslates.i_am_not_a_bot, callback_data="i_am_not_a_bot")
+            ]
+        ]
+        return types.InlineKeyboardMarkup(
+            inline_keyboard=kb
+        )
+    
 class AdminKBs:
     
     @staticmethod

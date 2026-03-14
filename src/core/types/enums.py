@@ -15,6 +15,12 @@ class DiscountType(str, Enum):
 class InviterType(str, Enum):
     customer = "user"
     channel = "channel"
+    
+class GiveawayCheckResult(str, Enum):
+    ok = "ok"
+    giveaway_ended = "giveaway_ended"
+    already_in = "already_in"
+    error = "error"
 
 class PromocodeCheckResult(str, Enum):
     ok = "ok"
@@ -49,6 +55,7 @@ __all__ = [
     "MediaType",
     "DiscountType",
     "InviterType",
+    "GiveawayCheckResult",
     "PromocodeCheckResult",
     "CartItemSource",
     "OrderStateKey"
