@@ -34,8 +34,8 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             lang="?",
             currency="RUB"
         )
-        
-    if (await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else None):
+    giveaway, _ = await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else (None, None)
+    if giveaway:
         await ctx.fsm.update_data(proceed_giveaway=command.args)
     
         
