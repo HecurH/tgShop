@@ -339,8 +339,6 @@ async def handle_currency_choosing(ctx: Context, **_):
 
 class CommonStates(StatesGroup):
     MainMenu = State()
-    
-    GiveawayVerifictaion = State()
 
 @state_handlers.register(CommonStates.MainMenu)
 async def main_menu_handler(ctx: Context, **_):
@@ -350,11 +348,6 @@ async def main_menu_handler(ctx: Context, **_):
     
     await ctx.message.answer(ctx.t.CommonTranslates.heres_the_menu,
                              reply_markup=CommonKBs.main_menu(ctx))
-
-@state_handlers.register(CommonStates.GiveawayVerifictaion)
-async def giveaway_verification_handler(ctx: Context, **_):
-    await ctx.message.answer(ctx.t.CommonTranslates.giveaway_verification,
-                             reply_markup=CommonKBs.i_am_not_a_bot(ctx))
 
 class AssortmentStates(StatesGroup):
     Menu = State()

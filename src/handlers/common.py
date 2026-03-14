@@ -35,7 +35,7 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
             lang="?",
             currency="RUB"
         )
-    giveaway, _ = await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else (None, None)
+    giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(command.args) if command.args else (None, None)
     if giveaway:
         await ctx.fsm.update_data(proceed_giveaway=command.args)
     
@@ -54,6 +54,28 @@ async def command_start_handler(_, ctx: Context, command: CommandObject) -> None
         await call_state_handler(NewUserStates.LangChoosing, 
                            ctx)
         return
+    
+    if giveaway:
+        await ctx.fsm.update_data(proceed_giveaway=None)
+        
+        check_result = giveaway.can_join(ctx)
+        if check_result != GiveawayCheckResult.ok:
+            check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
+            await call_state_handler(CommonStates.MainMenu,
+                                    ctx,
+                                    send_before=(check_result_text, 1))
+            return
+        
+        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
+                                                    marker=marker if marker and marker in giveaway.allowed_markers else None,
+                                                    when=datetime.now(timezone.utc)))
+        await ctx.services.db.customers.save(ctx.customer)
+        await call_state_handler(CommonStates.MainMenu,
+                                ctx,
+                                send_before=(
+                                    ctx.t.CommonTranslates.you_are_participating_in_giveaway,
+                                    1
+                                ))
     
     await ctx.message.answer(ctx.t.CommonTranslates.hi)
 
@@ -93,8 +115,8 @@ async def ask_age_handler(callback: CallbackQuery, ctx: Context) -> None:
 
 @router.callback_query(NewUserStates.CurrencyChoosing)
 async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> None:
+    await callback.answer()
     if callback.data.upper() not in SUPPORTED_CURRENCIES.keys():
-        await callback.answer()
         return
     
     await ctx.customer.change_selected_currency(callback.data, ctx, do_timeout=False)
@@ -102,44 +124,39 @@ async def currency_choosing_handler(callback: CallbackQuery, ctx: Context) -> No
     await ctx.services.db.customers.save(ctx.customer)
 
     await callback.message.delete()
+    
+    #####
+    
+    dl = await ctx.fsm.get_value("proceed_giveaway")
+    if dl:
+        giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(dl)
+        await ctx.fsm.update_data(proceed_giveaway=None)
+        
+        if not giveaway:
+            await call_state_handler(CommonStates.MainMenu,
+                                    ctx)
+        check_result = giveaway.can_join(ctx)
+        if check_result != GiveawayCheckResult.ok:
+            check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
+            await call_state_handler(CommonStates.MainMenu,
+                                    ctx,
+                                    send_before=(check_result_text, 1))
+            return
+        
+        ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
+                                                    marker=marker if marker and marker in giveaway.allowed_markers else None,
+                                                    when=datetime.now(timezone.utc)))
+        await ctx.services.db.customers.save(ctx.customer)
+        
+        await call_state_handler(CommonStates.MainMenu,
+                                ctx,
+                                send_before=(
+                                    ctx.t.CommonTranslates.you_are_participating_in_giveaway.format(giveaway_name=giveaway.name.get(ctx)),
+                                    1
+                                ))
 
     await call_state_handler(CommonStates.MainMenu,
                              ctx)
-
-    await callback.answer()
-
-@router.callback_query(CommonStates.GiveawayVerifictaion)
-async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
-    await callback.answer()
-    if callback.data != "i_am_not_a_bot":
-        return
-    await callback.message.delete()
-    
-    giveaway, marker = await ctx.services.db.giveaways.find_giveaway_by_deep_link(await ctx.fsm.get_value("proceed_giveaway"))
-    await ctx.fsm.update_data(proceed_giveaway=None)
-    
-    if not giveaway:
-        await call_state_handler(CommonStates.MainMenu,
-                                ctx)
-    check_result = giveaway.can_join(ctx)
-    if check_result != GiveawayCheckResult.ok:
-        check_result_text = getattr(ctx.t.EnumTranslates.GiveawayCheckResult, str(check_result.name))
-        await call_state_handler(CommonStates.MainMenu,
-                                 ctx,
-                                 send_before=(check_result_text, 1))
-        return
-    
-    ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
-                                                marker=marker if marker and marker in giveaway.allowed_markers else None,
-                                                when=datetime.now(timezone.utc)))
-    await ctx.services.db.customers.save(ctx.customer)
-    
-    await call_state_handler(CommonStates.MainMenu,
-                             ctx,
-                             send_before=(
-                                 ctx.t.CommonTranslates.you_are_participating_in_giveaway.format(giveaway_name=giveaway.name.get(ctx)),
-                                 1
-                             ))
 
 @router.message(CommonStates.MainMenu, lambda message: (message.text in ReplyButtonsTranslates.about.values()) if message.text else False)
 async def about_command_handler(_, ctx: Context) -> None:

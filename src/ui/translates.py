@@ -1457,15 +1457,10 @@ class CommonTranslates(Translatable):
         "en": "Select a currency (you can change it in the settings):"
     }
     
-    giveaway_verification = {
-        "ru": "Нажмите на кнопку ниже для подтверждения:",
-        "en": "Click on the button below to confirm:"
-    }
-    
     you_are_participating_in_giveaway = {
-        "ru": """Теперь вы участвуете в \"{giveaway_name}\"! 🎉
+        "ru": """Теперь вы участвуете в розыгрыше! 🎉
 Следите за новостями об итогах через наш канал или ждите сообщения от бота.""",
-        "en": """Now you are participating in \"{giveaway_name}\"! 🎉
+        "en": """Now you are participating in giveaway! 🎉
 Stay tuned for updates on the results through our channel or wait for a message from the bot."""
     }
 
