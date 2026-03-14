@@ -1,4 +1,5 @@
 import contextlib
+from datetime import datetime, timezone
 import logging
 from aiogram import Router
 from aiogram.filters import CommandStart, CommandObject, Command
@@ -128,7 +129,9 @@ async def giveaway_verification_handler(callback: CallbackQuery, ctx: Context):
                                  send_before=(check_result_text, 1))
         return
     
-    ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, marker=marker if marker and marker in giveaway.markers else None))
+    ctx.customer.giveaways.append(Participation(giveaway_id=giveaway.id, 
+                                                marker=marker if marker and marker in giveaway.markers else None,
+                                                when=datetime.now(timezone.utc)))
     await ctx.services.db.customers.save(ctx.customer)
     
     await call_state_handler(CommonStates.MainMenu,

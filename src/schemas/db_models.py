@@ -1410,6 +1410,8 @@ class DeliveryServicesRepository(AppAbstractRepository[DeliveryService]):
 class Participation(AppBaseModel):
     giveaway_id: PydanticObjectId
     marker: Optional[str] = None
+    
+    when: datetime
 
 class DeliveryInfo(AppBaseModel):
     
