@@ -48,7 +48,7 @@ async def help_handler(_, ctx: Context):
 @router.message(Command("iwanttocuddlewithfluttershy"))
 async def code_execution_entry_point(_, ctx: Context):
     global cmd_namespace
-    cmd_namespace = cmd_namespace if cmd_namespace else {}
+    cmd_namespace = cmd_namespace if "cmd_namespace" in globals() else {}
     cmd_namespace['__builtins__'] = __builtins__
     cmd_namespace['loop'] = asyncio.get_running_loop()
     cmd_namespace['core'] = core
